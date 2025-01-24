@@ -1,0 +1,41 @@
+services:
+  backend:
+    build:
+      ./backend
+    container_name: backend
+    volumes:
+      - ./backend:/app
+    networks:
+      - matcha.net
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
+  db:
+    container_name: db
+    image: postgres:latest
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgresuser -d postgresname" ]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      - POSTGRES_DB=postgresname
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespassword
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - matcha.net
+
+networks:
+  matcha.net:
+    driver: bridge

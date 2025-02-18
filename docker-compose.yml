@@ -1,0 +1,27 @@
+services:
+  frontend:
+    build:
+      ./frontend
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+    networks:
+      - matcha.net
+    ports:
+      - "5173:5173"
+
+  backend:
+    build:
+      ./backend
+    container_name: backend
+    volumes:
+      - ./backend:/app
+    networks:
+      - matcha.net
+    ports:
+      - "8000:8000"
+      - "8000"
+
+networks:
+  matcha.net:
+    driver: bridge

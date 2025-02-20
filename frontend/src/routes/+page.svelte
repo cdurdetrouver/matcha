@@ -5,7 +5,7 @@ let message: string = '';
 
 onMount(async () => {
   try {
-    const response = await fetch('http://backend:8000/api/');
+    const response = await fetch('http://localhost:8000/api/');
     if (!response.ok) {
       throw new Error('Failed to fetch the message');
     }

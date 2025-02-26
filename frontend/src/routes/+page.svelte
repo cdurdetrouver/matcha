@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+  import { onMount } from 'svelte';
+  import HomeHero from '../lib/components/HomeHero.svelte';
 
 let message: string = '';
 
@@ -37,12 +38,10 @@ function create_user() {
     });
 }
 
-	import HomeHero from '../lib/components/HomeHero.svelte';
 </script>
 
-<header id="hero">
-	<div class="section-container"><HomeHero /></div>
-</header>
+<h1>Welcome to SvelteKit</h1>
+<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
 
 <p>Message from back : {message}</p>
 <button on:click={() => create_user()}>Click me</button>

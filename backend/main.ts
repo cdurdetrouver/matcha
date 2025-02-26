@@ -7,10 +7,10 @@ const app = new Hono();
 
 let client = await db_connect();
 
-//if (client)
-//    console.log("Connected to database!");
-//else
-//    console.log("Failed to connect to database!");
+if (client)
+    console.log("Connected to database!");
+else
+    console.log("Failed to connect to database!");
 
 app.use('*', async (c, next) => {
     const corsMiddleware = cors({

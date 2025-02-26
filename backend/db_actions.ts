@@ -4,7 +4,7 @@ export async function db_connect() {
     const client = await connect({
         "host": 'db',
         "port": 5432,
-        "database": 'postgresname',
+        "database": 'matcha',
         "user": 'postgresuser',
         "password": 'postgrespassword'});
 

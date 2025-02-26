@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "deno": "^2.2.2",
+    "hono": "^4.7.2",
+    "ts-postgres": "^2.0.4"
+  }
+}

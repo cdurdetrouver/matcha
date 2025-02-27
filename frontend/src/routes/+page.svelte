@@ -1,25 +1,13 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-
-let message: string = '';
-
-onMount(async () => {
-  try {
-    const response = await fetch('http://backend:8000/api/');
-    if (!response.ok) {
-      throw new Error('Failed to fetch the message');
-    }
-    const data = await response.json();
-    console.log(data);
-    message = data.message;
-  } catch (error) {
-    console.error('Error:', error);
-  }
-});
-
+	import HomeHero from '../lib/components/HomeHero.svelte';
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<header id="hero">
+	<div class="section-container"><HomeHero /></div>
+</header>
 
-<p>Message from back : {message}</p>
+<style type="postcss">
+	.section-container {
+		@apply w-full max-w-7xl mx-auto p-4 py-16 md:py-24;
+	}
+</style>

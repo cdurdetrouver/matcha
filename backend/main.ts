@@ -3,24 +3,19 @@ import { cors } from 'hono/cors';
 
 const app = new Hono();
 
-// Liste des origines autorisées (équivalent à ALLOWED_HOSTS)
-const allowedOrigins = [
-  'http://localhost',
-  'http://127.0.0.1',
-];
+app.use('/api/', async (c, next) => {
+    const corsMiddleware = cors({
+      origin: ['http://localhost:5173'],
+      allowedHeaders: ['Origin', 'Content-Type', 'Authorization', 'X-Custom-Header', 'Upgrade-Insecure-Requests'],
+      allowMethods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
+      exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
+      maxAge: 600,
+      credentials: true,
+    });
+    return corsMiddleware(c, next);
+});
 
-// Middleware CORS
-app.use('*', async (c, next) => {
-  const corsMiddleware = cors({
-    origin: c.env.APP_URL,
-    allowedHeaders: ['Origin', 'Content-Type', 'Authorization'],
-    allowMethods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
-  })
-  return await corsMiddleware(c, next)
-})
 
-// Exemple de route
-app.get('/api/', (c) => c.json({ message: 'Hello, World!' }));
+app.get('/api/', (c) => {return c.json({ message: 'Hello, WoGabrielrld changed!' })});
 
 Deno.serve(app.fetch);

@@ -8,22 +8,20 @@ export async function db_connect() {
         "user": 'postgresuser',
         "password": 'postgrespassword'});
 
-    //const result = await client.query('');
-
     return client;
 }
 
-export async function db_obj_init(name, collums, contraints, client) {
+export async function db_obj_init(table, obj, contraints, client) {
     let query;
     let i = 0;
 
-    query = `CREATE TABLE IF NOT EXISTS "${name}" (`;
-    for (var y in collums) {
+    query = `CREATE TABLE IF NOT EXISTS "${table}" (`;
+    for (var y in obj) {
        
         query += `${y} `;
         if (contraints && i < contraints.length) {
             query += `${contraints[i]}`;
-            if (y != Object.keys(collums)[Object.keys(collums).length - 1])
+            if (y != Object.keys(obj)[Object.keys(obj).length - 1])
                 query += ', ';
             i++;
         }
@@ -35,10 +33,20 @@ export async function db_obj_init(name, collums, contraints, client) {
         console.log('Success:', data);
     })
     .catch((error) => {
-        console.error(`DB Error : init request of ${name} failed`);
+        console.error(`DB Error : init request of ${table} failed`);
     });
 }
 
-export async function db_print() {}
+export async function db_print_table(client) {
+    const query = 'SELECT *  FROM "user";';
 
-export async function db_print_table() {}
+    const result = await client.query(query)
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch((error) => {
+        console.error(`DB Error : db print failed`);
+    });
+}
+
+export async function db_export_obj(table, obj) {}

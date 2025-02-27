@@ -1,8 +1,9 @@
 <script lang="ts">
 	import '../app.postcss';
-	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
-	import Logo from '../lib/Logo.svelte';
+	import { AppShell } from '@skeletonlabs/skeleton';
 	import { initializeStores, Toast } from '@skeletonlabs/skeleton';
+	import Footer from '$lib/components/Footer.svelte';
+	import MainAppBar from "$lib/components/MainAppBar.svelte";
 
 	initializeStores();
 </script>
@@ -13,28 +14,10 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<AppBar class="background">
-			<svelte:fragment slot="lead">
-				<Logo></Logo>
-			</svelte:fragment>
-			<svelte:fragment slot="trail">
-				<a
-					class="btn btn-sm bg-white"
-					href="https://github.com/cdurdetrouver/france-limousin-inetum"
-					target="_blank"
-					rel="noreferrer"
-				>
-					GitHub
-				</a>
-			</svelte:fragment>
-		</AppBar>
+		<MainAppBar />
 	</svelte:fragment>
-	<!-- Page Route Content -->
 	<slot />
+	<svelte:fragment slot="pageFooter">
+		<Footer /> 
+	</svelte:fragment>
 </AppShell>
-
-<style>
-	:global(.background) {
-		background-color: #232d4b;
-	}
-</style>

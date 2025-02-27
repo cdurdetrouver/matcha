@@ -2,31 +2,27 @@
 	import { Avatar } from '@skeletonlabs/skeleton';
 </script>
 
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-10 items-center justify-center">
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-10 items-center justify-center h-[60vh]">
 	<div class="flex flex-col items-center xl:items-start text-center xl:text-left space-y-4 mt-40">
 		<h1 class="h1 !text-5xl md:!text-6xl max-w-[600px]">
-			Prédiction de Sélection bovine assistée par <span class="gradient-heading">IA</span>.
+			The meeting app for <span class="gradient-heading">42</span> Student.
 		</h1>
 		<p class="!text-xl max-w-[475px]">
-			Optimisez votre élevage avec notre IA capable d’identifier les meilleurs taureaux
-			reproducteurs selon les labels Libeco3 et Libeco2. Une sélection fiable, efficace et durable
-			pour un cheptel d’excellence.
+			Meet some student of 42 with the same passions at you.
 		</p>
 		<div class="flex gap-4">
-			<a class="btn variant-filled text-xl" href="/prediction" rel="noreferrer">
-				Commencer la prédiction
+			<a class="btn variant-filled-primary text-xl" href="/prediction" rel="noreferrer">
+				Discover the subject
 			</a>
 		</div>
 	</div>
 	<div class="hidden md:inline-block w-full max-w-[650px] mx-auto mt-20">
 		<div class="aspect-video relative">
 			<div class="anim-float-avatar absolute z-[1] left-[23%]">
-				<Avatar
-					src="taureau.jpg"
-					alt="Marty Logo"
-					rounded="rounded-3xl"
-					width="w-[28vw]"
-					shadow="shadow-xl"
+				<img
+					src="handshake.png"
+					alt="handsake"
+					class="w-[28vw]"
 				/>
 			</div>
 		</div>
@@ -38,7 +34,7 @@
 		animation: gradient 3s ease infinite;
 		@apply bg-clip-text text-transparent box-decoration-clone;
 		@apply bg-gradient-to-br;
-		@apply from-primary-500 via-tertiary-500 to-secondary-500;
+		@apply from-primary-500 via-secondary-500 to-primary-500;
 	}
 
 	.anim-float-avatar {

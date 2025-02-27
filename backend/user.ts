@@ -3,6 +3,7 @@ export class user {
     username: string;
     password: string;
     email: string;
+    created_at: Date;
     constructor(id: number, username: string, password: string, email: string) {
         this.id = id;
         this.username = username;

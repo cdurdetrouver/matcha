@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { user } from './user.ts';
-import { db_connect } from './db_actions.ts';
+import { db_connect, db_obj_init } from './db_actions.ts';
 
 const app = new Hono();
 
@@ -31,8 +31,11 @@ app.post('/api/create_user', async (c) => {
   const body = await c.req.json();
 
   let user_test = new user(body.id, body.username, body.password, body.email);
+  const contraints = [";SERIAL PRIMARY KEY", "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"];
+  
   user_test.print_info();
-  console.log(body);
+  console.log(body, " || ", JSON.stringify(user_test));
+  db_obj_init("user", user_test, contraints, client);
   return c.json({ message: 'User created!', body })
 });
 

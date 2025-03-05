@@ -3,7 +3,7 @@
 	import { AppBar, Avatar, popup } from '@skeletonlabs/skeleton';
 	import Icon from "@iconify/svelte";
 
-	let notifs:[] = []; // "test", "bonjour"
+	let notifs:[] = ["test", "bonjour"]; // "test", "bonjour"
 	let user = null;
 </script>
 
@@ -15,19 +15,19 @@
 	</svelte:fragment>
 	<svelte:fragment slot="trail">
 		<div class="relative hidden lg:block">
-			<a class="btn hover:variant-soft-primary cursor-pointer">
+			<a class="btn hover:variant-soft-primary cursor-pointer" href="/scroll">
 				<span class="hidden select-none md:inline-block">Scroll</span>
 			</a>
 		</div>
 
 		<div>
-			<a class="btn hover:variant-soft-primary cursor-pointer">
+			<a class="btn hover:variant-soft-primary cursor-pointer" href="/map">
 				<span class="hidden select-none md:inline-block">Map</span>
 			</a>
 		</div>
 
 		<div>
-			<a class="btn hover:variant-soft-primary cursor-pointer">
+			<a class="btn hover:variant-soft-primary cursor-pointer" href="/chat">
 				<span class="hidden select-none md:inline-block">Chat</span>
 			</a>
 		</div>
@@ -53,10 +53,12 @@
 					<span>No notifications for the moment</span>
 				{/if}
 			</div>
-			<a class="btn-icon hover:variant-soft-primary" href="https://github.com/skeletonlabs/skeleton" target="_blank" rel="noreferrer">
-				{#if user == null}
+			{#if user == null}
+				<a class="btn-icon hover:variant-soft-primary" href="/login" rel="noreferrer">
 					<Icon icon="mdi:account" width="24" height="24" />
-				{:else}
+				</a>
+			{:else}
+				<a class="btn-icon hover:variant-soft-primary" href="/profile" rel="noreferrer">
 					<Avatar
 						src="user.jpeg"
 						alt="User Logo"	
@@ -64,8 +66,8 @@
 						width="w-[40px]"
 						shadow="shadow-xl"
 					/>
-				{/if}
-			</a>
+				</a>
+			{/if}
 		</section>
 	</svelte:fragment>
 </AppBar>

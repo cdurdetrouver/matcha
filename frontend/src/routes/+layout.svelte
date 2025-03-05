@@ -2,10 +2,12 @@
 	import '../app.postcss';
 	import { AppShell } from '@skeletonlabs/skeleton';
 	import { initializeStores, Toast } from '@skeletonlabs/skeleton';
-	import Footer from '$lib/components/Footer.svelte';
 	import MainAppBar from "$lib/components/MainAppBar.svelte";
-
+	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
+	import { storePopup } from '@skeletonlabs/skeleton';
+	
 	initializeStores();
+	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 </script>
 
 <Toast />
@@ -17,7 +19,4 @@
 		<MainAppBar />
 	</svelte:fragment>
 	<slot />
-	<svelte:fragment slot="pageFooter">
-		<Footer /> 
-	</svelte:fragment>
 </AppShell>

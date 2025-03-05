@@ -1,6 +1,7 @@
 <script lang="ts">
-	import HomeHero from '../lib/components/HomeHero.svelte';
-	import HomePlayground from '../lib/components/HomePlayground.svelte';
+	import HomeHero from '$lib/components/Home/Hero.svelte';
+	import HomePlayground from '$lib/components/Home/Playground.svelte';
+	import Footer from '$lib/components/Home/Footer.svelte';
 </script>
 
 <header id="hero" class="bg-surface-100-800-token hero-gradient">
@@ -10,6 +11,8 @@
 <section id="playground" class="bg-surface-100-800-token">
 	<div class="section-container"><HomePlayground /></div>
 </section>
+
+<Footer /> 
 
 <style type="postcss">
 	.section-container {

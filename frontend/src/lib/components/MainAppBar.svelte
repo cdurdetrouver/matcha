@@ -1,10 +1,10 @@
 <script lang="ts">
 	import Logo from './Logo.svelte';
 	import { AppBar, Avatar, popup } from '@skeletonlabs/skeleton';
-	import Icon from "@iconify/svelte";
+	import Icon from '@iconify/svelte';
 
-	let notifs:[] = ["test", "bonjour"]; // "test", "bonjour"
-	let user = null;
+	let notifs: [] = ['test', 'bonjour']; // "test", "bonjour"
+	export let user;
 </script>
 
 <AppBar shadow="shadow-2xl" slotTrail="!space-x-2">
@@ -33,8 +33,16 @@
 		</div>
 
 		<section class="hidden sm:inline-flex space-x-{user == null ? '1' : '4'}">
-			<button class="btn hover:variant-soft-primary" use:popup={{ event: 'click', target: 'notifs' }}>
-				<Icon icon="mingcute:notification-{notifs.length == 0 ? '' : 'newdot-'}fill" width="24" height="24"  style="color: #000" />
+			<button
+				class="btn hover:variant-soft-primary"
+				use:popup={{ event: 'click', target: 'notifs' }}
+			>
+				<Icon
+					icon="mingcute:notification-{notifs.length == 0 ? '' : 'newdot-'}fill"
+					width="24"
+					height="24"
+					style="color: #000"
+				/>
 			</button>
 			<div class="card p-4 w-60 shadow-xl" data-popup="notifs">
 				{#if notifs.length != 0}
@@ -61,7 +69,7 @@
 				<a class="btn-icon hover:variant-soft-primary" href="/profile" rel="noreferrer">
 					<Avatar
 						src="user.jpeg"
-						alt="User Logo"	
+						alt="User Logo"
 						rounded="rounded-3xl"
 						width="w-[40px]"
 						shadow="shadow-xl"

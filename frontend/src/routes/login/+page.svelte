@@ -1,31 +1,30 @@
 <script lang="ts">
-    import { TabGroup, Tab } from '@skeletonlabs/skeleton';
-    import Login from '$lib/components/Login/Login.svelte';
-    import Register from '$lib/components/Login/Register.svelte';
+	import { TabGroup, Tab } from '@skeletonlabs/skeleton';
+	import Login from '$lib/components/Login/Login.svelte';
+	import Register from '$lib/components/Login/Register.svelte';
 
-    export let form;
+	export let form;
 
-    let tabSet: boolean = true;
+	let tabSet: boolean = true;
 
-    if (form?.page)
-    {
-        tabSet = form?.page == "login";
-    }
+	if (form?.page) {
+		tabSet = form?.page == 'login';
+	}
 </script>
 
 <div class="size-full flex items-center justify-center">
-    <section class="w-[20vw] min-w-[300px] card p-4 text-token">
-        <TabGroup>
-            <Tab bind:group={tabSet} name="login" value={true}>Login</Tab>
-            <Tab bind:group={tabSet} name="register" value={false}>Register</Tab>
-            <!-- Tab Panels --->
-            <svelte:fragment slot="panel">
-                {#if tabSet === true}
-                    <Login form={form} />
-                {:else if tabSet === false}
-                    <Register form={form} />
-                {/if}
-            </svelte:fragment>
-        </TabGroup>
-    </section>
+	<section class="w-[20vw] min-w-[300px] card p-4 text-token">
+		<TabGroup>
+			<Tab bind:group={tabSet} name="login" value={true}>Login</Tab>
+			<Tab bind:group={tabSet} name="register" value={false}>Register</Tab>
+			<!-- Tab Panels --->
+			<svelte:fragment slot="panel">
+				{#if tabSet === true}
+					<Login {form} />
+				{:else if tabSet === false}
+					<Register {form} />
+				{/if}
+			</svelte:fragment>
+		</TabGroup>
+	</section>
 </div>

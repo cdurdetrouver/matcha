@@ -2,8 +2,8 @@ import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 
 export const actions = {
-	login: async ({ request }) => {
-        const data = await request.formData();
+	login: async ({ request, cookies, locals }) => {
+		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
 
@@ -16,14 +16,25 @@ export const actions = {
 			});
 		}
 
-        return ({email, success: true, page: "login"});
+		cookies.set(
+			'user', email,
+			{
+				path: '/',
+				maxAge: 60 * 60 * 24 * 365,	
+				httpOnly: false,
+			},
+		);
+
+		locals.user	= email;
+
+		return ({email, success: true, page: "login"});
 	},
-	register: async ({ request }) => {
+	register: async ({ request, cookies ,locals }) => {
 		const data = await request.formData();
 		const email = data.get('email');
-        const username = data.get('username');
+		const username = data.get('username');
 		const password = data.get('password');
-        const password_verif = data.get('password-verif');
+		const password_verif = data.get('password-verif');
 
 		if (!email || !username || !password || !password_verif) {
 			return fail(400, { 
@@ -45,6 +56,17 @@ export const actions = {
 				page: "register"
 			});
 		}
+
+		cookies.set(
+			'user', email,
+			{
+				path: '/',
+				maxAge: 60 * 60 * 24 * 365,	
+				httpOnly: false,
+			},
+		);
+
+		locals.user	= email;
 
 		return ({email, username, success: true, page: "register"});
 	}

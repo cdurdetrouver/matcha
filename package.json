@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "serializer.ts": "^0.0.12"
+  }
+}

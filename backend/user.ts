@@ -1,11 +1,10 @@
 export class user {
-    id: number;
     username: string;
     password: string;
     email: string;
+    id: number;
     created_at: Date;
-    constructor(id: number, username: string, password: string, email: string) {
-        this.id = id;
+    constructor(username: string, password: string, email: string) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -13,4 +12,19 @@ export class user {
     print_info() {
         console.log(`ID: ${this.id}, Username: ${this.username}, Password: ${this.password}, Email: ${this.email}`);
     }
+    serialize() {
+
+    }
+}
+
+export function user_serializer(user: user) {
+    const csv = JSON.stringify(user, {
+        columns: [
+          "username",
+          "email",
+          "id",
+          "created_at",
+        ],
+      });
+    return csv;
 }

@@ -1,16 +1,16 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { user } from './user.ts';
-import { db_connect, db_obj_init, db_print_table } from './db_actions.ts';
+import { user, user_serializer } from './user.ts';
+import { db_connect, db_init, db_print_table, db_store_obj, db_get_number_obj, db_get_obj, db_delete_obj, db_update_obj } from './db_actions.ts';
 
 const app = new Hono();
 
 let client = await db_connect();
 
-if (client)
-    console.log("Connected to database!");
+if (client && await db_init(client))
+    console.log("Successful database connection and initialization !");
 else
-    console.log("Failed to connect to database!");
+    console.log("Connection or initialization of the database failed !");
 
 app.use('*', async (c, next) => {
     const corsMiddleware = cors({
@@ -30,14 +30,48 @@ app.get('/api/', (c) => {return c.json({ message: 'Hello, World changed!' })});
 app.post('/api/create_user', async (c) => {
   const body = await c.req.json();
 
-  let user_test = new user(body.id, body.username, body.password, body.email);
-  const contraints = ["SERIAL PRIMARY KEY", "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"];
-  
-  user_test.print_info();
-  console.log(body, " || ", JSON.stringify(user_test));
-  db_obj_init("user", user_test, contraints, client);
-  db_print(client);
-  return c.json({ message: 'User created!', body })
+  let user_test = new user(body.username, body.password, body.email);  
+  const ret_user = db_store_obj("user", user_test, client);
+  if (ret_user == -1)
+      return c.json({ message: 'User creation failed!'}, 500);
+  return c.json({ message: 'User created!'}, 200)
+});
+
+app.post('/api/update_user/:id', async (c) => {
+  const id = await c.req.param('id');
+  const body = await c.req.json();
+  const user_info = await db_get_obj("user", id, client);
+
+  if (user_info == -1)
+      return c.json({ message: 'User not found!'}, 404);
+
+  let user_test = new user(body.username, body.password, body.email);  
+  const ret_user = db_update_obj("user", id, client, user_test);
+  if (ret_user == -1)
+      return c.json({ message: 'User update failed!'}, 500);
+  return c.json({ message: 'User updated!'}, 200)
+});
+
+app.get('/api/get_user/:id', async (c) => {
+  const id = await c.req.param('id');
+  let user_info = await db_get_obj("user", id, client);
+
+  if (user_info == -1)
+      return c.json({ message: 'User not found!'}, 404);
+  user_info = user_serializer(user_info);
+  return c.json({ message: 'User found', user_info}, 200);
+});
+
+app.delete('/api/delete_user/:id', async (c) => {
+  const id = await c.req.param('id');
+  let user_info = await db_get_obj("user", id, client);
+
+  if (user_info == -1)
+    return c.json({ message: 'User not found!'}, 404);
+  user_info = await db_delete_obj("user", id, client);
+  if (user_info == -1)
+    return c.json({ message: 'User deletion failed!'}, 500);
+  return c.json({ message: 'User Deleted'}, 200);
 });
 
 Deno.serve(app.fetch);

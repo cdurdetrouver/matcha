@@ -28,3 +28,8 @@ export function user_serializer(user: user) {
       });
     return csv;
 }
+
+export function user_deserializer(csv: string) {
+    const user: user = JSON.parse(csv, columns: ['username', 'email', 'id', 'created_at']);
+    return user;
+}

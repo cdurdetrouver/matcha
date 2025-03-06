@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { user, user_serializer } from './user.ts';
-import { db_connect, db_init, db_print_table, db_store_obj, db_get_number_obj, db_get_obj, db_delete_obj, db_update_obj } from './db_actions.ts';
+import { db_connect, db_init, db_print_table, db_post_obj, db_get_number_obj, db_get_obj, db_delete_obj, db_put_obj } from './db_actions.ts';
 
 const app = new Hono();
 
@@ -31,7 +31,7 @@ app.post('/api/create_user', async (c) => {
   const body = await c.req.json();
 
   let user_test = new user(body.username, body.password, body.email);  
-  const ret_user = db_store_obj("user", user_test, client);
+  const ret_user = db_post_obj("user", user_test, client);
   if (ret_user == -1)
       return c.json({ message: 'User creation failed!'}, 500);
   return c.json({ message: 'User created!'}, 200)
@@ -46,7 +46,7 @@ app.post('/api/update_user/:id', async (c) => {
       return c.json({ message: 'User not found!'}, 404);
 
   let user_test = new user(body.username, body.password, body.email);  
-  const ret_user = db_update_obj("user", id, client, user_test);
+  const ret_user = db_put_obj("user", id, client, user_test);
   if (ret_user == -1)
       return c.json({ message: 'User update failed!'}, 500);
   return c.json({ message: 'User updated!'}, 200)

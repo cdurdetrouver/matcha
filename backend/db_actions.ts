@@ -74,7 +74,7 @@ export async function db_get_number_obj(client, table) {
     return result;
 }
 
-export async function db_store_obj(table, obj, client) {
+export async function db_post_obj(table, obj, client) {
     let query;
 
     query = `INSERT INTO "${table}" (`;
@@ -106,7 +106,7 @@ export async function db_store_obj(table, obj, client) {
     return result;
 }
 
-export async function db_update_obj(table, id, client, obj) {
+export async function db_put_obj(table, id, client, obj) {
     let query;
 
     query = `UPDATE "${table}" SET `;

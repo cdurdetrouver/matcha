@@ -57,12 +57,11 @@ app.get('/api/user/:id', async (c) => {
 
   if (user_info == -1)
       return c.json({ message: 'User not found!'}, 404);
-  console.log(user_info);
   user_info = user_info.serialize();
   return c.json({message: "user found", user: user_info}, 200);
 });
 
-app.delete('/api/delete_user/:id', async (c) => {
+app.delete('/api/user/:id', async (c) => {
   const id = await c.req.param('id');
   let user_info = await db_get_obj("user", id, client);
 

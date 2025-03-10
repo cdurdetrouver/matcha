@@ -40,7 +40,7 @@ function create_user() {
 
 function update_user(id: number) {
     fetch(`http://localhost:8000/api/update_user/${id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },

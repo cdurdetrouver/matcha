@@ -14,7 +14,7 @@ else
 
 app.use('*', async (c, next) => {
     const corsMiddleware = cors({
-      origin: ['http://localhost:5173'],
+      origin: ['*', 'http://localhost:5173'],
       allowHeaders: ['Origin', 'Content-Type', 'Authorization', 'X-Custom-Header', 'Upgrade-Insecure-Requests'],
       allowMethods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
       exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
@@ -24,10 +24,9 @@ app.use('*', async (c, next) => {
     return corsMiddleware(c, next);
 });
 
-
 app.get('/api/', (c) => {return c.json({ message: 'Hello, World changed!' })});
 
-app.post('/api/create_user', async (c) => {
+app.post('/api/user', async (c) => {
   const body = await c.req.json();
 
   let user_test = new user(body.username, body.password, body.email);  
@@ -37,7 +36,7 @@ app.post('/api/create_user', async (c) => {
   return c.json({ message: 'User created!'}, 200)
 });
 
-app.post('/api/update_user/:id', async (c) => {
+app.put('/api/user/:id', async (c) => {
   const id = await c.req.param('id');
   const body = await c.req.json();
   const user_info = await db_get_obj("user", id, client);
@@ -52,14 +51,15 @@ app.post('/api/update_user/:id', async (c) => {
   return c.json({ message: 'User updated!'}, 200)
 });
 
-app.get('/api/get_user/:id', async (c) => {
+app.get('/api/user/:id', async (c) => {
   const id = await c.req.param('id');
   let user_info = await db_get_obj("user", id, client);
 
   if (user_info == -1)
       return c.json({ message: 'User not found!'}, 404);
-  user_info = user_serializer(user_info);
-  return c.json({ message: 'User found', user_info}, 200);
+  console.log(user_info);
+  user_info = user_info.serialize();
+  return c.json({message: "user found", user: user_info}, 200);
 });
 
 app.delete('/api/delete_user/:id', async (c) => {

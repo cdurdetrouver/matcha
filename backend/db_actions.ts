@@ -31,7 +31,7 @@ export async function db_obj_init(table, obj, contraints, client) {
     const result = await client.query(query)
     .then(data => {
         return true;
-    })
+    })	
     .catch((error) => {
         console.error(`DB Error : init request of ${table} failed`);
         return false;
@@ -163,9 +163,8 @@ export async function db_get_obj(table, id, client) {
 export async function db_parse_user(response) {
     if (response == -1 || response['rows'].length == 0)
         return (-1);
-    console.log(response);
     const rows = response['rows'][0];
-    
-    let user_get = new user(rows[0], rows[1], rows[2], rows[3]);
+
+    let user_get = new user(rows[0], rows[1], rows[2], rows[3], rows[4]);
     return user_get;
 }

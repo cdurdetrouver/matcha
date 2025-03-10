@@ -12,7 +12,7 @@
 	<div class="section-container"><HomePlayground /></div>
 </section>
 
-<Footer /> 
+<Footer />
 
 <style type="postcss">
 	.section-container {

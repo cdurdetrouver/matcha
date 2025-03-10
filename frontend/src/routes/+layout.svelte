@@ -22,7 +22,7 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<MainAppBar user={data.user ?? null} />
+		<MainAppBar user={data.user} notifs={data.notifs} />
 	</svelte:fragment>
 	<slot />
 </AppShell>

@@ -1,23 +1,39 @@
+import type { PersonalUser } from '$lib/types/user';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
+
+export const load = async ({ locals }) => {
+	if (locals.user) {
+		throw redirect(302, '/profile');
+	}
+}
 
 export const actions = {
-	login: async ({ request, cookies, locals }) => {
+	login: async ({ request, cookies }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
 
 		if (!email || !password) {
-			return fail(400, { 
-				missing_email: !email, 
-				missing_password: !password, 
-				email, 
+			return fail(400, {
+				missing_email: !email,
+				missing_password: !password,
+				email,
 				page: "login"
 			});
 		}
 
+		const user: PersonalUser = {
+			email: email.toString(),
+			username: "cdurdetrouver",
+			id: 1,
+			created_at: new Date(),
+			avatar: "user.jpeg"
+		}
+
 		cookies.set(
-			'user', email,
+			'user', JSON.stringify(user),
 			{
 				path: '/',
 				maxAge: 60 * 60 * 24 * 365,	
@@ -25,11 +41,9 @@ export const actions = {
 			},
 		);
 
-		locals.user	= email;
-
-		return ({email, success: true, page: "login"});
+		throw redirect(302, '/profile');
 	},
-	register: async ({ request, cookies ,locals }) => {
+	register: async ({ request, cookies }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 		const username = data.get('username');
@@ -57,8 +71,16 @@ export const actions = {
 			});
 		}
 
+		const user: PersonalUser = {
+			email: email.toString(),
+			username: username.toString(),
+			id: 1,
+			created_at: new Date(),
+			avatar: "user.jpeg"
+		}
+
 		cookies.set(
-			'user', email,
+			'user', JSON.stringify(user),
 			{
 				path: '/',
 				maxAge: 60 * 60 * 24 * 365,	
@@ -66,8 +88,6 @@ export const actions = {
 			},
 		);
 
-		locals.user	= email;
-
-		return ({email, username, success: true, page: "register"});
+		throw redirect(302, '/profile');
 	}
 } satisfies Actions;

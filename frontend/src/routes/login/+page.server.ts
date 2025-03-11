@@ -28,7 +28,7 @@ export const actions = {
 			email: email.toString(),
 			username: "cdurdetrouver",
 			id: 1,
-			created_at: new Date(),
+			created_at: Date.now(),
 			avatar: "user.jpeg"
 		}
 
@@ -75,7 +75,7 @@ export const actions = {
 			email: email.toString(),
 			username: username.toString(),
 			id: 1,
-			created_at: new Date(),
+			created_at: Date.now(),
 			avatar: "user.jpeg"
 		}
 

@@ -4,6 +4,7 @@ export type Message = {
 	id: number;
 	message: string;
 	author: User;
+	created_at: number;
 }
 
 export type Chat = {

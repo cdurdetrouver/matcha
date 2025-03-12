@@ -42,7 +42,6 @@ app.post('/login', async (c) => {
 app.post('/register', async (c) => {
   try {
     const body = await c.req.json();
-    const bcrypt = require('bcrypt');
     const saltRounds = 12;
     const [ ret_check, mess ] = await user_check(body.username, body.email, body.password);
 

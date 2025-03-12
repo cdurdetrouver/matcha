@@ -1,18 +1,19 @@
 import { connect } from 'ts-postgres';
-import { user } from './user.ts';
+import { user } from '../types/user.ts';
+import { client } from '../main.ts';
 
 export async function db_connect() {
-    const client = await connect({
+    const clt = await connect({
         "host": 'db',
         "port": 5432,
         "database": 'matcha',
         "user": 'postgresuser',
         "password": 'postgrespassword'});
 
-    return client;
+    return clt;
 }
 
-export async function db_obj_init(table, obj, contraints, client) {
+export async function db_obj_init(table, obj, contraints) {
     let query;
     let i = 0;
 
@@ -38,16 +39,16 @@ export async function db_obj_init(table, obj, contraints, client) {
     });
 }
 
-export async function db_init(client) {
+export async function db_init() {
     let user_init = new user;
     const contraints = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
     if (!db_obj_init("user", user_init, contraints, client))
         return false;
-    db_print_table(client, "user");
+    db_print_table("user");
     return true;
 }
 
-export async function db_print_table(client, table) {
+export async function db_print_table(table) {
     const query = `SELECT *  FROM "${table}";`;
 
     const result = await client.query(query)
@@ -55,11 +56,11 @@ export async function db_print_table(client, table) {
         console.log('Success:', data);
     })
     .catch((error) => {
-        console.error(`DB Error : db print failed`);
+        console.error(`DB Error : db print failed -> `, error);
     });
 }
 
-export async function db_get_number_obj(client, table) {
+export async function db_get_number_obj(table) {
     const query = 'SELECT COUNT(*) FROM "user" WHERE id = NOT NULL;';
 
     const result = await client.query(query)
@@ -74,7 +75,7 @@ export async function db_get_number_obj(client, table) {
     return result;
 }
 
-export async function db_post_obj(table, obj, client) {
+export async function db_post_obj(table, obj) {
     let query;
 
     query = `INSERT INTO "${table}" (`;
@@ -106,31 +107,74 @@ export async function db_post_obj(table, obj, client) {
     return result;
 }
 
-export async function db_put_obj(table, id, client, obj) {
+export async function db_put_obj(table: string, id: number, obj) {
     let query;
 
-    query = `UPDATE "${table}" SET `;
-    for (var y in obj) {
-        query += `${y} = '${obj[y]}'`;
-        if (y != Object.keys(obj)[Object.keys(obj).length - 3])
-            query += ', ';
-        else
-            break;
-    }
     query += ` WHERE "id" = ${id};`;
 
     const result = await client.query(query)
     .then(data => {
         return (1);
     })
+    t.query(query)
+    .then(data => {
+        return 1
+    })
     .catch((error) => {
-        console.error(`DB Error : can't update ${id} in ${table}`);
+        console.error(`DB Error : can't destroy in ${table}`);
         return (-1);
     });
     return result;
 }
 
-export async function db_delete_obj(table, id, client) {
+export async function db_get_obj_by_id(table: string, id: number) {
+    const query = `SELECT *  FROM "${table}" WHERE id = '${id}';`;
+
+    const result = await client.query(query)
+    .then(data => {
+        return(data);
+    })
+    .catch((error) => {
+        console.error(`DB Error : db get failed for ${id} in ${table}`);
+        return (-1);
+    });
+    return result;
+}
+
+export async function db_get_obj_custom(table: string, custom: string, custom_value: string) {
+    const query = `SELECT *  FROM "${table}" WHERE ${custom} = '${custom_value}';`;
+
+    const result = await client.query(query)
+    .then(data => {
+        return(data);
+    })
+    .catch((error) => {
+        //SELECT *  FROM "user" WHERE username = updated;
+        //console.error(`DB Error : db get failed for ${custom} in ${table}`);
+        return (-1);
+    });
+    return result;
+}
+
+export async function db_get_user_custom(id: number, custom: string, custom_value: string) {
+    const response = await db_get_obj_custom("user", custom, custom_value);
+    if (response == -1 || response['rows'].length == 0)
+        return (-1);
+    const rows = response['rows'][0];
+    let user_get = new user(rows[0], rows[1], rows[2], rows[3], rows[4]);
+    return user_get;
+}
+
+export async function db_get_user(id: number) {
+    const response = await db_get_obj_by_id("user", id);
+    if (response == -1 || response['rows'].length == 0)
+        return (-1);
+    const rows = response['rows'][0];
+    let user_get = new user(rows[0], rows[1], rows[2], rows[3], rows[4]);
+    return user_get;
+}
+
+export async function db_delete_obj(table, id) {
     let query;
 
     query = `DELETE FROM "${table}" WHERE id = ${id};`;
@@ -144,27 +188,4 @@ export async function db_delete_obj(table, id, client) {
         return (-1);
     });
     return result;
-}
-
-export async function db_get_obj(table, id, client) {
-    const query = `SELECT *  FROM "${table}" WHERE id = ${id};`;
-
-    const result = await client.query(query)
-    .then(data => {
-        return(data);
-    })
-    .catch((error) => {
-        console.error(`DB Error : db get failed for ${id} in ${table}`);
-        return (-1);
-    });
-    return db_parse_user(result);
-}
-
-export async function db_parse_user(response) {
-    if (response == -1 || response['rows'].length == 0)
-        return (-1);
-    const rows = response['rows'][0];
-
-    let user_get = new user(rows[0], rows[1], rows[2], rows[3], rows[4]);
-    return user_get;
 }

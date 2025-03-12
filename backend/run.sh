@@ -1,3 +1,3 @@
-npm i ts-serializer
+npm install bcrypt
 
 deno task start

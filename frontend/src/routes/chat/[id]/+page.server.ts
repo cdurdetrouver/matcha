@@ -16,6 +16,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 					created_at: Date.now(),
 					avatar: '/user.jpeg'
 				},
+				type: "chat",
 				created_at: Date.now()
 			},
 			{
@@ -27,6 +28,19 @@ export const load: PageServerLoad = async ({ parent }) => {
 					created_at: Date.now(),
 					avatar: '/blast.jpg'
 				},
+				type:"chat",
+				created_at: Date.now()
+			},
+			{
+				id: 1,
+				author: {
+					username: 'cdurdetrouver',
+					id: 1,
+					created_at: Date.now(),
+					avatar: '/user.jpeg'
+				},
+				type: "image",
+				image:"/outerwilds.jpg",
 				created_at: Date.now()
 			},
 		];

@@ -19,6 +19,102 @@ export const load = async ({ params }) => {
 			name:"les potos 2",
 			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
 			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
+		},
+		{
+			id:2,
+			name:"les potos 2",
+			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
+			avatar: '/blast.jpg'
 		}
 	];
 

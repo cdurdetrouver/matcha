@@ -2,9 +2,11 @@ import type { User } from "./user";
 
 export type Message = {
 	id: number;
-	message: string;
+	message?: string;
+	image?:string;
 	author: User;
 	created_at: number;
+	type:string;
 }
 
 export type Chat = {

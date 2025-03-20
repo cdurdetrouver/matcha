@@ -5,6 +5,7 @@
 	import MainAppBar from '$lib/components/MainAppBar.svelte';
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
+	import { autoModeWatcher } from '@skeletonlabs/skeleton';
 
 	initializeStores();
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
@@ -14,6 +15,7 @@
 
 <svelte:head>
 	<title>Matcha</title>
+	{@html '<script>(' + autoModeWatcher.toString() + ')();</script>'}
 </svelte:head>
 
 <Toast />

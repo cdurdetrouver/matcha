@@ -39,7 +39,6 @@
 		icon="mingcute:notification-{notifs.length == 0 ? '' : 'newdot-'}fill"
 		width="24"
 		height="24"
-		style="color: #000"
 	/>
 </button>
 <div class="card p-4 w-80 shadow-xl" data-popup="notifs">

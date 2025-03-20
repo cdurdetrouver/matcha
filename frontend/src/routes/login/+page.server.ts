@@ -29,7 +29,7 @@ export const actions = {
 			username: "cdurdetrouver",
 			id: 1,
 			created_at: Date.now(),
-			avatar: "user.jpeg"
+			avatar: "/user.jpeg"
 		}
 
 		cookies.set(
@@ -76,7 +76,7 @@ export const actions = {
 			username: username.toString(),
 			id: 1,
 			created_at: Date.now(),
-			avatar: "user.jpeg"
+			avatar: "/user.jpeg"
 		}
 
 		cookies.set(

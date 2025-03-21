@@ -1,8 +1,18 @@
 <script lang="ts">
 	import Chat from '$lib/components/chat/Chat.svelte';
-	import PersonalChat from '$lib/components/chat/PersonalChat.svelte';
 
 	export let data;
+
+	let classes = {
+		"personal":[
+			"flex flex-col items-end justify-start gap-2 lg:flex-row-reverse lg:justify-start lg:items-start",
+			"card w-fit p-4 rounded-tr-none space-y-2 variant-soft-primary"
+		],
+		"other":[
+			"grid grid-rows-[auto_1fr] md:grid-cols-[auto_1fr] gap-2",
+			"card w-fit p-4 rounded-tl-none space-y-2 variant-soft"
+		]
+	}
 
 	let currentMessage = '';
 </script>
@@ -12,11 +22,7 @@
 	<section class="h-full overflow-scroll">
 		<ul class="size-full p-10 flex flex-col gap-2.5">
 			{#each data.messages as message}
-				{#if message.author.id === data.user.id}
-					<PersonalChat {message} />
-				{:else}
-					<Chat {message} />
-				{/if}
+				<Chat {message} classes={classes[message.author.id === data.user.id ? "personal" : "other"]}/>
 			{/each}
 		</ul>
 	</section>
@@ -35,11 +41,3 @@
 		</div>
 	</div>
 </main>
-
-<style>
-	.shadow-top {
-		box-shadow:
-			0 -8px 12px -1px rgba(0, 0, 0, 0.1),
-			0 -4px 8px -1px rgba(0, 0, 0, 0.06);
-	}
-</style>

@@ -21,17 +21,17 @@
 </script>
 
 <AppShell
-	slotSidebarLeft="bg-surface-500/5 w-[22vw] h-[92vh] p-4 overflow-y-auto hidden lg:grid shadow-2xl"
+	slotSidebarLeft="bg-surface-500/5 w-[22vw] h-[92vh] p-4 overflow-y-auto hidden lg:flex flex-col shadow-2xl"
 >
 	<svelte:fragment slot="sidebarLeft">
-		<header class="border-b border-surface-500/30 p-4">
+		<header class="border-b border-surface-500/30 h-fit p-4">
 			<input class="input pl-2" type="search" placeholder="Search..." />
 		</header>
-		<div class="flex flex-col items-center gap-5 w-full overflow-scroll">
+		<div class="flex flex-col items-center justify-start w-full overflow-scroll">
 			{#each chats as chat}
 				<button
 					type="button"
-					class="btn w-[20vw] flex items-center justify-start gap-2.5 {chat.id === data.chatid
+					class="btn w-[20vw] flex items-center justify-start gap-2.5 mt-[10px] {chat.id === data.chatid
 						? 'variant-filled-primary'
 						: 'bg-surface-hover-token'}"
 					on:click={() => goto('/chat/' + chat.id)}

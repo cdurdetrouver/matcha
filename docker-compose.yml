@@ -32,6 +32,25 @@ services:
     networks:
       - matcha.net
 
+  db:
+    container_name: db
+    image: postgres:latest
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgresuser -d matcha" ]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      - POSTGRES_DB=matcha
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - matcha.net
+
   backend:
     build:
       ./backend

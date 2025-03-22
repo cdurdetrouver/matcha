@@ -1,11 +1,22 @@
 <script lang="ts">
 	import '../app.postcss';
-	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
-	import Logo from '../lib/Logo.svelte';
+	import { AppShell } from '@skeletonlabs/skeleton';
 	import { initializeStores, Toast } from '@skeletonlabs/skeleton';
+	import MainAppBar from '$lib/components/MainAppBar.svelte';
+	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
+	import { storePopup } from '@skeletonlabs/skeleton';
+	import { autoModeWatcher } from '@skeletonlabs/skeleton';
 
 	initializeStores();
+	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
+
+	export let data;
 </script>
+
+<svelte:head>
+	<title>Matcha</title>
+	{@html '<script>(' + autoModeWatcher.toString() + ')();</script>'}
+</svelte:head>
 
 <Toast />
 
@@ -13,28 +24,7 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<AppBar class="background">
-			<svelte:fragment slot="lead">
-				<Logo></Logo>
-			</svelte:fragment>
-			<svelte:fragment slot="trail">
-				<a
-					class="btn btn-sm bg-white"
-					href="https://github.com/cdurdetrouver/france-limousin-inetum"
-					target="_blank"
-					rel="noreferrer"
-				>
-					GitHub
-				</a>
-			</svelte:fragment>
-		</AppBar>
+		<MainAppBar user={data.user} notifs={data.notifs} />
 	</svelte:fragment>
-	<!-- Page Route Content -->
 	<slot />
 </AppShell>
-
-<style>
-	:global(.background) {
-		background-color: #232d4b;
-	}
-</style>

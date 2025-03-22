@@ -1,10 +1,9 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { db_connect, db_init } from './utils/db_actions.ts';
 import user from './routes/user.ts';
 import 'https://deno.land/x/dotenv/load.ts';
-import type { JwtVariables } from 'hono/jwt'
-import { get_access_token, get_refresh_token, verify_token } from './utils/jwt.ts';
+import type { JwtVariables } from 'hono/jwt';
 
 type Variables = JwtVariables
 
@@ -14,7 +13,7 @@ const app = new Hono<{ Variables: Variables }>();
 
 app.route('/api/user', user);
 
-app.notFound((c) => {
+app.notFound((c:Context) => {
 	return c.json({ message: 'Not Found' }, 404)
 });
 
@@ -27,7 +26,7 @@ else
 
 app.use('*', async (c, next) => {
 	const corsMiddleware = cors({
-	  origin: ['*', 'http://localhost:5173'],
+	  origin: ['*', 'http://localhost:5173', 'http://frontend:5173'],
 	  allowHeaders: ['Origin', 'Content-Type', 'Authorization', 'X-Custom-Header', 'Upgrade-Insecure-Requests'],
 	  allowMethods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
 	  exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],

@@ -1,5 +1,4 @@
-import { user } from '../types/user.ts';
-import bcrypt from "bcrypt";
+import { compare } from "https://deno.land/x/bcrypt/mod.ts";
 import { db_get_user_custom, db_get_obj_custom } from '../utils/db_actions.ts';
 
 export async function user_match(email: string, password: string) {
@@ -7,7 +6,7 @@ export async function user_match(email: string, password: string) {
 
 	if (ret_user == -1 || ret_user.length == 0)
 			return { user_found:-1 };
-	const is_valid_pass = await bcrypt.compareSync(password, ret_user.password);
+	const is_valid_pass = await compare(password, ret_user.password);
 	console.log(is_valid_pass, password, ret_user.password);
 	if (ret_user.email == email && is_valid_pass)
 		return { user_found:0, ret_user:ret_user };
@@ -30,7 +29,6 @@ export async function user_check(username: string, email: string, password: stri
 }
 
 async function check_username( username: string ) {
-	let message;
 	var re = /^\w+$/;
 	var re_is_apla = /^[A-Za-z]+$/;
 

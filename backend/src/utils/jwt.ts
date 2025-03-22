@@ -1,20 +1,17 @@
-import { Hono } from 'hono'
-import { jwt, sign, verify } from 'hono/jwt'
+import { sign, verify } from 'hono/jwt'
 import { user } from '../types/user.ts';
-import { jwtSecret, client } from '../main.ts';
+import { jwtSecret } from '../main.ts';
 import { db_get_user } from '../utils/db_actions.ts';
-import { getCookie, setCookie, deleteCookie} from 'hono/cookie';
-import { cryptoRandomStringAsync } from 'crypto-random-string';
-import type { JwtVariables } from 'hono/jwt';
+import { getCookie } from 'hono/cookie';
 
 export async function check_cookies(c, id: string) {
-		const acces_token = await getCookie(c).acces_token;
+		const access_token = await getCookie(c).access_token;
 
 		if (!id)
 			return {cookies: "No id provided.", ret_val: 401, user: null};
-		if (!acces_token)
+		if (!access_token)
 			return {cookies: "No acces token provided", ret_val: 401, user: null};;
-		const { message, id_ret, token_type } = await verify_token(acces_token);
+		const { message, id_ret, token_type } = await verify_token(access_token);
 		if (message)
 			return {cookies: message, ret_val: 401, user: null};
 		if (token_type != "acces")

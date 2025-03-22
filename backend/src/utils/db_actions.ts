@@ -1,4 +1,4 @@
-import { connect } from 'ts-postgres';
+import { connect } from "npm:ts-postgres";
 import { user } from '../types/user.ts';
 import { client } from '../main.ts';
 
@@ -40,11 +40,10 @@ export async function db_obj_init(table, obj, contraints) {
 }
 
 export async function db_init() {
-	let user_init = new user;
+	let user_init:user | null = null;
 	const contraints = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
-	if (!db_obj_init("user", user_init, contraints, client))
+	if (!db_obj_init("user", user_init, contraints))
 		return false;
-	db_print_table("user");
 	return true;
 }
 
@@ -163,7 +162,7 @@ export async function db_get_user_custom(custom: string, custom_value: string) {
 	if (response == -1 || response['rows'].length == 0)
 		return (-1);
 	const rows = response['rows'][0];
-	let user_get = new user(null, null, null, rows);
+	let user_get = new user("", "", "", rows);
 	return user_get;
 }
 
@@ -172,7 +171,7 @@ export async function db_get_user(id: number) {
 	if (response == -1 || response['rows'].length == 0)
 		return (-1);
 	const rows = response['rows'][0];
-	let user_get = new user(null, null, null, rows);
+	let user_get = new user("", "", "", rows);
 	return user_get;
 }
 

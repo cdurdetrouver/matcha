@@ -87,7 +87,9 @@ app.put('/:id', async (c) => {
 	if (user_info == -1)
 		return c.json({ message: 'User not found!'}, 404);
 
-	let user_test = new user(body.username, body.password, body.email);	
+	const saltRounds = 12;
+	const hash = await bcrypt.hashSync(body.password, saltRounds);
+	let user_test = new user(body.username, hash, body.email);	
 	const ret_user = db_put_obj("user", id, user_test);
 	if (ret_user == -1)
 		return c.json({ message: 'User updatenew user failed!'}, 500);
@@ -104,15 +106,11 @@ app.get('/:id', async (c) => {
 });
 
 app.delete('/:id', async (c) => {
-	const cookies = await check_cookies(c);
+	const id = await c.req.param('id');
+	const { cookies, ret_val, user_info } = await check_cookies(c, id);
 	if (cookies != 1)
 			return c.json({message: cookies}, 401);
 
-	const id = await c.req.param('id');
-	let user_info = await db_get_user(id);
-
-	if (user_info == -1)
-		return c.json({ message: 'User not found!'}, 404);
 	user_info = await db_delete_obj("user", id, client);
 	if (user_info == -1)
 		return c.json({ message: 'User deletion failed!'}, 500);

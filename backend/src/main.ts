@@ -14,20 +14,6 @@ const app = new Hono<{ Variables: Variables }>();
 
 app.route('/api/user', user);
 
-//const authMiddleware: MiddlewareHandler = async (c, next) => {
-//    const token = getCookie(c, 'token');
-//    if (token) {
-//        const isAuthenticated = await verify_token(token);
-//        if (isAuthenticated) {
-//            await next();
-//        } else {
-//            return c.redirect('/login');
-//        }
-//    } else {
-//        return c.redirect('/login');
-//    }
-//};
-
 export const client = await db_connect();
 
 if (client && await db_init(client))
@@ -46,11 +32,5 @@ app.use('*', async (c, next) => {
 	});
 	return corsMiddleware(c, next);
 });
-
-//login    -|
-//register  - > refresh token + acces token
-
-//refreresh token ->
-//export client;
 
 Deno.serve(app.fetch);

@@ -15,10 +15,10 @@ export async function check_cookies(c, id: string) {
 		if (!acces_token)
 			return {cookies: "No acces token provided", ret_val: 401, user: null};;
 		const { message, id_ret, token_type } = await verify_token(acces_token);
-		if (token_type != "acces")
-			return {cookies: "Wrong token type provided", ret_val: 401, user: null};
 		if (message)
 			return {cookies: message, ret_val: 401, user: null};
+		if (token_type != "acces")
+			return {cookies: "Wrong token type provided", ret_val: 401, user: null};
 		let user_info = await db_get_user(id);
 		if (user_info == -1)
 			return {cookies: "User not found !", ret_val: 404, user: null};

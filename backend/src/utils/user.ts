@@ -7,8 +7,8 @@ export async function user_match(email: string, password: string) {
 
 	if (ret_user == -1 || ret_user.length == 0)
 			return { user_found:-1 };
-	const is_valid_pass = bcrypt.compareSync(password, ret_user.password);
-	
+	const is_valid_pass = await bcrypt.compareSync(password, ret_user.password);
+	console.log(is_valid_pass, password, ret_user.password);
 	if (ret_user.email == email && is_valid_pass)
 		return { user_found:0, ret_user:ret_user };
 	else

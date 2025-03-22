@@ -1,26 +1,22 @@
+//if modifying this file, modify new user call to p'tite boucle for dans le constructeur
 export class user {
 	username: string;
 	password: string;
 	email: string;
-	token: string;
-	is_valid_token: date;
 	id: number;
 	created_at: Date;
-	constructor(username: string, password: string, email: string, token: string, is_valid_token: date, db_info: string[5]) {
+	constructor(username: string, password: string, email: string, db_info: string[5]) {
 		if (!db_info) {
 			this.username = username;
 			this.password = password;
 			this.email = email;
-			this.token = token;
-			this.is_valid_token = is_valid_token
 		}
 		else {
 			this.username = db_info[0];
 			this.password = db_info[1];
 			this.email = db_info[2];
-			this.token = db_info[3];
-			this.is_valid_token = db_info[4];
-			this.created_at = db_info[5];
+			this.id = db_info[3];
+			this.created_at = db_info[4];
 		}
 	}
 	print_info() {

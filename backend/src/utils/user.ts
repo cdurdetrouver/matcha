@@ -1,22 +1,18 @@
 import { user } from '../types/user.ts';
 import bcrypt from "bcrypt";
-import { db_get_user_custom } from '../utils/db_actions.ts';
-import { db_get_obj_custom } from '../utils/db_actions.ts';
+import { db_get_user_custom, db_get_obj_custom } from '../utils/db_actions.ts';
 
 export async function user_match(email: string, password: string) {
-	const ret_user = (await db_get_obj_custom("user", "email", email))['rows'];
-	
+	const ret_user = await db_get_user_custom("email", email);
+
 	if (ret_user == -1 || ret_user.length == 0)
-			return { user_found:-1, user:undefined };
+			return { user_found:-1 };
+	const is_valid_pass = bcrypt.compareSync(password, ret_user.password);
 	
-	let user_get = new user(null, null, null, null, null, ret_user[0]);
-	const [ _name, _pass, _email, _id, _created ] = ret_user[0];
-	const is_valid_pass = bcrypt.compareSync(password, _pass);
-	
-	if (_email == email && is_valid_pass)
-		return { user_found:0, user:user_get };
+	if (ret_user.email == email && is_valid_pass)
+		return { user_found:0, ret_user:ret_user };
 	else
-		return { user_found:1, user:undefined };
+		return { user_found:1 };
 }
 
 export async function user_check(username: string, email: string, password: string) {

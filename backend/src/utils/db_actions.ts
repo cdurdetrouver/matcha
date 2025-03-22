@@ -41,7 +41,7 @@ export async function db_obj_init(table, obj, contraints) {
 
 export async function db_init() {
 	let user_init = new user;
-	const contraints = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "VARCHAR(255)", "TIMESTAMPTZ", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
 	if (!db_obj_init("user", user_init, contraints, client))
 		return false;
 	db_print_table("user");
@@ -108,20 +108,23 @@ export async function db_post_obj(table, obj, len) {
 }
 
 export async function db_put_obj(table: string, id: number, obj) {
-	let query;
+	let query = `UPDATE "${table}" SET `;
 
+	for (var y in obj) {
+		query += `${y} = '${obj[y]}'`;
+		if (y != Object.keys(obj)[Object.keys(obj).length - 3])
+			query += ', ';
+		else
+			 break;
+	}
+ 
 	query += ` WHERE "id" = ${id};`;
-
 	const result = await client.query(query)
 	.then(data => {
 		return (1);
 	})
-	t.query(query)
-	.then(data => {
-		return 1
-	})
 	.catch((error) => {
-		console.error(`DB Error : can't destroy in ${table}`);
+		console.error(`DB Error : can't UPDATE in ${table}`);
 		return (-1);
 	});
 	return result;
@@ -155,12 +158,12 @@ export async function db_get_obj_custom(table: string, custom: string, custom_va
 	return result;
 }
 
-export async function db_get_user_custom(id: number, custom: string, custom_value: string) {
+export async function db_get_user_custom(custom: string, custom_value: string) {
 	const response = await db_get_obj_custom("user", custom, custom_value);
 	if (response == -1 || response['rows'].length == 0)
 		return (-1);
 	const rows = response['rows'][0];
-	let user_get = new user(rows[0], rows[1], rows[2], rows[3], rows[4]);
+	let user_get = new user(null, null, null, rows);
 	return user_get;
 }
 
@@ -169,7 +172,7 @@ export async function db_get_user(id: number) {
 	if (response == -1 || response['rows'].length == 0)
 		return (-1);
 	const rows = response['rows'][0];
-	let user_get = new user(rows[0], rows[1], rows[2], rows[3], rows[4]);
+	let user_get = new user(null, null, null, rows);
 	return user_get;
 }
 

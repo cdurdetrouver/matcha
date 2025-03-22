@@ -3,8 +3,11 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import type { Chat } from '$lib/types/chat.ts';
+	import Chat from '$lib/components/chat/Chat.svelte';
 
 	export let data;
+
+	let search:string = "";
 
 	const chats: Chat[] = data.chats;
 
@@ -18,6 +21,20 @@
 		}
 		return '';
 	}
+
+	function FilterChats(search: string, chats: Chat[]) {
+		let newChats: Chat[] = [];
+
+		const searchLower = search.toLowerCase();
+
+		for (let i = 0; i < chats.length; i++) {
+			if (chats[i].name.toLowerCase().includes(searchLower)) {
+				newChats.push(chats[i]);
+			}
+		}
+
+		return newChats;
+	}
 </script>
 
 <AppShell
@@ -25,10 +42,10 @@
 >
 	<svelte:fragment slot="sidebarLeft">
 		<header class="border-b border-surface-500/30 h-fit p-4">
-			<input class="input pl-2" type="search" placeholder="Search..." />
+			<input class="input pl-2" type="search" placeholder="Search..." bind:value={search} />
 		</header>
 		<div class="flex flex-col items-center justify-start w-full overflow-y-scroll overflow-x-hidden">
-			{#each chats as chat}
+			{#each (search !== "" ? FilterChats(search, chats) : chats) as chat}
 				<button
 					type="button"
 					class="btn w-[20vw] flex items-center justify-start gap-2.5 mt-[10px] {chat.id === data.chatid

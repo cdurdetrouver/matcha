@@ -1,3 +1,4 @@
+import { PUBLIC_BACKEND_HOST } from '$env/static/public';
 import type { PersonalUser } from '$lib/types/user';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
@@ -23,6 +24,20 @@ export const actions = {
 				page: "login"
 			});
 		}
+
+		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/login`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				email: email,
+				password: password
+			})
+		});
+		const data_res = await res.json();
+
+		console.log(data_res);
 
 		const user: PersonalUser = {
 			email: email.toString(),
@@ -70,6 +85,21 @@ export const actions = {
 				page: "register"
 			});
 		}
+
+		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/register`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				username: username,
+				email: email,
+				password: password
+			})
+		});
+		const data_res = await res.json();
+
+		console.log(data_res );
 
 		const user: PersonalUser = {
 			email: email.toString(),

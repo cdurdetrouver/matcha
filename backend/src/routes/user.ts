@@ -8,12 +8,14 @@ import { db_print_table, db_post_obj, db_get_user, db_get_user_custom, db_delete
 
 const app = new Hono()
 
-//logout route
-
 app.delete('/logout', async (c) => {
 	deleteCookie(c, `acces_token`);
 	deleteCookie(c, `refresh_token`);
 	return c.json({ message: 'User logged out!'}, 200);
+});
+
+app.all('/logout', (c) => {
+	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
 app.get('/refresh_token/', async (c) => {
@@ -31,6 +33,10 @@ app.get('/refresh_token/', async (c) => {
 	deleteCookie(c, `acces_token`);
 	c.res.headers.append('Set-Cookie', `acces_token=${acces_token}; HttpOnly; Secure; Path=/`);
 	return c.json({ message: 'User logged in!'}, 200);
+});
+
+app.all('/refresh_token', (c) => {
+	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
 app.post('/login', async (c) => {
@@ -53,17 +59,21 @@ app.post('/login', async (c) => {
 	return c.json({ message: 'User not found!'}, 404);
 });
 
+app.all('/login', (c) => {
+	return c.json({ message: 'Method Not Allowed' }, 405)
+});
+
 app.post('/register', async (c) => {
 	const { username, email, password } = await c.req.json();
-
+	
 	if (!username || !email || !password)
 		return c.json({ message: 'Body not format correctly !'}, 400);
 	const saltRounds = 12;
 	const [ ret_check, mess, ret_code ] = await user_check(username, email, password);
-
+	
 	if (!ret_check)
 		return c.json({ message: mess}, ret_code);
-
+	
 	const hash = await bcrypt.hashSync(password, saltRounds);
 	const user_register = new user(username, hash, email);
 	const ret_user = await db_post_obj("user", user_register, 3);
@@ -72,21 +82,25 @@ app.post('/register', async (c) => {
 	const user_get = await db_get_user_custom("email", email);
 	const acces_token = await get_access_token(user_get);
 	const refresh_token = await get_refresh_token(user_get);
-
-
+	
+	
 	c.res.headers.append('Set-Cookie', `acces_token=${acces_token}; HttpOnly; Secure; Path=/`);
 	c.res.headers.append('Set-Cookie', `refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`);
 	return c.json({ message: 'User created!'}, 200);
+});
+
+app.all('/register', (c) => {
+	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
 app.put('/:id', async (c) => {
 	const body = await c.req.json();
 	const id = await c.req.param('id');
 	const user_info = await db_get_user(id); 
-
+	
 	if (user_info == -1)
 		return c.json({ message: 'User not found!'}, 404);
-
+	
 	const saltRounds = 12;
 	const hash = await bcrypt.hashSync(body.password, saltRounds);
 	let user_test = new user(body.username, hash, body.email);	
@@ -100,7 +114,7 @@ app.get('/:id', async (c) => {
 	const id = await c.req.param('id');
 	let { cookies, ret_val, user_info } = await check_cookies(c, id);
 	if (cookies != 1)
-			return c.json({message: cookies}, ret_val);
+		return c.json({message: cookies}, ret_val);
 	user_info = user_info.serialize();
 	return c.json({message: "user found", user: user_info}, 200);
 });
@@ -109,12 +123,21 @@ app.delete('/:id', async (c) => {
 	const id = await c.req.param('id');
 	const { cookies, ret_val, user_info } = await check_cookies(c, id);
 	if (cookies != 1)
-			return c.json({message: cookies}, 401);
-
+		return c.json({message: cookies}, 401);
+	
 	user_info = await db_delete_obj("user", id, client);
 	if (user_info == -1)
 		return c.json({ message: 'User deletion failed!'}, 500);
 	return c.json({ message: 'User Deleted'}, 200);
 });
+
+app.all('/:id', (c) => {
+	return c.json({ message: 'Method Not Allowed' }, 405)
+});
+
+app.notFound((c) => {
+	return c.json({ message: 'Route not Found' }, 404)
+});
+
 
 export default app

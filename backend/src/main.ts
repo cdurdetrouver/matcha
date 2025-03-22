@@ -14,6 +14,10 @@ const app = new Hono<{ Variables: Variables }>();
 
 app.route('/api/user', user);
 
+app.notFound((c) => {
+	return c.json({ message: 'Not Found' }, 404)
+});
+
 export const client = await db_connect();
 
 if (client && await db_init(client))

@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 				created_at: Date.now()
 			},
 			{
-				id: 1,
+				id: 3,
 				author: {
 					username: 'cdurdetrouver',
 					id: 1,
@@ -41,6 +41,30 @@ export const load: PageServerLoad = async ({ parent }) => {
 				},
 				type: "image",
 				image:"/outerwilds.jpg",
+				created_at: Date.now()
+			},
+			{
+				id: 4,
+				author: {
+					username: 'cdurdetrouver',
+					id: 1,
+					created_at: Date.now(),
+					avatar: '/user.jpeg'
+				},
+				type: "chat",
+				message:"Hey, regarde ce website trop cool : https://cdurdetrouver.fr",
+				created_at: Date.now()
+			},
+			{
+				id: 5,
+				author: {
+					username: 'blast',
+					id: 2,
+					created_at: Date.now(),
+					avatar: '/blast.jpg'
+				},
+				type: "video",
+				video:"https://dn720407.ca.archive.org/0/items/rick-roll/Rick%20Roll.ia.mp4",
 				created_at: Date.now()
 			},
 		];

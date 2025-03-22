@@ -7,8 +7,8 @@ export const load = async ({ locals }) => {
 	let notifs: Notif[] = [
 		{
 			id: 1,
-			message: 'You got a new Message from Jhon Doe',
-			redirect: '/',
+			message: 'You got a new Message from Blast',
+			redirect: '/chat/1',
 			created_at: 1738981727280
 		},
 		{

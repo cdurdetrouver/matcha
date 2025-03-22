@@ -27,7 +27,7 @@
 		<header class="border-b border-surface-500/30 h-fit p-4">
 			<input class="input pl-2" type="search" placeholder="Search..." />
 		</header>
-		<div class="flex flex-col items-center justify-start w-full overflow-scroll">
+		<div class="flex flex-col items-center justify-start w-full overflow-y-scroll overflow-x-hidden">
 			{#each chats as chat}
 				<button
 					type="button"

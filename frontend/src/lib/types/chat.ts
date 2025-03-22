@@ -4,6 +4,7 @@ export type Message = {
 	id: number;
 	message?: string;
 	image?:string;
+	video?:string;
 	author: User;
 	created_at: number;
 	type:string;

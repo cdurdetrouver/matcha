@@ -5,10 +5,30 @@ services:
     container_name: frontend
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     networks:
       - matcha.net
     ports:
       - "5173:5173"
+
+  db:
+    container_name: db
+    image: postgres:latest
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgresuser -d matcha" ]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      - POSTGRES_DB=matcha
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - matcha.net
 
   backend:
     build:
@@ -22,6 +42,9 @@ services:
       - "8000:8000"
     environment:
       - APP_URL=http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy
 
 networks:
   matcha.net:

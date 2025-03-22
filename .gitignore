@@ -27,3 +27,7 @@ vite.config.ts.timestamp-*
 # Deno
 deno.lock
 package-lock.json
+
+# DB
+
+db

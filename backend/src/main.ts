@@ -19,12 +19,12 @@ app.notFound((c:Context) => {
 
 export const client = await db_connect();
 
-if (client && await db_init(client))
+if (client && await db_init())
 	console.log("Successful database connection and initialization !");
 else
 	console.log("Connection or initialization of the database failed !");
 
-app.use('*', async (c, next) => {
+app.use('*', (c, next) => {
 	const corsMiddleware = cors({
 	  origin: ['*', 'http://localhost:5173', 'http://frontend:5173'],
 	  allowHeaders: ['Origin', 'Content-Type', 'Authorization', 'X-Custom-Header', 'Upgrade-Insecure-Requests'],

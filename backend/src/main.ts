@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { db_connect, db_init } from './utils/db_actions.ts';
 import user from './routes/user.ts';
+import chat from './routes/chat.ts';
 import 'https://deno.land/x/dotenv/load.ts';
 import type { JwtVariables } from 'hono/jwt';
 
@@ -12,6 +13,8 @@ export const jwtSecret = ('JWT_SECRET');
 const app = new Hono<{ Variables: Variables }>();
 
 app.route('/api/user', user);
+
+app.route('/api/chat', chat);
 
 app.notFound((c:Context) => {
 	return c.json({ message: 'Not Found' }, 404)

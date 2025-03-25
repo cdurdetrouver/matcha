@@ -1,5 +1,8 @@
 import { connect } from "ts-postgres";
 import User from '../types/user.ts';
+import Chat from "../types/chat.ts";
+import Message from "../types/message.ts";
+import Notif from "../types/notifs.ts";
 import { client } from '../main.ts';
 import type response from '../types/response.ts';
 
@@ -41,9 +44,17 @@ export async function db_obj_init(table:string, props:string[], contraints:strin
 }
 
 export async function db_init(): Promise<boolean> {
-	const contraints = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
-	const result:boolean = await db_obj_init("user", User.getPropertyNames(), contraints);
-	if (!result)
+	const contraints_user = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints_chat = ["VARCHAR(255) NOT NULL",  "INTEGER[]",  "INTEGER[]", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints_message = ["VARCHAR(255) NOT NULL",  "INTEGER[]",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints_notifs = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "INTEGER", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+
+	const result_user:boolean = await db_obj_init("user", User.getPropertyNames(), contraints_user);
+	const result_chat:boolean = await db_obj_init("chat", Chat.getPropertyNames(), contraints_chat);
+	const result_message:boolean = await db_obj_init("message", Message.getPropertyNames(), contraints_message);
+	const result_notif:boolean = await db_obj_init("notifs", Notif.getPropertyNames(), contraints_notifs);
+
+	if (!result_user || !result_chat || !result_message || !result_notif)
 		return false;
 	return true;
 }
@@ -158,26 +169,6 @@ export async function db_get_obj_custom(table: string, custom: string, custom_va
 		return null;
 	});
 	return result;
-}
-
-export async function db_get_user_custom(custom: string, custom_value: string):Promise<User | null>{
-	const response:response | null = await db_get_obj_custom("user", custom, custom_value);
-	if (response == null)
-		return null;
-	if (response.rows.length == 0)
-		return null;
-	const rows = response['rows'][0];
-	return new User(rows[0], rows[1], rows[2], rows[3], rows[4]);
-}
-
-export async function db_get_user(id: number): Promise<User | null> {
-	const response: response | null = await db_get_obj_by_id("user", id);
-	if (response == null)
-		return null;
-	if (response.rows.length == 0)
-		return null;
-	const rows = response['rows'][0];
-	return new User(rows[0], rows[1], rows[2], rows[3], rows[4]);
 }
 
 export async function db_delete_obj(table: string, id: number): Promise<boolean> {

@@ -26,5 +26,5 @@ export default class User {
 	static getPropertyNames(): string[] {
 		return Object.getOwnPropertyNames(User.prototype)
 		  .filter((prop) => prop !== 'constructor' && typeof User.prototype[prop as keyof User] !== 'function');
-	  }
+	}
 }

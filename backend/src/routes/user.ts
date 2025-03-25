@@ -4,7 +4,9 @@ import { user_match, user_check } from '../utils/user.ts';
 import User from '../types/user.ts';
 import { getCookie, deleteCookie} from 'hono/cookie';
 import { get_access_token, get_refresh_token, verify_token, check_cookies } from '../utils/jwt.ts';
-import { db_post_obj, db_get_user, db_get_user_custom, db_delete_obj, db_put_obj } from '../utils/db_actions.ts';
+import { db_post_obj, db_delete_obj, db_put_obj } from '../utils/db_actions.ts';
+import { db_get_user, db_get_user_custom } from '../utils/db_user.ts';
+
 
 const app = new Hono()
 
@@ -14,7 +16,7 @@ app.delete('/logout', (c:Context) => {
 	return c.json({ message: 'User logged out!'}, 200);
 });
 
-app.all('/logout', (c) => {
+app.all('/logout', (c:Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
@@ -42,11 +44,11 @@ app.get('/refresh_token/', async (c: Context) => {
 	return c.json({ message: 'User logged in!'}, 200);
 });
 
-app.all('/refresh_token', (c) => {
+app.all('/refresh_token', (c:Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
-app.post('/login', async (c) => {
+app.post('/login', async (c:Context) => {
 	const { email, password } = await c.req.json();
 
 	if ( !email || !password )
@@ -60,6 +62,8 @@ app.post('/login', async (c) => {
 		const access_token = await get_access_token(ret_user);
 		const refresh_token = await get_refresh_token(ret_user);
 
+		deleteCookie(c, `access_token`);
+		deleteCookie(c, `refresh_token`);
 		c.res.headers.append('Set-Cookie', `access_token=${access_token}; HttpOnly; Secure; Path=/`);
 		c.res.headers.append('Set-Cookie', `refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`);
 		return c.json({ message: 'User logged in!', user:ret_user.serialize()}, 200);
@@ -69,11 +73,11 @@ app.post('/login', async (c) => {
 	return c.json({ message: 'User not found!'}, 404);
 });
 
-app.all('/login', (c) => {
+app.all('/login', (c:Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
-app.post('/register', async (c) => {
+app.post('/register', async (c:Context) => {
 	const { username, email, password } = await c.req.json();
 	
 	if (!username || !email || !password)
@@ -95,17 +99,18 @@ app.post('/register', async (c) => {
 	const access_token = await get_access_token(user_get);
 	const refresh_token = await get_refresh_token(user_get);
 	
-	
+	deleteCookie(c, `access_token`);
+	deleteCookie(c, `refresh_token`);
 	c.res.headers.append('Set-Cookie', `access_token=${access_token}; HttpOnly; Secure; Path=/`);
 	c.res.headers.append('Set-Cookie', `refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`);
 	return c.json({ message: 'User created!'}, 200);
 });
 
-app.all('/register', (c) => {
+app.all('/register', (c:Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
-app.put('/:id', async (c) => {
+app.put('/:id', async (c:Context) => {
 	const body = await c.req.json();
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c, id);
@@ -124,9 +129,9 @@ app.put('/:id', async (c) => {
 	return c.json({ message: 'User updated!'}, 200);
 });
 
-app.get('/:id', async (c) => {
+app.get('/:id', async (c:Context) => {
 	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c, id);
+	const ret_check = await check_cookies(c, id, true);
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !'}, 400);
 	const { cookies, ret_val, user } = ret_check;
@@ -136,7 +141,7 @@ app.get('/:id', async (c) => {
 	return c.json({message: "user found", user: user_info}, 200);
 });
 
-app.delete('/:id', async (c) => {
+app.delete('/:id', async (c:Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c, id);
 	if (ret_check == null)
@@ -151,11 +156,11 @@ app.delete('/:id', async (c) => {
 	return c.json({ message: 'User Deleted'}, 200);
 });
 
-app.all('/:id', (c) => {
+app.all('/:id', (c:Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405)
 });
 
-app.notFound((c) => {
+app.notFound((c:Context) => {
 	return c.json({ message: 'Route not Found' }, 404)
 });
 

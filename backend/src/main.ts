@@ -3,7 +3,6 @@ import { cors } from 'hono/cors';
 import { db_connect, db_init } from './utils/db_actions.ts';
 import user from './routes/user.ts';
 import chat from './routes/chat.ts';
-import upload from './routes/upload.ts';
 import type { JwtVariables } from 'hono/jwt';
 
 const app = new Hono<{ Variables: JwtVariables }>();
@@ -23,8 +22,6 @@ app.use('*', cors({
 app.route('/api/user', user);
 
 app.route('/api/chat', chat);
-
-app.route('/upload', upload);
 
 app.notFound((c:Context) => {
 	return c.json({ message: 'Not Found' }, 404)

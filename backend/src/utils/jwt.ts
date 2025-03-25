@@ -1,14 +1,14 @@
 import { sign, verify } from 'hono/jwt'
 import User from '../types/user.ts';
 import { jwtSecret } from '../main.ts';
-import { db_get_user } from '../utils/db_actions.ts';
+import { db_get_user } from '../utils/db_user.ts';
 import { getCookie } from 'hono/cookie';
 import { type Context } from "hono";
 import { JWTPayload } from "hono/utils/jwt/types";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 
 
-export async function check_cookies(c: Context, id: number): Promise<{cookies: string | boolean, ret_val: ContentfulStatusCode | undefined, user: User | null}> {
+export async function check_cookies(c: Context, id: number, id_nonblock?: boolean): Promise<{cookies: string | boolean, ret_val: ContentfulStatusCode | undefined, user: User | null}> {
 		const access_token = await getCookie(c).access_token;
 
 		if (id == undefined)
@@ -26,7 +26,7 @@ export async function check_cookies(c: Context, id: number): Promise<{cookies: s
 		const user_info = await db_get_user(id);
 		if (user_info == null)
 			return {cookies: "User not found !", ret_val: 404, user: null};
-		if (user_info.id != id_ret)
+		if (!id_nonblock && user_info.id != id_ret)
 			return {cookies: "Trying to acces to unauthorized data !", ret_val: 401, user: null};
 		return {cookies: true, ret_val: undefined, user: user_info};
 }

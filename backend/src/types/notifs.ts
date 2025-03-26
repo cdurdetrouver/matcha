@@ -1,4 +1,4 @@
-export default class Notif {
+export class Notif {
 	name: string;
 	content: string;
 	notif_type: string;
@@ -6,15 +6,14 @@ export default class Notif {
 	id: number = 0;
 	created_at: number = Date.now();
 
-	constructor(name: string, content: string, notif_type: string, id_target: number, id?: number, created_at?: number) {
-		this.name = name;
-		this.content = content;
-		this.notif_type = notif_type;
-		this.id_target = id_target;
-		if (id)
-			this.id = id;
-		if (created_at)
-			this.created_at = created_at;
+	[key: string]: unknown;
+	constructor(...args: unknown[]) {
+		this.name = args[0] as string;
+		this.content = args[1] as string;
+		this.notif_type = args[2] as string;
+		this.id_target = args[3] as number;
+		this.id = (args[4] as number) ?? 0;
+		this.created_at = (args[5] as number) ?? 0;
 	}
 
 	serialize() {
@@ -22,7 +21,6 @@ export default class Notif {
 	}
 
 	static getPropertyNames(): string[] {
-		return Object.getOwnPropertyNames(Notif.prototype)
-		  .filter((prop) => prop !== 'constructor' && typeof Notif.prototype[prop as keyof Notif] !== 'function');
+		return ["name", "content", "notif_type", "id_target", "id", "created_at"];
 	}
 }

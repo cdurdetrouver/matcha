@@ -2,5 +2,7 @@
 .env.*
 !.env.example
 !.env.test
+google.env.json
+
 
 deno.lock

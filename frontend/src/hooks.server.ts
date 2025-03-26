@@ -1,5 +1,5 @@
 import { redirect, type Handle} from '@sveltejs/kit'
-import type { PersonalUser } from '$lib/types/user';
+import type { User } from '$lib/types/user';
 
 const public_paths = [
 	'/',
@@ -25,7 +25,7 @@ export const handle: Handle = async ({ event , resolve }) => {
 			return resolve(event);
 	}
 	
-	const user:PersonalUser | null = JSON.parse(user_cookie);
+	const user:User | null = JSON.parse(user_cookie);
 
 	event.locals.user = user;
 

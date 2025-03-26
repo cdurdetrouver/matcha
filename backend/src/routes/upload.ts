@@ -1,19 +1,21 @@
 import { Context, Hono } from 'hono';
 import { GoogleStorage } from 'https://deno.land/x/google_cloud_storage@v0.1.1/mod.ts';
 import serviceAccount from "../../google.env.json" with { type: "json" };
+import { BUCKET_NAME } from "../main.ts";
 
-const app = new Hono();
-
-const BUCKET_NAME = "bucket-matcha";
-
-const storage = new GoogleStorage(
-    serviceAccount,
-    "https://www.googleapis.com/auth/devstorage.full_control",
-    {
-        name: BUCKET_NAME,
-        region: "asia-northeast3",
-    }
-);
+type ServiceAccount = {
+    type: string;
+    project_id: string;
+    private_key_id: string;
+    private_key: string;
+    client_email: string;
+    client_id: string;
+    auth_uri: string;
+    token_uri: string;
+    auth_provider_x509_cert_url: string;
+    client_x509_cert_url: string;
+    universe_domain: string;
+};
 
 type FormDataFile = {
     content?: Uint8Array;
@@ -22,6 +24,19 @@ type FormDataFile = {
     name: string;
     originalName: string;
 };
+
+const app = new Hono();
+
+const storage = new GoogleStorage(
+    serviceAccount as ServiceAccount,
+    "https://www.googleapis.com/auth/devstorage.full_control",
+    {
+        name: BUCKET_NAME,
+        region: "asia-northeast3",
+    }
+);
+
+
 
 app.post('/', async (c : Context) => {
     try {

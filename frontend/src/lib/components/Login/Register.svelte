@@ -1,9 +1,82 @@
 <script lang="ts">
-	export let form;
+	import { goto } from '$app/navigation';
+	import { PUBLIC_BACKEND_HOST } from "$env/static/public";
+	import { SetCookie } from '$lib/script/cookies';
+	import type { User } from '$lib/types/user';
+
+	let form : {
+		missing_username?: boolean,
+		incorrect_username?:string,
+		missing_match?: boolean,
+		incorrect_match?:boolean,
+		missing_email?: boolean,
+		incorrect_email?:string,
+		missing_password?: boolean,
+		incorrect_password?:string,
+		email?:string,
+		username?:string,
+		password?:string,
+	} = {
+	};
+
+	let email = form?.email || '';
+	let username = form?.username || '';
+	let password = '';
+	let match_password = '';
+
+	async function register(event: SubmitEvent) {
+		event.preventDefault();
+
+		if (!email || !password || !username || !match_password) {
+			form = {
+				missing_email: !email,
+				missing_password: !password,
+				missing_username: !username,
+				missing_match: !match_password,
+				email,
+				username,
+			};
+		}
+
+		if (password !== match_password) {
+			form = {
+				incorrect_match: true
+			};
+		}
+
+		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/register`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({
+				email: email,
+				password: password,
+				username: username,
+				match_password: match_password
+			}),
+			credentials: 'include'
+		});
+		const data_res = await res.json();
+		if (res.status !== 200) {
+			form = {
+				incorrect_email: data_res.err_email,
+				incorrect_username: data_res.err_username,
+				incorrect_password: data_res.err_password,
+			};
+			return;
+		}
+
+		const user = data_res.user as User;
+
+		SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+
+		goto('/profile');
+	}
 </script>
 
 <main class="flex flex-col gap-4">
-	<form class="flex flex-col gap-2 items-start" method="POST" action="?/register">
+	<form class="flex flex-col gap-2 items-start" on:submit={register}>
 		<div class="w-full">
 			<h2>Email:</h2>
 			<input
@@ -11,10 +84,10 @@
 				type="email"
 				name="email"
 				placeholder="Email..."
-				value={form?.email ?? ''}
+				bind:value={email}
 			/>
 			{#if form?.missing_email}<p class="text-red-600">The email field is required</p>{/if}
-			{#if form?.incorrect_email}<p class="text-red-600">The email field is incorrect</p>{/if}
+			{#if form?.incorrect_email}<p class="text-red-600">{form?.incorrect_email}</p>{/if}
 		</div>
 		<div class="w-full">
 			<h2>Username:</h2>
@@ -23,16 +96,22 @@
 				type="text"
 				name="username"
 				placeholder="Username..."
-				value={form?.username ?? ''}
+				bind:value={username}
 			/>
 			{#if form?.missing_username}<p class="text-red-600">The username field is required</p>{/if}
-			{#if form?.incorrect_username}<p class="text-red-600">The username field is incorrect</p>{/if}
+			{#if form?.incorrect_username}<p class="text-red-600">{form?.incorrect_username}</p>{/if}
 		</div>
 		<div class="w-full">
 			<h2>Password:</h2>
-			<input class="input w-2/3 px-2" type="password" name="password" placeholder="Password..." />
+			<input
+				class="input w-2/3 px-2"
+				type="password"
+				name="password"
+				placeholder="Password..."
+				bind:value={password}
+			/>
 			{#if form?.missing_password}<p class="text-red-600">The Password field is required</p>{/if}
-			{#if form?.incorrect_password}<p class="text-red-600">{form?.password_message ?? ''}</p>{/if}
+			{#if form?.incorrect_password}<p class="text-red-600">{form?.incorrect_password}</p>{/if}
 		</div>
 		<div class="w-full">
 			<h2>Confirm Password:</h2>
@@ -41,9 +120,10 @@
 				type="password"
 				name="password-verif"
 				placeholder="Password..."
+				bind:value={match_password}
 			/>
 			{#if form?.missing_match}<p class="text-red-600">Field is missing</p>{/if}
-			{#if form?.incorrect_match}<p class="text-red-600">{form?.incorrect_match}</p>{/if}
+			{#if form?.incorrect_match}<p class="text-red-600">Password Doesn't match</p>{/if}
 		</div>
 		<button class="btn variant-filled-primary mx-10 px-10" type="submit">Register</button>
 	</form>

@@ -6,16 +6,12 @@
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
 	import { autoModeWatcher } from '@skeletonlabs/skeleton';
-	import { onMount } from 'svelte';
 
 	initializeStores();
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
 	export let data;
 
-	onMount(() => {
-		const ws = new WebSocket('')
-	})
 </script>
 
 <svelte:head>

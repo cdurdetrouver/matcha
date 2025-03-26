@@ -85,10 +85,10 @@ app.post('/register', async (c:Context) => {
 	if (!username || !email || !password)
 		return c.json({ message: 'Body not format correctly !'}, 400);
 	const saltRounds = genSaltSync(12);
-	const [ ret_check, mess ] = await user_check(username, email, password);
+	const {error, err_password, err_username, err_email } = await user_check(username, email, password);
 	
-	if (!ret_check)
-		return c.json({ message: mess}, 401);
+	if (error)
+		return c.json({ err_password, err_username, err_email}, 401);
 	
 	const hash_pass = hashSync(password, saltRounds);
 	const user_register = new User(username, hash_pass, email);
@@ -105,7 +105,7 @@ app.post('/register', async (c:Context) => {
 	deleteCookie(c, `refresh_token`);
 	c.res.headers.append('Set-Cookie', `access_token=${access_token}; HttpOnly; Secure; Path=/`);
 	c.res.headers.append('Set-Cookie', `refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`);
-	return c.json({ message: 'User created!'}, 200);
+	return c.json({ message: 'User created!', user : user_get.serialize()}, 200);
 });
 
 app.all('/register', (c:Context) => {

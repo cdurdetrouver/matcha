@@ -1,9 +1,61 @@
 <script lang="ts">
-	export let form;
+	import { goto } from '$app/navigation';
+	import { PUBLIC_BACKEND_HOST } from "$env/static/public";
+	import { SetCookie } from '$lib/script/cookies';
+	import type { User } from '$lib/types/user';
+
+	let form : {
+		missing_email?: boolean,
+		missing_password?: boolean,
+		incorrect_email?:boolean,
+		incorrect_password?:boolean,
+		email?:string
+	} = {};
+
+	let email = form?.email || '';
+	let password = '';
+
+	async function login(event: SubmitEvent) {
+		event.preventDefault();
+
+		if (!email || !password) {
+			form = {
+				missing_email: !email,
+				missing_password: !password,
+				email,
+			};
+		}
+
+		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/login`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				email: email,
+				password: password
+			}),
+			credentials: 'include'
+		});
+		const data_res = await res.json();
+		if (res.status !== 200) {
+			form = {
+				incorrect_email: data_res.err_email,
+				incorrect_password: data_res.err_password,
+			};
+			return;
+		}
+
+		const user = data_res.user as User;
+
+		SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+
+		goto('/profile');
+	}
 </script>
 
 <main class="flex flex-col gap-4">
-	<form class="flex flex-col gap-2 items-start" method="POST" action="?/login">
+	<form class="flex flex-col gap-2 items-start" on:submit={login}>
 		<div class="w-full">
 			<h2>Email:</h2>
 			<input
@@ -11,14 +63,20 @@
 				type="email"
 				name="email"
 				placeholder="Email..."
-				value={form?.email ?? ''}
+				bind:value={email}
 			/>
 			{#if form?.missing_email}<p class="text-red-600">The email field is required</p>{/if}
 			{#if form?.incorrect_email}<p class="text-red-600">The email field is incorrect</p>{/if}
 		</div>
 		<div class="w-full">
 			<h2>Password:</h2>
-			<input class="input w-2/3 px-2" type="password" name="password" placeholder="Password..." />
+			<input
+				class="input w-2/3 px-2"
+				type="password"
+				name="password"
+				placeholder="Password..."
+				bind:value={password}
+			/>
 			{#if form?.missing_password}<p class="text-red-600">Password is required</p>{/if}
 			{#if form?.incorrect_password}<p class="text-red-600">Password is incorrect !</p>{/if}
 		</div>

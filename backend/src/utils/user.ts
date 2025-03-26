@@ -1,7 +1,7 @@
 import { compare } from "https://deno.land/x/bcrypt/mod.ts";
 import { db_get_obj_custom } from '../utils/db_actions.ts';
 import { db_get_user_custom } from '../utils/db_user.ts';
-import User from '../types/user.ts';
+import { User } from '../types/user.ts';
 
 export async function user_match(email: string, password: string): Promise<[boolean, User | undefined] | null> {
 	const ret_user = await db_get_user_custom("email", email);

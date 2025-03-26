@@ -1,10 +1,10 @@
 import { connect } from "ts-postgres";
-import User from '../types/user.ts';
-import Chat from "../types/chat.ts";
-import Message from "../types/message.ts";
-import Notif from "../types/notifs.ts";
+import { User } from '../types/user.ts';
+import { Chat } from "../types/chat.ts";
+import { Message } from "../types/message.ts";
+import { Notif } from "../types/notifs.ts";
 import { client } from '../main.ts';
-import type response from '../types/response.ts';
+import type { response } from '../types/response.ts';
 
 export async function db_connect() {
 	const clt = await connect({
@@ -23,10 +23,10 @@ export async function db_obj_init(table:string, props:string[], contraints:strin
 	query = `CREATE TABLE IF NOT EXISTS "${table}" (`;
 	let i = 0;
 	for (const y in props) {
-		query += `${y} `;
+		query += `${props[y]} `;
 		if (contraints && i < contraints.length) {
 			query += `${contraints[i]}`;
-			if (y != props[props.length - 1])
+			if (props[y] != props[props.length - 1])
 				query += ', ';
 			i++;
 		}
@@ -44,9 +44,9 @@ export async function db_obj_init(table:string, props:string[], contraints:strin
 }
 
 export async function db_init(): Promise<boolean> {
-	const contraints_user = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
-	const contraints_chat = ["VARCHAR(255) NOT NULL",  "INTEGER[]",  "INTEGER[]", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
-	const contraints_message = ["VARCHAR(255) NOT NULL",  "INTEGER[]",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints_user = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "INTEGER", "BOOLEAN", "INTEGER ARRAY", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints_chat = ["VARCHAR(255) NOT NULL",  "INTEGER ARRAY",  "INTEGER ARRAY", "INTEGER", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
+	const contraints_message = ["VARCHAR(255) NOT NULL",  "INTEGER ARRAY",  "VARCHAR(255) NOT NULL", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
 	const contraints_notifs = ["VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL",  "VARCHAR(255) NOT NULL", "INTEGER", "SERIAL PRIMARY KEY", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"];
 
 	const result_user:boolean = await db_obj_init("user", User.getPropertyNames(), contraints_user);
@@ -56,6 +56,7 @@ export async function db_init(): Promise<boolean> {
 
 	if (!result_user || !result_chat || !result_message || !result_notif)
 		return false;
+	db_print_table("user");
 	return true;
 }
 
@@ -80,7 +81,7 @@ export async function db_get_number_obj(table: string): Promise<number | boolean
 		return nb;
 	})
 	.catch(() => {
-		console.error(`DB Error : can't find number of objects in ${table}`);
+		console.error(`UserDB Error : can't find number of objects in ${table}`);
 		return false;
 	});
 	return result;
@@ -99,7 +100,14 @@ export async function db_post_obj(table: string, obj: Record<string, unknown>): 
 	}
 	query += ') VALUES (';
 	for (const y in obj) {
-		query += `'${obj[y]}'`;
+		if (Array.isArray(obj[y])) {
+			if (obj[y].length == 0)
+				query += "'{NULL}'";
+			else
+				query += `'{${obj[y].join(",")}}'`;
+		}
+		else
+			query += `'${obj[y]}'`;
 		if (y != Object.keys(obj)[Object.keys(obj).length - 3])
 			query += ', ';
 		else
@@ -107,6 +115,7 @@ export async function db_post_obj(table: string, obj: Record<string, unknown>): 
 	}
 	query += ');';
 
+	console.log(query);
 	const result = await client.query(query)
 	.then(() => {
 		return true;
@@ -144,6 +153,7 @@ export async function db_put_obj(table: string, id: number, obj: Record<string, 
 export async function db_get_obj_by_id(table: string, id: number): Promise<response | null> {
 	const query = `SELECT *  FROM "${table}" WHERE id = '${id}';`;
 
+	console.log(query);
 	const result = await client.query(query)
 	.then(data => {
 		return(data);

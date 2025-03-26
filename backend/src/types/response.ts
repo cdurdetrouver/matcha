@@ -1,5 +1,5 @@
 import { ResultRecord, ResultRow } from "ts-postgres";
 
-export default interface response {
+export interface response {
 	rows: ResultRow<ResultRecord<string>>[];
 }

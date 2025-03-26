@@ -23,8 +23,6 @@ app.route('/api/user', user);
 
 app.route('/api/chat', chat);
 
-app.route('/upload', upload);
-
 app.notFound((c:Context) => {
 	return c.json({ message: 'Not Found' }, 404)
 });

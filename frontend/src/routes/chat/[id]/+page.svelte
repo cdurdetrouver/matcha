@@ -40,11 +40,21 @@
 </script>
 
 <main class="h-[92vh] flex flex-col">
-	<header class="h-fit">bonjour</header>
+	<header class="h-fit p-4 flex items-center justify-center relative">
+		<a href="/chat" class="md:hidden absolute top-1/2 -translate-y-1/2 left-[10px]">
+			<Icon icon="ic:round-arrow-back" width="24" height="24"/>
+		</a>
+		<h2 class="h2">{data.chat.name}</h2>
+	</header>
 	<section class="h-full overflow-scroll">
 		<ul class="size-full p-10 flex flex-col gap-2.5">
 			{#each data.messages as message}
-				<Chat {message} classes={classes[message.author.id === data.user.id ? "personal" : "other"]}/>
+				{#if message.type == "announce"}
+					<Announce {message}/>
+				{:else}
+					<Chat {message} classes={classes[message.author?.id === data.user?.id ? "personal" : "other"]}/>
+				{/if}
+				
 			{/each}
 		</ul>
 	</section>

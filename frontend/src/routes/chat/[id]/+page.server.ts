@@ -2,7 +2,7 @@ import type { Message } from "$lib/types/chat";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ parent }) => {
-	const {chatid} = await parent();
+	const {chatid, chats} = await parent();
 	let messages: Message[] = [];
 	if (chatid == 1)
 	{
@@ -65,6 +65,12 @@ export const load: PageServerLoad = async ({ parent }) => {
 				},
 				type: "video",
 				video:"https://dn720407.ca.archive.org/0/items/rick-roll/Rick%20Roll.ia.mp4",
+				created_at: Date.now()
+			},
+			{
+				id: 6,
+				type: "announce",
+				message: "Blast has leave the channel !",
 				created_at: Date.now()
 			},
 		];

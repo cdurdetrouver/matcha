@@ -8,6 +8,7 @@ export const load = async ({ params }) => {
 			users: [{id:1, username : "cdurdetrouver", created_at: Date.now(), avatar: "/user.jpeg"}],
 			LastMessage: {
 				id: 1,
+				type: "chat",
 				message: 'Hello, how are you ?',
 				author: {id:2, username : "blast",created_at: Date.now(), avatar: "/blast.jpg"},
 				created_at: Date.now()

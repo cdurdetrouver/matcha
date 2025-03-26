@@ -133,10 +133,10 @@
 	</form>
 	<hr />
 	<div class="flex flex-col gap-3 items-center">
-		<a href="test" class="btn variant-filled mx-20 flex gap-4"
+		<a href="test" class="btn bg-black text-white mx-20 flex gap-4"
 			><img class="h-[1em]" src="logo/42Paris.svg" alt="42 paris logo" />Register with Intra</a
 		>
-		<a href="test" class="btn bg-white mx-20 flex gap-4"
+		<a href="test" class="btn bg-white text-black mx-20 flex gap-4"
 			><img class="h-[1em]" src="logo/Google.svg" alt="Google logo" />Register with Google</a
 		>
 	</div>

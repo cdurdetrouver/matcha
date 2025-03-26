@@ -1,4 +1,4 @@
-import { PUBLIC_BACKEND_HOST } from '$env/static/public';
+import { PRIVATE_BACKEND_HOST } from '$env/static/private';
 import type { PersonalUser } from '$lib/types/user';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
@@ -25,7 +25,7 @@ export const actions = {
 			});
 		}
 
-		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/login`, {
+		const res = await fetch(`${PRIVATE_BACKEND_HOST}/api/user/login`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -86,7 +86,7 @@ export const actions = {
 			});
 		}
 
-		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/register`, {
+		const res = await fetch(`${PRIVATE_BACKEND_HOST}/api/user/register`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

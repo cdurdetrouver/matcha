@@ -1,5 +1,5 @@
 import { sign, verify } from 'hono/jwt'
-import User from '../types/user.ts';
+import { User } from '../types/user.ts';
 import { jwtSecret } from '../main.ts';
 import { db_get_user } from '../utils/db_user.ts';
 import { getCookie } from 'hono/cookie';

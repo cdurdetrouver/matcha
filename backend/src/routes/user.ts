@@ -1,7 +1,7 @@
 import { Hono, type Context } from "hono";
 import { hashSync, genSaltSync } from "https://deno.land/x/bcrypt/mod.ts";
 import { user_match, user_check } from '../utils/user.ts';
-import User from '../types/user.ts';
+import { User } from '../types/user.ts';
 import { getCookie, deleteCookie} from 'hono/cookie';
 import { get_access_token, get_refresh_token, verify_token, check_cookies } from '../utils/jwt.ts';
 import { db_post_obj, db_delete_obj, db_put_obj } from '../utils/db_actions.ts';
@@ -9,6 +9,8 @@ import { db_get_user, db_get_user_custom } from '../utils/db_user.ts';
 
 
 const app = new Hono()
+
+//get all  chat
 
 app.delete('/logout', (c:Context) => {
 	deleteCookie(c, `access_token`);
@@ -122,10 +124,10 @@ app.put('/:id', async (c:Context) => {
 
 	const saltRounds = genSaltSync(12);
 	const hash_pass = hashSync(body.password, saltRounds);
-	const user_test = new User(body.username, hash_pass, body.email);	
-	const ret_user = await db_put_obj("user", id, user_test);
+	user.email, user.password, user.email = hash_pass, body.email;
+	const ret_user = await db_put_obj("user", id, user);
 	if (ret_user == false)
-		return c.json({ message: 'User updatenew user failed!'}, 500);
+		return c.json({ message: 'User update user failed!'}, 500);
 	return c.json({ message: 'User updated!'}, 200);
 });
 

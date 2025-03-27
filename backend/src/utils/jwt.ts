@@ -1,7 +1,6 @@
 import { sign, verify } from 'hono/jwt'
-import { User } from '../types/user.ts';
+import { User } from '../db_objects/user.ts';
 import { JWT_SECRET } from '../secret.ts';
-import { db_get_user } from '../utils/db_user.ts';
 import { getCookie } from 'hono/cookie';
 import { type Context } from "hono";
 import { JWTPayload } from "hono/utils/jwt/types";
@@ -18,12 +17,12 @@ export async function check_cookies(c: Context, id: number, id_nonblock?: boolea
 		const tokenResult = await verify_token(access_token);
 		if (!tokenResult )
 			return {cookies: "Acces token provided not valid", ret_val: 401, user: null};
-		const {message, id_ret, token_type} = tokenResult;
-		if (message)
-			return {cookies: message, ret_val: 401, user: null};
+		if ('message' in tokenResult)
+			return {cookies: tokenResult.message, ret_val: 401, user: null};
+		const {id_ret, token_type} = tokenResult;
 		if (token_type != "acces")
 			return {cookies: "Wrong token type provided", ret_val: 401, user: null};
-		const user_info = await db_get_user(id);
+		const user_info = await User.get_by_id(id_ret);
 		if (user_info == null)
 			return {cookies: "User not found !", ret_val: 404, user: null};
 		if (!id_nonblock && user_info.id != id_ret)
@@ -56,7 +55,7 @@ export async function get_access_token(user: User) {
 	return token;
 }
 
-export async function verify_token(token: string): Promise<{message ?: string , id_ret	?: number, token_type ?: string} | null> {
+export async function verify_token(token: string): Promise<{message: string } | {id_ret	: number, token_type : string } | null> {
 	try {
 		const payload = await verify(token, JWT_SECRET);
 		return {id_ret: Number(payload.id), token_type: String(payload.type)};

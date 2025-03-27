@@ -1,10 +1,8 @@
 import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
-import { db_get_obj_custom } from '../utils/db_actions.ts';
-import { db_get_user_custom } from '../utils/db_user.ts';
-import { User } from '../types/user.ts';
+import { User } from '../db_objects/user.ts';
 
 export async function user_match(email: string, password: string): Promise<{ret_user?: User, err_password?: string, err_email?: string}> {
-	const ret_user = await db_get_user_custom("email", email);
+	const ret_user = await User.get_by_field("email", email);
 
 	if (ret_user == null)
 			return {err_email: "Wrong email"};
@@ -38,8 +36,8 @@ async function check_username( username: string ): Promise<[boolean, string | un
 		return [ false, "Username should start with a letter." ];
 	if (!re.test(username))
 		return [ false, "Username should only contain letters, digits, and underscores (_)." ];
-	const is_exists = await db_get_obj_custom("user", "username", username);
-	if (is_exists != null && is_exists['rows'].length != 0)
+	const is_exists = await User.get_by_field("username", username);
+	if (is_exists != null)
 		return [ false, "Username already used."]
 	return [ true, undefined ];
 }
@@ -49,8 +47,8 @@ async function check_email( email: string ): Promise<[boolean, string | undefine
 
 	if (!re_email.test(email))
 		return [ false, "Wrong email format" ];
-	const is_exists = (await db_get_obj_custom("user", "email", email));
-	if (is_exists != null && is_exists['rows'].length != 0)
+	const is_exists = await User.get_by_field("email", email);
+	if (is_exists != null)
 		return [ false, "Email already used."]
 	return [ true, undefined ];
 }

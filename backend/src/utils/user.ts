@@ -1,32 +1,29 @@
-import { compare } from "https://deno.land/x/bcrypt/mod.ts";
+import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { db_get_obj_custom } from '../utils/db_actions.ts';
 import { db_get_user_custom } from '../utils/db_user.ts';
 import { User } from '../types/user.ts';
 
-export async function user_match(email: string, password: string): Promise<[boolean, User | undefined] | null> {
+export async function user_match(email: string, password: string): Promise<{ret_user?: User, err_password?: string, err_email?: string}> {
 	const ret_user = await db_get_user_custom("email", email);
 
 	if (ret_user == null)
-			return null;
+			return {err_email: "Wrong email"};
 	const is_valid_pass = await compare(password, ret_user.password);
 	if (ret_user.email == email && is_valid_pass)
-		return [ true, ret_user ];
-	else
-		return [ false, undefined ];
+		return {ret_user};
+	else if (!is_valid_pass)
+		return {err_password: "Wrong password"};
+	return {err_email: "Wrong email", err_password: "Wrong password"};
 }
 
-export async function user_check(username: string, email: string, password: string): Promise<[boolean, string | undefined]> {
+export async function user_check(username: string, email: string, password: string): Promise<{error: boolean, err_password?:string, err_email?:string, err_username?:string}> {
 	const [ is_valid_username, err_username ] = await check_username(username);
 	const [ is_valid_email, err_email ] = await check_email(email);
-	const [ is_valid_password, err_password ] = await check_password(password, username);
+	const [ is_valid_password, err_password ] = check_password(password, username);
 
-	if (!is_valid_username)
-		return [ false, err_username ];
-	else if (!is_valid_email)
-		return [ false, err_email ];
-	else if (!is_valid_password)
-		return [ false, err_password ];
-	return [ true, undefined ];
+	if (!is_valid_username || !is_valid_email || !is_valid_password)
+		return {error: true, err_password, err_email, err_username}
+	return {error: false}
 }
 
 async function check_username( username: string ): Promise<[boolean, string | undefined]> {

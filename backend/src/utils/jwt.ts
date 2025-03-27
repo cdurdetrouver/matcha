@@ -1,6 +1,6 @@
 import { sign, verify } from 'hono/jwt'
 import { User } from '../types/user.ts';
-import { jwtSecret } from '../main.ts';
+import { JWT_SECRET } from '../secret.ts';
 import { db_get_user } from '../utils/db_user.ts';
 import { getCookie } from 'hono/cookie';
 import { type Context } from "hono";
@@ -47,18 +47,18 @@ export function get_date_token() {
 }
 
 export async function get_refresh_token(user: User) {
-	const token = await sign(get_payload(user.id, user.username, 10080, "refresh"), jwtSecret);
+	const token = await sign(get_payload(user.id, user.username, 10080, "refresh"), JWT_SECRET);
 	return token;
 }
 
 export async function get_access_token(user: User) {
-	const token = await sign(get_payload(user.id, user.username, 5, "acces"), jwtSecret);
+	const token = await sign(get_payload(user.id, user.username, 5, "acces"), JWT_SECRET);
 	return token;
 }
 
 export async function verify_token(token: string): Promise<{message ?: string , id_ret	?: number, token_type ?: string} | null> {
 	try {
-		const payload = await verify(token, jwtSecret);
+		const payload = await verify(token, JWT_SECRET);
 		return {id_ret: Number(payload.id), token_type: String(payload.type)};
 	}
 	catch (error: unknown) {

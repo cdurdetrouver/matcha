@@ -3,13 +3,7 @@
 	import Login from '$lib/components/Login/Login.svelte';
 	import Register from '$lib/components/Login/Register.svelte';
 
-	export let form;
-
 	let tabSet: boolean = true;
-
-	if (form?.page) {
-		tabSet = form?.page == 'login';
-	}
 </script>
 
 <div class="size-full flex items-center justify-center">
@@ -20,9 +14,9 @@
 			<!-- Tab Panels --->
 			<svelte:fragment slot="panel">
 				{#if tabSet === true}
-					<Login {form} />
+					<Login />
 				{:else if tabSet === false}
-					<Register {form} />
+					<Register />
 				{/if}
 			</svelte:fragment>
 		</TabGroup>

@@ -31,3 +31,5 @@ package-lock.json
 # DB
 
 db
+
+google.env.json

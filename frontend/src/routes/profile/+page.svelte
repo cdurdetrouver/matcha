@@ -7,7 +7,8 @@
 
 	async function logout() {
 		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/logout`, {
-			method: "DELETE"
+			method: "DELETE",
+			credentials: "include"
 		});
 		if (res.status !== 200) {
 			const data_res = await res.json();

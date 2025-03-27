@@ -1,7 +1,7 @@
 import { Context, Hono } from 'hono';
 import { GoogleStorage } from 'https://deno.land/x/google_cloud_storage@v0.1.1/mod.ts';
 import serviceAccount from "../../google.env.json" with { type: "json" };
-import { BUCKET_NAME } from "../main.ts";
+import { BUCKET_NAME } from "../secret.ts";
 
 type ServiceAccount = {
     type: string;

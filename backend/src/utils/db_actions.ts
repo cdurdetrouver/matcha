@@ -56,7 +56,7 @@ export async function db_init(): Promise<boolean> {
 
 	if (!result_user || !result_chat || !result_message || !result_notif)
 		return false;
-	db_print_table("user");
+	// db_print_table("user");
 	return true;
 }
 

@@ -1,6 +1,6 @@
 import { sign, verify } from 'hono/jwt'
 import { User } from '../types/user.ts';
-import { JWT_SECRET } from '../main.ts';
+import { JWT_SECRET } from '../secret.ts';
 import { db_get_user } from '../utils/db_user.ts';
 import { getCookie } from 'hono/cookie';
 import { type Context } from "hono";

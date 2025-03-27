@@ -36,12 +36,16 @@
 				email,
 				username,
 			};
+
+			return;
 		}
 
 		if (password !== match_password) {
 			form = {
 				incorrect_match: true
 			};
+
+			return;
 		}
 
 		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/register`, {

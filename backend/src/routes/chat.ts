@@ -1,6 +1,4 @@
 import { Hono, type Context } from "hono";
-import { db_get_chat } from '../utils/db_chat.ts';
-import { upgradeWebSocket } from 'hono/deno';
 //import { user_match, user_check } from '../utils/user.ts';
 //import User from '../types/user.ts';
 //import { getCookie, deleteCookie} from 'hono/cookie';
@@ -22,7 +20,7 @@ const app = new Hono()
 //	return response;
 //});
 
-app.get("/ws", async (c) => {
+app.get("/ws", (c) => {
 	const { response, socket } = Deno.upgradeWebSocket(c.req.raw);
   
 	socket.onopen = () => {
@@ -51,11 +49,4 @@ app.notFound((c:Context) => {
 	return c.json({ message: 'Route not Found' }, 404)
 });
 
-async function save_message(message: string, user_id: number, chat_id: number) {
-	
-	console.log(`Saving message: ${message}`);
-
-}
-
 export default app
-

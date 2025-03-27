@@ -5,12 +5,8 @@ import user from './routes/user.ts';
 import chat from './routes/chat.ts';
 import upload from './routes/upload.ts';
 import type { JwtVariables } from 'hono/jwt';
-import { SignatureKey } from "hono/utils/jwt/jws";
 
 const app = new Hono<{ Variables: JwtVariables }>();
-
-export const JWT_SECRET = Deno.env.get('JWT_SECRET') as SignatureKey ?? 'JWT_SECRET';
-export const BUCKET_NAME = Deno.env.get('BUCKET_NAME') ?? 'BUCKET_NAME';
 
 const allowedOrigin = 'http://localhost:5173';
 

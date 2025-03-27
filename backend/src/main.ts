@@ -1,9 +1,10 @@
 import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
-import { db_connect, db_init } from './utils/db_actions.ts';
+import { db_connect, init_db } from './utils/db_actions.ts';
 import user from './routes/user.ts';
 import chat from './routes/chat.ts';
 import type { JwtVariables } from 'hono/jwt';
+import { Chats_Users } from "./db_objects/chats_users.ts";
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -27,11 +28,22 @@ app.notFound((c:Context) => {
 	return c.json({ message: 'Not Found' }, 404)
 });
 
-export const client = await db_connect();
+export const client = db_connect();
 
-if (client && await db_init())
-	console.log("Successful database connection and initialization !");
-else
-	console.log("Connection or initialization of the database failed !");
+try {
+	await client.connect();
+	await init_db();
+	console.log("Connected to the database");
+	
+	await Chats_Users.add_user_chat(1, 1);
+	await Chats_Users.add_user_chat(2, 1);
+	await Chats_Users.add_user_chat(3, 1);
 
-Deno.serve(app.fetch);
+	const users = await Chats_Users.get_users_by_chat(1);
+	console.log(users);
+	Deno.serve(app.fetch);
+}
+catch (e) {
+	console.error(e);
+}
+

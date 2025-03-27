@@ -5,7 +5,6 @@
     "crypto-random-string": "^5.0.0",
     "deno": "^2.2.2",
     "hono": "^4.7.2",
-    "ts-postgres": "^2.0.4",
     "ws": "^8.18.1"
   }
 }

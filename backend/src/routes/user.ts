@@ -1,11 +1,9 @@
 import { Hono, type Context } from "hono";
-import { hashSync, genSaltSync } from "https://deno.land/x/bcrypt/mod.ts";
+import { hashSync, genSaltSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { user_match, user_check } from '../utils/user.ts';
-import { User } from '../types/user.ts';
+import { User } from '../db_objects/user.ts';
 import { getCookie, deleteCookie} from 'hono/cookie';
 import { get_access_token, get_refresh_token, verify_token, check_cookies } from '../utils/jwt.ts';
-import { db_post_obj, db_delete_obj, db_put_obj } from '../utils/db_actions.ts';
-import { db_get_user, db_get_user_custom } from '../utils/db_user.ts';
 
 
 const app = new Hono()
@@ -31,12 +29,12 @@ app.get('/refresh_token/', async (c: Context) => {
 	const tokenResult = await verify_token(refresh_token);
 		if (!tokenResult )
 			return c.json({message: "Acces token provided not valid"}, 401);
-	const {message, id_ret, token_type} = tokenResult;
+	if ('message' in tokenResult)
+		return c.json({message: tokenResult.message}, 401);
+	const {id_ret, token_type} = tokenResult;
 	if (token_type != "refresh" || id_ret == undefined)
 		return c.json({ message: "Wrong token type provided."}, 401);
-	if (message)
-		return c.json({message: message}, 401);
-	const user_info = await db_get_user(id_ret);
+	const user_info = await User.get_by_id(id_ret);
 	if (user_info == null)
 		return c.json({ message: "User not found !"}, 404);
 	 const access_token = await get_access_token(user_info);
@@ -89,12 +87,12 @@ app.post('/register', async (c:Context) => {
 	
 	const hash_pass = hashSync(password, saltRounds);
 	const user_register = new User(username, hash_pass, email);
-	const ret_user = await db_post_obj("user", user_register);
-	if (ret_user == false)
+	try {
+		await user_register.create();
+	} catch (_e) {
 		return c.json({ message: 'User creation failed!'}, 500);
-	const user_get = await db_get_user_custom("email", email);
-	if (user_get == null)
-		return c.json({ message: 'User creation failed!'}, 500);
+	}
+	const user_get = user_register;
 	const access_token = await get_access_token(user_get);
 	const refresh_token = await get_refresh_token(user_get);
 	
@@ -121,10 +119,12 @@ app.put('/:id', async (c:Context) => {
 
 	const saltRounds = genSaltSync(12);
 	const hash_pass = hashSync(body.password, saltRounds);
-	user.email, user.password, user.email = hash_pass, body.email;
-	const ret_user = await db_put_obj("user", id, user);
-	if (ret_user == false)
-		return c.json({ message: 'User update user failed!'}, 500);
+	user.password, user.email = hash_pass, body.email;
+	try {
+		await user.save();
+	} catch (_e) {
+		return c.json({ message: 'User update failed!'}, 500);
+	}
 	return c.json({ message: 'User updated!'}, 200);
 });
 
@@ -149,9 +149,11 @@ app.delete('/:id', async (c:Context) => {
 	if (cookies != true)
 		return c.json({message: cookies}, 401);
 
-	const user_info = await db_delete_obj("user", id);
-	if (user_info == false)
+	try {
+		await User.delete(id);
+	} catch (_e) {
 		return c.json({ message: 'User deletion failed!'}, 500);
+	}
 	return c.json({ message: 'User Deleted'}, 200);
 });
 

@@ -29,14 +29,13 @@ const app = new Hono();
 
 const storage = new GoogleStorage(
     serviceAccount as ServiceAccount,
+
     "https://www.googleapis.com/auth/devstorage.full_control",
     {
         name: BUCKET_NAME,
         region: "asia-northeast3",
     }
 );
-
-
 
 app.post('/', async (c : Context) => {
     try {

@@ -2,22 +2,6 @@
 	import HomeHero from '$lib/components/Home/Hero.svelte';
 	import HomePlayground from '$lib/components/Home/Playground.svelte';
 	import Footer from '$lib/components/Home/Footer.svelte';
-	import { onMount } from 'svelte';
-
-	onMount(() => {
-		const socket = new WebSocket('ws://localhost:8000/api/chat/ws');
-
-		// Connection opened
-		socket.addEventListener('open', function (event) {
-			console.log("It's open");
-		});
-
-		// Listen for messages
-		socket.addEventListener('message', function (event) {
-			console.log(event.data);
-		});
-
-	});
 </script>
 
 <header id="hero" class="bg-surface-100-800-token hero-gradient">

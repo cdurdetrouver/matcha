@@ -6,12 +6,25 @@
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
 	import { autoModeWatcher } from '@skeletonlabs/skeleton';
+	import { onMount } from 'svelte';
+	import { PUBLIC_WEBSOCKET_HOST } from '$env/static/public';
+	import type { Notif } from '$lib/types/notif.ts';
 
 	initializeStores();
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
 	export let data;
 
+	let socket;
+	let notifs: Notif[] = [];
+
+	onMount(() => {
+		socket = new WebSocket(PUBLIC_WEBSOCKET_HOST + '/api/notif/ws');
+
+		socket.onmessage = (event) => {
+			console.log(event.data);
+		};
+	});
 </script>
 
 <svelte:head>
@@ -25,7 +38,7 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<MainAppBar user={data.user} notifs={data.notifs} />
+		<MainAppBar user={data.user} {notifs} />
 	</svelte:fragment>
 	<slot />
 </AppShell>

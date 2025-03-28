@@ -1,42 +1,56 @@
-import { sign, verify } from 'hono/jwt'
+import { sign, verify } from 'hono/jwt';
 import { User } from '../db_objects/user.ts';
 import { JWT_SECRET } from '../secret.ts';
 import { getCookie } from 'hono/cookie';
-import { type Context } from "hono";
-import { JWTPayload } from "hono/utils/jwt/types";
-import { ContentfulStatusCode } from "hono/utils/http-status";
+import { type Context } from 'hono';
+import { JWTPayload } from 'hono/utils/jwt/types';
+import { ContentfulStatusCode } from 'hono/utils/http-status';
 
+export async function check_cookies(c: Context): Promise<{
+	message?: string;
+	ret_val?: ContentfulStatusCode;
+	user: User | null;
+}> {
+	const access_token = getCookie(c).access_token;
 
-export async function check_cookies(c: Context, id: number, id_nonblock?: boolean): Promise<{cookies: string | boolean, ret_val: ContentfulStatusCode | undefined, user: User | null}> {
-		const access_token = await getCookie(c).access_token;
-
-		if (id == undefined)
-			return {cookies: "No id provided.", ret_val: 401, user: null};
-		if (!access_token)
-			return {cookies: "No acces token provided", ret_val: 401, user: null};
-		const tokenResult = await verify_token(access_token);
-		if (!tokenResult )
-			return {cookies: "Acces token provided not valid", ret_val: 401, user: null};
-		if ('message' in tokenResult)
-			return {cookies: tokenResult.message, ret_val: 401, user: null};
-		const {id_ret, token_type} = tokenResult;
-		if (token_type != "acces")
-			return {cookies: "Wrong token type provided", ret_val: 401, user: null};
-		const user_info = await User.get_by_id(id_ret);
-		if (user_info == null)
-			return {cookies: "User not found !", ret_val: 404, user: null};
-		if (!id_nonblock && user_info.id != id_ret)
-			return {cookies: "Trying to acces to unauthorized data !", ret_val: 401, user: null};
-		return {cookies: true, ret_val: undefined, user: user_info};
+	if (!access_token)
+		return { message: 'No acces token provided', ret_val: 401, user: null };
+	const tokenResult = await verify_token(access_token);
+	if (!tokenResult)
+		return {
+			message: 'Acces token provided not valid',
+			ret_val: 401,
+			user: null,
+		};
+	const { message, id_ret, token_type } = tokenResult;
+	if (message) return { message: message, ret_val: 401, user: null };
+	if (token_type != 'acces')
+		return {
+			message: 'Wrong token type provided',
+			ret_val: 401,
+			user: null,
+		};
+	try {
+		const user_info = await User.get_by_id(Number(id_ret));
+		return { user: user_info };
+	} catch (_error) {
+		return { message: 'User not found !', ret_val: 404, user: null };
+	}
 }
 
-function get_payload(id: number, username: string, time: number, type: string): JWTPayload {
-	return ({"id": `${id}`, 
-			"username": `${username}`,
-			"type": `${type}`,
-			"exp": Math.floor(Date.now() / 1000) + (60 * time),
-			"nbf": Math.floor(Date.now() / 1000)
-		});
+function get_payload(
+	id: number,
+	username: string,
+	time: number,
+	type: string
+): JWTPayload {
+	return {
+		id: `${id}`,
+		username: `${username}`,
+		type: `${type}`,
+		exp: Math.floor(Date.now() / 1000) + 60 * time,
+		nbf: Math.floor(Date.now() / 1000),
+	};
 }
 
 export function get_date_token() {
@@ -46,21 +60,28 @@ export function get_date_token() {
 }
 
 export async function get_refresh_token(user: User) {
-	const token = await sign(get_payload(user.id, user.username, 10080, "refresh"), JWT_SECRET);
+	const token = await sign(
+		get_payload(user.id, user.username, 10080, 'refresh'),
+		JWT_SECRET
+	);
 	return token;
 }
 
 export async function get_access_token(user: User) {
-	const token = await sign(get_payload(user.id, user.username, 5, "acces"), JWT_SECRET);
+	const token = await sign(
+		get_payload(user.id, user.username, 5, 'acces'),
+		JWT_SECRET
+	);
 	return token;
 }
 
-export async function verify_token(token: string): Promise<{message: string } | {id_ret	: number, token_type : string } | null> {
+export async function verify_token(
+	token: string
+): Promise<{ message?: string; id_ret?: number; token_type?: string } | null> {
 	try {
 		const payload = await verify(token, JWT_SECRET);
-		return {id_ret: Number(payload.id), token_type: String(payload.type)};
-	}
-	catch (error: unknown) {
+		return { id_ret: Number(payload.id), token_type: String(payload.type) };
+	} catch (error: unknown) {
 		if (error instanceof Error) {
 			return { message: error.name };
 		}

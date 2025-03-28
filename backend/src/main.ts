@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { init_db } from './utils/db_actions.ts';
 import user from './routes/user.ts';
 import chat from './routes/chat.ts';
+import notif from './routes/notif.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 
@@ -10,9 +11,11 @@ const app = new Hono<{ Variables: JwtVariables }>();
 
 const allowedOrigin = 'http://localhost:5173';
 
-app.use(
-	'*',
-	cors({
+app.use('*', (c, next) => {
+	if (c.req.header('upgrade')?.toLowerCase() === 'websocket') {
+		return next();
+	}
+	return cors({
 		origin: allowedOrigin,
 		allowHeaders: [
 			'Origin',
@@ -26,12 +29,12 @@ app.use(
 		exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
 		maxAge: 600,
 		credentials: true,
-	})
-);
+	})(c, next);
+});
 
 app.route('/api/user', user);
-
 app.route('/api/chat', chat);
+app.route('/api/notif', notif);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);

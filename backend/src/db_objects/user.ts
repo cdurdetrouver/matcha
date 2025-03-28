@@ -137,6 +137,16 @@ export class User {
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
+			created_at: this.created_at,
+			avatar: this.avatar,
+		};
+		return user;
+	}
+
+	serialize_me(): UserType {
+		const user: UserType = {
+			username: this.username,
+			id: this.id,
 			email: this.email,
 			created_at: this.created_at,
 			avatar: this.avatar,

@@ -14,15 +14,12 @@ import {
 import { Chats_Users } from '../db_objects/chats_users.ts';
 import { Chat } from '../db_objects/chats.ts';
 import { User } from '../db_objects/user.ts';
+import { Block_Users } from "../db_objects/block_users.ts";
+import { ChatType } from "../types/chat.ts";
 
 const app = new Hono();
 
-app.all('/chat', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.get('/chat/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
+app.get('/chats', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
@@ -30,14 +27,13 @@ app.get('/chat/:id', async (c: Context) => {
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
 
-	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
-
 	const chats_ids = await Chats_Users.get_chats_by_user(user.id);
 	const chats = await Chat.get_all_by_ids(chats_ids);
-	return c.json({ message: 'User chats found !', chats: chats }, 200);
+	const chats_serialize: ChatType[] = await Promise.all(chats.map(async (chat: Chat) => await chat.serialize()));
+	return c.json({ message: 'User chats found !', chats: chats_serialize }, 200);
 });
 
-app.all('/chat', (c: Context) => {
+app.all('/chats', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
@@ -73,7 +69,7 @@ app.get('/refresh_token', async (c: Context) => {
 		'Set-Cookie',
 		`access_token=${access_token}; HttpOnly; Path=/`
 	);
-	return c.json({ message: 'User logged in!' }, 200);
+	return c.json({ message: 'User logged in!', user:user_info.serialize_me() }, 200);
 });
 
 app.all('/refresh_token', (c: Context) => {
@@ -108,7 +104,7 @@ app.post('/login', async (c: Context) => {
 			`refresh_token=${refresh_token}; HttpOnly; Path=/`
 		);
 		return c.json(
-			{ message: 'User logged in!', user: ret_user.serialize() },
+			{ message: 'User logged in!', user: ret_user.serialize_me() },
 			200
 		);
 	}
@@ -153,7 +149,7 @@ app.post('/register', async (c: Context) => {
 		`refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`
 	);
 	return c.json(
-		{ message: 'User created!', user: user_register.serialize() },
+		{ message: 'User created!', user: user_register.serialize_me() },
 		200
 	);
 });
@@ -173,12 +169,10 @@ app.put('/:id', async (c: Context) => {
 		return c.json({ message: message }, ret_val);
 	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
 
-	const saltRounds = genSaltSync(12);
-	const hash_pass = hashSync(body.password, saltRounds);
-	user.password, (user.email = hash_pass), body.email;
+	user.email = body.email;
 	try {
 		user.save();
-		return c.json({ message: 'User updated!' }, 200);
+		return c.json({ message: 'User updated!', user: user.serialize_me() }, 200);
 	} catch (_e) {
 		return c.json({ message: 'User update failed !' }, 500);
 	}
@@ -191,7 +185,7 @@ app.get('/me', async (c: Context) => {
 	const { message, ret_val, user } = ret_check;
 	if (user == null || message != undefined)
 		return c.json({ message: message }, ret_val);
-	return c.json({ message: 'user found', user: user.serialize() }, 200);
+	return c.json({ message: 'user found', user: user.serialize_me() }, 200);
 });
 
 app.get('/:id', async (c: Context) => {
@@ -233,31 +227,74 @@ app.all('/:id', (c: Context) => {
 app.post('/block_user/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
-	if (ret_check == null)
+	if (ret_check.user == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
 	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
 
-	const user_info = await User.get_by_id(id);
-	if (user_info == undefined)
+	try {
+		await User.get_by_id(id);
+	} catch (_e) {
 		return c.json(
 			{ message: 'The user you try to blocked does not exists !' },
 			404
 		);
+	}
 
 	try {
-		await user.save();
+		await Block_Users.block_user(ret_check.user.id, id);
 	} catch (_e) {
-		return c.json({ message: 'Failed to block user' }, 500);
+		return c.json(
+			{ message: 'Error while blocking the user' },
+			500
+		);
 	}
+
 	return c.json({ message: 'Blocked users list updated' }, 200);
 });
 
 app.all('/block_user/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
+
+app.delete('/unblock_user/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check.user == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
+
+	try {
+		await User.get_by_id(id);
+	} catch (_e) {
+		return c.json(
+			{ message: 'The user you try to unblocked does not exists !' },
+			404
+		);
+	}
+
+	try {
+		await Block_Users.delete_block(id, ret_check.user.id);
+	} catch (_e) {
+		return c.json(
+			{ message: 'Error while unblocking the user' },
+			500
+		);
+	}
+
+	return c.json({ message: 'Blocked users list updated' }, 200);
+});
+
+app.all('/unblock_user/:id', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+//app.post change_password
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Route not Found' }, 404);

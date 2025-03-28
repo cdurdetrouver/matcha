@@ -1,104 +1,142 @@
-import { UserType } from "../types/user.ts";
-import { client } from "../main.ts";
+import { UserType } from '../types/user.ts';
+import { client } from '../main.ts';
 
-const TABLE = "users";
+const TABLE = 'users';
 
 export class User {
 	username: string;
 	password: string;
 	email: string;
-	avatar?: string ;
+	avatar?: string;
 	online: boolean = false;
 	id: number = 0;
 	created_at: number = Date.now();
 
-	[key: string]: unknown;
-	constructor(username: string, password: string, email: string) {
-		this.username = username;
-		this.password = password;
-		this.email = email;
+	constructor(
+		usernameOrOther: string | Partial<User>,
+		password?: string,
+		email?: string
+	) {
+		if (typeof usernameOrOther === 'object' && usernameOrOther !== null) {
+			this.username = usernameOrOther.username!;
+			this.password = usernameOrOther.password!;
+			this.email = usernameOrOther.email!;
+			this.avatar = usernameOrOther.avatar;
+			this.online = usernameOrOther.online ?? false;
+			this.id = usernameOrOther.id ?? 0;
+			this.created_at = usernameOrOther.created_at ?? Date.now();
+		} else {
+			this.username = usernameOrOther;
+			this.password = password!;
+			this.email = email!;
+			this.avatar = undefined;
+			this.online = false;
+			this.id = 0;
+			this.created_at = Date.now();
+		}
 	}
 
-	async save(){
-		await client.queryObject(`
-			UPDATE "${TABLE}"
-			SET
-				username = $1,
-				password = $2,
-				email = $3,
-				photo_id = $4,
-				online = $5,
-				chat_ids = $6,
-				created_at = $7
-			WHERE id = $8;
-		`, [this.username, this.password, this.email, this.photo_id, this.online, this.chat_ids, this.created_at, this.id]);
+	async save() {
+		await client.queryObject(
+			`
+				UPDATE "${TABLE}"
+				SET
+					username = $1,
+					password = $2,
+					email = $3,
+					avatar = $4,
+					online = $5
+				WHERE id = $6;
+			`,
+			[
+				this.username,
+				this.password,
+				this.email,
+				this.avatar,
+				this.online,
+				this.id,
+			]
+		);
 	}
 
-	static async init_table(){
+	static async init_table() {
 		await client.queryObject(`
 			CREATE TABLE IF NOT EXISTS "${TABLE}" (
 				id SERIAL PRIMARY KEY,
-				username TEXT NOT NULL,
-				password TEXT NOT NULL,
-				email TEXT NOT NULL,
-				photo_id TEXT,
-				online BOOLEAN NOT NULL,
-				created_at BIGINT NOT NULL
+				username VARCHAR(255) NOT NULL UNIQUE,
+				password VARCHAR(255) NOT NULL,
+				email VARCHAR(255) NOT NULL UNIQUE,
+				avatar VARCHAR(255) DEFAULT NULL,
+				online BOOLEAN DEFAULT FALSE,
+				created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 			);
 		`);
 	}
 
-	async create(){
-		const res = await client.queryObject<{id :number}>(`
-			INSERT INTO "${TABLE}" (username, password, email, photo_id, online, chat_ids, created_at) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-			RETURNING id
-		`, [this.username, this.password, this.email, this.photo_id, this.online, this.chat_ids, this.created_at]);
+	async create() {
+		const res = await client.queryObject<{ id: number }>(
+			`
+				INSERT INTO "${TABLE}" (username, password, email, avatar, online) 
+				VALUES ($1, $2, $3, $4, $5)
+				RETURNING id
+	 		`,
+			[this.username, this.password, this.email, this.avatar, this.online]
+		);
 		this.id = res.rows[0].id;
 	}
 
-	static async delete(id:number){
-		await client.queryObject(`
-			DELETE FROM "${TABLE}" WHERE id = $1;
-		`, [id]);
+	static async delete(id: number) {
+		await client.queryObject(
+			`
+				DELETE FROM "${TABLE}" WHERE id = $1;
+			`,
+			[id]
+		);
 	}
 
-	static async get_by_id(id:number): Promise<User | null> {
-		const res = await client.queryObject<User>(`
-			SELECT * FROM "${TABLE}" WHERE id = $1;
-		`, [id]);
+	static async get_by_id(id: number): Promise<User> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT * FROM "${TABLE}" WHERE id = $1;
+			`,
+			[id]
+		);
 		const user = res.rows[0];
-		if (user == undefined)
-			return null;
-		return user;
+		return new User(user);
 	}
 
-	static async get_all_by_ids(ids:number[]): Promise<User[]> {
-		const res = await client.queryObject<User>(`
-			SELECT * FROM "${TABLE}" WHERE id = ANY($1);
-		`, [ids]);
-		const users = res.rows;
-		return users;
+	static async get_all_by_ids(ids: number[]): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT * FROM "${TABLE}" WHERE id = ANY($1);
+			`,
+			[ids]
+		);
+		return res.rows.map((row) => new User(row));
 	}
 
-	static async get_by_field(field_name:string, field_value:string): Promise<User | null> {
-		const res = await client.queryObject<User>(`
-			SELECT * FROM "${TABLE}" WHERE ${field_name} = $1;
-		`, [field_value]);
+	static async get_by_field(
+		field_name: string,
+		field_value: string
+	): Promise<User> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT * FROM "${TABLE}" WHERE ${field_name} = $1;
+			`,
+			[field_value]
+		);
 		const user = res.rows[0];
-		if (user == undefined)
-			return null;
-		return user;
+		return new User(user);
 	}
 
 	serialize(): UserType {
-		const user:UserType = {
+		const user: UserType = {
 			username: this.username,
 			id: this.id,
 			email: this.email,
 			created_at: this.created_at,
 			avatar: this.avatar,
-		}
+		};
 		return user;
 	}
 }

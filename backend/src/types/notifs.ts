@@ -1,3 +1,11 @@
+export type NotifType = {
+	content: string;
+	redirect: string;
+	id: number;
+	read: boolean;
+	send_at: number;
+};
+
 // export class Notif {
 // 	name: string;
 // 	content: string;

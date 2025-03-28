@@ -102,6 +102,8 @@ export class User {
 			[id]
 		);
 		const user = res.rows[0];
+		if (user == undefined)
+			throw Error();
 		return new User(user);
 	}
 
@@ -126,6 +128,8 @@ export class User {
 			[field_value]
 		);
 		const user = res.rows[0];
+		if (user == undefined)
+			throw Error();
 		return new User(user);
 	}
 

@@ -59,7 +59,10 @@ export class Chat {
 			`,
 			[this.name, this.avatar]
 		);
-		this.id = res.rows[0].id;
+		const chat = res.rows[0];
+		if (chat == undefined)
+			throw Error();
+		this.id = chat.id;
 	}
 
 	static async delete(id: number) {
@@ -79,6 +82,8 @@ export class Chat {
 			[id]
 		);
 		const chat = res.rows[0];
+		if (chat == undefined)
+			throw Error();
 		return new Chat(chat);
 	}
 
@@ -103,6 +108,8 @@ export class Chat {
 			[field_value]
 		);
 		const chat = res.rows[0];
+		if (chat == undefined)
+			throw Error();
 		return chat;
 	}
 

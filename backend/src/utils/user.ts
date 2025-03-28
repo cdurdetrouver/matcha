@@ -5,13 +5,16 @@ export async function user_match(
 	email: string,
 	password: string
 ): Promise<{ ret_user?: User; err_password?: string; err_email?: string }> {
-	const ret_user = await User.get_by_field('email', email);
+	let ret_user:User;
+	try {
+		ret_user = await User.get_by_field('email', email);
+	} catch (_e) {
+		return { err_email: 'Wrong email' };
+	}
 
-	if (ret_user == null) return { err_email: 'Wrong email' };
 	const is_valid_pass = await compare(password, ret_user.password);
-	if (ret_user.email == email && is_valid_pass) return { ret_user };
-	else if (!is_valid_pass) return { err_password: 'Wrong password' };
-	return { err_email: 'Wrong email', err_password: 'Wrong password' };
+	if (!is_valid_pass) return { err_password: 'Wrong password' };
+	return { ret_user };
 }
 
 export async function user_check(

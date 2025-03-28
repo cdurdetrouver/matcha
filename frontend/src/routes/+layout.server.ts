@@ -1,8 +1,8 @@
 import type { Notif } from '$lib/types/notif';
-import type { PersonalUser } from '$lib/types/user';
+import type { User } from '$lib/types/user.js';
 
 export const load = async ({ locals }) => {
-	const user: PersonalUser | null = locals.user;
+	const user: User | null = locals.user;
 
 	let notifs: Notif[] = [
 		{
@@ -18,7 +18,7 @@ export const load = async ({ locals }) => {
 			created_at: 1741609727280
 		}
 	];
-	
+
 	return {
 		user: user,
 		notifs: notifs

@@ -3,10 +3,10 @@
 	import NotifComponent from './utils/Notif.svelte';
 	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
-	import type { PersonalUser } from '$lib/types/user';
+	import type { User } from '$lib/types/user';
 	import type { Notif } from '$lib/types/notif';
 
-	export let user: PersonalUser | null = null;
+	export let user: User | null = null;
 	export let notifs: Notif[] = [];
 </script>
 

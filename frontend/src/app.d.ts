@@ -1,9 +1,9 @@
-import type { PersonalUser } from '$lib/types/user';
+import type { User } from '$lib/types/user';
 
 declare global {
 	namespace App {
 		interface Locals {
-			user: PersonalUser | null;
+			user: User | null;
 		}
 	}
 }

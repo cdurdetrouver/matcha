@@ -1,19 +1,13 @@
-import { Client } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
-import { User } from "../db_objects/user.ts";
-import { Chats_Users } from "../db_objects/chats_users.ts";
-
-export function db_connect() {
-	const clt = new Client({
-		hostname: 'db',
-		port: 5432,
-		database: 'matcha',
-		user: 'postgresuser',
-		password: 'postgrespassword'
-	});
-	return clt;
-}
+import { User } from '../db_objects/user.ts';
+import { Chats_Users } from '../db_objects/chats_users.ts';
+import { Chat } from '../db_objects/chats.ts';
+import { Message } from '../db_objects/message.ts';
+import { Notif } from '../db_objects/notif.ts';
 
 export async function init_db() {
 	await User.init_table();
+	await Chat.init_table();
 	await Chats_Users.init_table();
+	await Message.init_table();
+	await Notif.init_table();
 }

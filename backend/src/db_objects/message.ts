@@ -73,7 +73,10 @@ export class Message {
 			`,
 			[this.content, this.user_id, this.chat_id, this.type]
 		);
-		this.id = res.rows[0].id;
+		const message = res.rows[0];
+		if (message == undefined)
+			throw Error();
+		this.id = message.id;
 	}
 
 	static async delete(id: number) {
@@ -93,6 +96,8 @@ export class Message {
 			[id]
 		);
 		const message = res.rows[0];
+		if (message == undefined)
+			throw Error();
 		return new Message(message);
 	}
 

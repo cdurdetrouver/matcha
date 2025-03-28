@@ -25,7 +25,6 @@ export class Notif {
 			this.id = contentOrOther.id ?? 0;
 			this.send_at = contentOrOther.send_at ?? Date.now();
 		} else {
-			console.log('notif');
 			this.content = contentOrOther;
 			this.user_id = user_id!;
 			this.redirect = redirect!;
@@ -70,7 +69,10 @@ export class Notif {
 			`,
 			[this.content, this.user_id, this.redirect]
 		);
-		this.id = res.rows[0].id;
+		const notif = res.rows[0];
+		if (notif == undefined)
+			throw Error();
+		this.id = notif.id;
 	}
 
 	static async delete(id: number) {
@@ -90,6 +92,8 @@ export class Notif {
 			[id]
 		);
 		const notif = res.rows[0];
+		if (notif == undefined)
+			throw Error();
 		return new Notif(notif);
 	}
 

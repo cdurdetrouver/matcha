@@ -16,7 +16,6 @@ app.get(
 					ws.close();
 					return;
 				}
-				console.log(ret_check);
 				console.log('Connection opened');
 				ws.send('Hello from server!');
 			},

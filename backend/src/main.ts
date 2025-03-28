@@ -55,19 +55,6 @@ try {
 	await init_db();
 	console.log('Connected to the database');
 
-	//const user1 = new User("test2", "test2", "test2");
-	//await user1.create();
-	//const user2 = new User("test", "test", "test");
-	//await user2.create();
-
-	////console.log(user2);
-
-	//await Block_Users.init_table();
-	//await Block_Users.block_user(user1.id,user2.id);
-
-	console.log(await Block_Users.is_user_blocked_by(1, 2))
-
-
 	Deno.serve(app.fetch);
 } catch (e) {
 	console.error(e);

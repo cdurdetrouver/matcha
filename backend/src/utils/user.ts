@@ -5,7 +5,7 @@ export async function user_match(
 	email: string,
 	password: string
 ): Promise<{ ret_user?: User; err_password?: string; err_email?: string }> {
-	let ret_user:User;
+	let ret_user: User;
 	try {
 		ret_user = await User.get_by_field('email', email);
 	} catch (_e) {

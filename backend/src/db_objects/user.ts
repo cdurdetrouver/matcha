@@ -102,8 +102,7 @@ export class User {
 			[id]
 		);
 		const user = res.rows[0];
-		if (user == undefined)
-			throw Error();
+		if (user == undefined) throw Error();
 		return new User(user);
 	}
 
@@ -128,9 +127,17 @@ export class User {
 			[field_value]
 		);
 		const user = res.rows[0];
-		if (user == undefined)
-			throw Error();
+		if (user == undefined) throw Error();
 		return new User(user);
+	}
+
+	static async getall(): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT * FROM "${TABLE}";
+			`
+		);
+		return res.rows.map((row) => new User(row));
 	}
 
 	serialize(): UserType {

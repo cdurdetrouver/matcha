@@ -33,6 +33,8 @@ app.get(
 
 					connectedUsers.set(user.id, ws);
 
+					connectedUsers.set(user.id, ws);
+
 					user.online = true;
 					user.save().then(async () => {
 						const notifs = await Notif.get_all_by_user_id(user.id);

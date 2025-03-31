@@ -70,8 +70,7 @@ export class Notif {
 			[this.content, this.user_id, this.redirect]
 		);
 		const notif = res.rows[0];
-		if (notif == undefined)
-			throw Error();
+		if (notif == undefined) throw Error();
 		this.id = notif.id;
 	}
 
@@ -92,8 +91,7 @@ export class Notif {
 			[id]
 		);
 		const notif = res.rows[0];
-		if (notif == undefined)
-			throw Error();
+		if (notif == undefined) throw Error();
 		return new Notif(notif);
 	}
 
@@ -111,7 +109,6 @@ export class Notif {
 		const notif: NotifType = {
 			content: this.content,
 			redirect: this.redirect,
-			read: this.read,
 			id: this.id,
 			send_at: this.send_at,
 		};

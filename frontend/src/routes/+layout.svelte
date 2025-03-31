@@ -22,7 +22,12 @@
 		socket = new WebSocket(PUBLIC_WEBSOCKET_HOST + '/api/notif/ws');
 
 		socket.onmessage = (event) => {
-			console.log(event.data);
+			const data = JSON.parse(event.data);
+			console.log(data);
+			if (data.type === 'new')
+				notifs.push(data.notif);
+			else
+				notifs = [...notifs, data.notifs];
 		};
 	});
 </script>

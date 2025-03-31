@@ -12,6 +12,7 @@ export async function check_cookies(c: Context): Promise<{
 	user: User | null;
 }> {
 	const access_token = getCookie(c).access_token;
+	console.log(access_token);
 
 	if (!access_token)
 		return { message: 'No acces token provided', ret_val: 401, user: null };

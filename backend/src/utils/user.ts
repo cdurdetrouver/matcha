@@ -64,9 +64,9 @@ async function check_username(
 		];
 	try {
 		await User.get_by_field('username', username);
-		return [true, undefined];
-	} catch (_e) {
 		return [false, 'Username already used.'];
+	} catch (_e) {
+		return [true, undefined];
 	}
 }
 
@@ -79,9 +79,9 @@ async function check_email(
 
 	try {
 		await User.get_by_field('email', email);
-		return [true, undefined];
-	} catch (_e) {
 		return [false, 'Email already used.'];
+	} catch (_e) {
+		return [true, undefined];
 	}
 }
 

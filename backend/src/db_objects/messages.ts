@@ -111,6 +111,30 @@ export class Message {
 		return res.rows.map((row) => new Message(row));
 	}
 
+	static async get_last_message(chat_id: number): Promise<Message> {
+		const res = await client.queryObject<Message>(
+			`
+				SELECT * FROM "${TABLE}" WHERE send_at = 
+				(SELECT MAX(send_at) FROM ${TABLE}) AND chat_id = $1;
+			`,
+			[chat_id]
+		);
+		const message = res.rows[0];
+		if (message == undefined)
+			throw Error();
+		return new Message(message);
+	}
+
+	static async get_10_mess_by_id(message_id: number, chat_id:number): Promise<Message[]> {
+		const res = await client.queryObject<Message>(
+			`
+				SELECT * FROM "${TABLE}" WHERE id < '${message_id}'
+				 AND chat_id = ${chat_id} limit 10;
+			`,
+		);
+		return res.rows.map((row) => new Message(row));
+	}
+
 	async serialize(): Promise<MessageType> {
 		let user;
 		if (this.user_id)

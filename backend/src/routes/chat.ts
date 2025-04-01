@@ -14,18 +14,49 @@ const app = new Hono()
 
 const chan_layer = new Map<number, Set<WSContext<WebSocket>>>();
 
-app.put('/:id', async(c: Context) => {
-	const body = await c.req.json();
-	const id = Number(c.req.param('id'));
+app.get('/:chat_id/:message_id/:after_id', async(c:Context) => {
+	const chat_id = Number(c.req.param('chat_id'));
+	const message_id = Number(c.req.param('message_id'));
+	const after_id: boolean = c.req.param('after_id') === 'true' ? true: false;
+	console.log(after_id)
 	const ret_check = await check_cookies(c);
+	let chat: Chat;
+
+	if (chat_id == undefined || message_id == undefined || after_id == undefined)
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !'}, 400);
 	const { message, ret_val, user } = ret_check;
 	if ( user == null || message != undefined)
 		return c.json({message: message}, ret_val);
-	const chat = await Chat.get_by_id(id);
-	if (chat == null)
+	try {
+		chat = await Chat.get_by_id(chat_id);
+	}
+	catch (_e) {
 		return c.json({message: "Chat not found"}, 404);
+	}
+	const messages = await Message.get_10_mess_by_id(message_id, after_id, chat.id);
+	messages.reverse();
+	const messages_serialized: MessageType[] = await Promise.all(messages.map(async (message: Message) => await message.serialize()));
+	return c.json({history: messages_serialized}, 200);
+});
+
+app.put('/:id', async(c: Context) => {
+	const body = await c.req.json();
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	let chat: Chat;
+
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !'}, 400);
+	const { message, ret_val, user } = ret_check;
+	if ( user == null || message != undefined)
+		return c.json({message: message}, ret_val);
+	try {
+		chat = await Chat.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({message: "Chat not found"}, 404);
+	}
 	chat.name, chat.photo_id = body.name, body.photo_id;
 	await chat.save();
 	return c.json({message: "Chat successfully updated"});
@@ -76,7 +107,7 @@ app.get("/:id", upgradeWebSocket( async (c: Context) => {
 				ws.send(JSON.stringify({error: "Failed to retrived history"}));
 				return ;
 			}
-			const messages = await Message.get_10_mess_by_time(last_message.send_at, false, chat.id);
+			const messages = await Message.get_10_mess_by_id(last_message.id, false, chat.id);
 			messages.reverse();
 			const messages_serialized: MessageType[] = await Promise.all(messages.map(async (message: Message) => await message.serialize()));
 			ws.send(JSON.stringify({history: messages_serialized}));

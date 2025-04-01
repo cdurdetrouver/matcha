@@ -9,6 +9,11 @@ export class User {
 	email: string;
 	avatar?: string;
 	online: boolean = false;
+	complete_profile: boolean = false;
+	gender: string;
+	sexual_preferences: string;
+	interests: string[];
+	photo_ids: string[];
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
 
@@ -23,12 +28,26 @@ export class User {
 			this.email = usernameOrOther.email!;
 			this.avatar = usernameOrOther.avatar;
 			this.online = usernameOrOther.online ?? false;
+			this.complete_profile = usernameOrOther.complete_profile ?? false;
+			this.gender = usernameOrOther.gender ?? "not specified";
+			this.sexual_preferences = usernameOrOther.sexual_preferences ?? "not specified";
+			this.interests = usernameOrOther.interests ?? [];
+			this.photo_ids = usernameOrOther.photo_ids ?? [];
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
 			this.email = email!;
+			this.avatar = undefined;
+			this.online = false;
+			this.complete_profile = false;
+			this.gender = "not specified";
+			this.sexual_preferences = "not specified";
+			this.interests = [];
+			this.photo_ids = [];
+			this.id = 0;
+			this.created_at = Date.now();
 		}
 	}
 

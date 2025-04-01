@@ -125,12 +125,10 @@ export class Message {
 		return new Message(message);
 	}
 
-	static async get_10_mess_by_id(
-		message_id: number, after_id: boolean, chat_id:number): Promise<Message[]> {
-		const c = after_id ? '>' : '<';
+	static async get_10_mess_by_id(message_id: number, chat_id:number): Promise<Message[]> {
 		const res = await client.queryObject<Message>(
 			`
-				SELECT * FROM "${TABLE}" WHERE id ${c} '${message_id}'
+				SELECT * FROM "${TABLE}" WHERE id < '${message_id}'
 				 AND chat_id = ${chat_id} limit 10;
 			`,
 		);

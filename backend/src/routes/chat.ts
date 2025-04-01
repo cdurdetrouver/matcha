@@ -59,7 +59,8 @@ app.put('/:id', async(c: Context) => {
 	catch (_e) {
 		return c.json({message: "Chat not found"}, 404);
 	}
-	chat.name, chat.photo_id = body.name, body.photo_id;
+	chat.name = body.name;
+	chat.photo_id = body.photo_id;
 	await chat.save();
 	return c.json({message: "Chat successfully updated"});
 });

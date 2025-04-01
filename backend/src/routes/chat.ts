@@ -7,6 +7,7 @@ import { Message } from "../db_objects/messages.ts";
 import { Chats_Users } from "../db_objects/chats_users.ts";
 import { upgradeWebSocket } from "hono/deno";
 import { WSContext } from "hono/ws";
+import { MessageType } from "../types/message.ts";
 
 
 const app = new Hono()
@@ -38,17 +39,18 @@ app.get("/:id", upgradeWebSocket( async (c: Context) => {
 	return {
 
 		onOpen: async (_event, ws) => {
+			let last_message: Message;
 			ws.send("WebSocket connection opened");
 			if (ret_check == null) {
-				ws.send('Server cannot perform checks !');
+				ws.send(JSON.stringify({error: 'Server cannot perform checks !'}));
 				return ;
 			}
 			const { message, user, ret_val } = ret_check;
 			if (message != undefined || user == null) {
 				if (message)
-					ws.send(message);
+					ws.send(JSON.stringify({error: message}));
 				else
-					ws.send('Server cannot perform checks !');
+					ws.send(JSON.stringify({error: 'Server cannot perform checks !'}));
 				ws.close(ret_val);
 				return ;
 			}
@@ -56,23 +58,33 @@ app.get("/:id", upgradeWebSocket( async (c: Context) => {
 				chat = await Chat.get_by_id(id);
 			}
 			catch (_e) {
-				ws.send("chat not found");
+				ws.send(JSON.stringify({error: "chat not found"}));
 				ws.close(404);
 				return ;
 			}
 			if (!((await Chats_Users.get_chats_by_user(user.id))).includes(chat.id)) {
-				ws.send("User not in the chat");
+				ws.send(JSON.stringify({error: "User not in the chat"}));
 				ws.close(403);
 				return ;
 			}
 			user_chat = new User(user);
 			joinGroup(chat.id, ws, chan_layer);
-			ws.send("Welcome to your WebSocket!");
+			try {
+				last_message = await Message.get_last_message(chat.id);
+			}
+			catch (_e) {
+				ws.send(JSON.stringify({error: "Failed to retrived history"}));
+				return ;
+			}
+			const messages = await Message.get_10_mess_by_time(last_message.send_at, false, chat.id);
+			messages.reverse();
+			const messages_serialized: MessageType[] = await Promise.all(messages.map(async (message: Message) => await message.serialize()));
+			ws.send(JSON.stringify({history: messages_serialized}));
 		},
 
 		onMessage: async (event, ws) => {
 			if (typeof event.data != 'string') {
-				ws.send('bad message format')
+				ws.send(JSON.stringify({error: 'bad message format'}));
 				return ;
 			}
 			const message: Message = new Message (JSON.parse(event.data));
@@ -83,14 +95,13 @@ app.get("/:id", upgradeWebSocket( async (c: Context) => {
 			}
 			catch (_e) {
 				console.log(_e);
-				ws.send("Failed to store message");
+				ws.send(JSON.stringify({error: "Failed to store message"}));
 				return ;
 			}
 			try {
 				const full_message = await Message.get_by_id(message.id);
 				console.log(full_message);
 				await broadcastToGroup(chat.id, full_message, chan_layer);
-				console.log(await Message.get_10_mess_by_time(full_message.send_at, false, chat.id));
 			}
 			catch (_e) {
 				console.log(_e);

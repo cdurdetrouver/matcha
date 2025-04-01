@@ -9,7 +9,7 @@ export class Notif {
 	redirect: string;
 	read: boolean = false;
 	id: number = 0;
-	send_at: number = Date.now();
+	send_at: bigint = BigInt(Date.now());
 
 	[key: string]: unknown;
 	constructor(
@@ -23,7 +23,7 @@ export class Notif {
 			this.redirect = contentOrOther.redirect!;
 			this.read = contentOrOther.read ?? false;
 			this.id = contentOrOther.id ?? 0;
-			this.send_at = contentOrOther.send_at ?? Date.now();
+			this.send_at = contentOrOther.send_at ?? BigInt(Date.now());
 		} else {
 			this.content = contentOrOther;
 			this.user_id = user_id!;
@@ -53,7 +53,7 @@ export class Notif {
 				user_id INT NOT NULL,
 				content TEXT NOT NULL,
 				redirect VARCHAR(255) DEFAULT NULL,
-				send_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+				send_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 				read BOOLEAN DEFAULT FALSE,
 				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 			);
@@ -110,7 +110,7 @@ export class Notif {
 			content: this.content,
 			redirect: this.redirect,
 			id: this.id,
-			send_at: this.send_at,
+			send_at: Number(this.send_at),
 		};
 		return notif;
 	}

@@ -1,6 +1,6 @@
 export type Notif = {
-	id: number;
-	message: string;
+	content: string;
 	redirect: string;
-	created_at: number;
-}
+	id: number;
+	send_at: number;
+};

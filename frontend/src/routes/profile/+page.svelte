@@ -1,23 +1,13 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { PUBLIC_BACKEND_HOST } from "$env/static/public";
-	import { DeleteCookie } from "$lib/script/cookies";
+	import { goto } from '$app/navigation';
+	import { logoutUser } from '$lib/script/request';
 
-	let message:string = "";
+	let message: string = '';
 
 	async function logout() {
-		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/logout`, {
-			method: "DELETE",
-			credentials: "include"
-		});
-		if (res.status !== 200) {
-			const data_res = await res.json();
-			message = data_res.message;
-			return;
-		}
-		DeleteCookie("user");
-		goto("/");
-	};
+		await logoutUser();
+		goto('/');
+	}
 </script>
 
 <div class="size-full flex items-center justify-center">

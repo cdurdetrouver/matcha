@@ -12,7 +12,7 @@ export class Chat {
 	name?: string;
 	avatar?: string;
 	id: number = 0;
-	created_at: number = Date.now();
+	created_at: bigint = BigInt(Date.now());
 
 	[key: string]: unknown;
 	constructor(nameOrOther?: string | Partial<Chat>, avatar?: string) {
@@ -20,12 +20,10 @@ export class Chat {
 			this.name = nameOrOther.name;
 			this.avatar = nameOrOther.avatar;
 			this.id = nameOrOther.id ?? 0;
-			this.created_at = nameOrOther.created_at ?? Date.now();
+			this.created_at = nameOrOther.created_at ?? BigInt(Date.now());
 		} else {
 			this.name = nameOrOther;
 			this.avatar = avatar;
-			this.id = 0;
-			this.created_at = Date.now();
 		}
 	}
 
@@ -48,7 +46,7 @@ export class Chat {
 				id SERIAL PRIMARY KEY,
 				name VARCHAR(255) DEFAULT NULL,
 				avatar VARCHAR(255) DEFAULT NULL,
-				created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);
 	}
@@ -63,8 +61,7 @@ export class Chat {
 			[this.name, this.avatar]
 		);
 		const chat = res.rows[0];
-		if (chat == undefined)
-			throw Error();
+		if (chat == undefined) throw Error();
 		this.id = chat.id;
 	}
 
@@ -85,8 +82,7 @@ export class Chat {
 			[id]
 		);
 		const chat = res.rows[0];
-		if (chat == undefined)
-			throw Error();
+		if (chat == undefined) throw Error();
 		return new Chat(chat);
 	}
 
@@ -111,8 +107,7 @@ export class Chat {
 			[field_value]
 		);
 		const chat = res.rows[0];
-		if (chat == undefined)
-			throw Error();
+		if (chat == undefined) throw Error();
 		return chat;
 	}
 
@@ -130,7 +125,7 @@ export class Chat {
 			name: this.name,
 			id: this.id,
 			users: users_serialize,
-			created_at: this.created_at,
+			created_at: Number(this.created_at),
 			avatar: this.avatar,
 			LastMessage: last_message,
 		};

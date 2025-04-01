@@ -10,7 +10,7 @@ export class Message {
 	chat_id: number;
 	type: string;
 	id: number = 0;
-	send_at: number = Date.now();
+	send_at: bigint = BigInt(Date.now());
 
 	[key: string]: unknown;
 	constructor(
@@ -25,14 +25,12 @@ export class Message {
 			this.chat_id = contentOrOther.chat_id!;
 			this.type = contentOrOther.type!;
 			this.id = contentOrOther.id ?? 0;
-			this.send_at = contentOrOther.send_at ?? Date.now();
+			this.send_at = contentOrOther.send_at ?? BigInt(Date.now());
 		} else {
 			this.content = contentOrOther;
 			this.chat_id = chat_id!;
 			this.type = type!;
 			this.user_id = user_id;
-			this.id = 0;
-			this.send_at = Date.now();
 		}
 	}
 
@@ -59,7 +57,7 @@ export class Message {
 				user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
 				chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE,
 				type VARCHAR(255) NOT NULL,
-				send_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+				send_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);
 	}
@@ -74,8 +72,7 @@ export class Message {
 			[this.content, this.user_id, this.chat_id, this.type]
 		);
 		const message = res.rows[0];
-		if (message == undefined)
-			throw Error();
+		if (message == undefined) throw Error();
 		this.id = message.id;
 	}
 
@@ -96,8 +93,7 @@ export class Message {
 			[id]
 		);
 		const message = res.rows[0];
-		if (message == undefined)
-			throw Error();
+		if (message == undefined) throw Error();
 		return new Message(message);
 	}
 
@@ -145,7 +141,7 @@ export class Message {
 			author: user,
 			type: this.type,
 			id: this.id,
-			send_at: this.send_at,
+			send_at: Number(this.send_at),
 		};
 		return message;
 	}

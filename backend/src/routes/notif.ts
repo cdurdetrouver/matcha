@@ -3,18 +3,22 @@ import { upgradeWebSocket } from 'hono/deno';
 import { check_cookies } from '../utils/jwt.ts';
 import { Notif } from '../db_objects/notif.ts';
 import { WSContext } from 'hono/ws';
+import { User } from '../db_objects/user.ts';
 
 const app = new Hono();
+interface ExtendedWebSocket extends WSContext<WebSocket> {
+	user: User;
+}
+
 const connectedUsers = new Map<number, WSContext<WebSocket>>();
 
 app.get(
 	'/ws',
-	upgradeWebSocket(async (c) => {
-		const ret_check = await check_cookies(c);
-
-		return {
-			onOpen: async (_event, ws) => {
-				if (ret_check.user == null) {
+	upgradeWebSocket((c) => {
+		return check_cookies(c).then((ret_check) => ({
+			onOpen: (_event, ws) => {
+				const { user } = ret_check;
+				if (user == null) {
 					ws.send(
 						JSON.stringify({
 							type: 'error',
@@ -25,19 +29,24 @@ app.get(
 					return;
 				}
 				try {
-					const { user } = ret_check;
-					ws.user = user;
+					(ws as ExtendedWebSocket).user = user;
 
 					connectedUsers.set(user.id, ws);
 
 					user.online = true;
-					await user.save();
-					const notifs = await Notif.get_all_by_user_id(user.id);
-					const notifs_serialize = notifs.map((notif: Notif) => {
-						notif.serialize();
+					user.save().then(async () => {
+						const notifs = await Notif.get_all_by_user_id(user.id);
+						const notifs_serialize = notifs.map((notif: Notif) => {
+							return notif.serialize();
+						});
+						ws.send(
+							JSON.stringify({
+								type: 'init',
+								notifs: notifs_serialize,
+							})
+						);
+						// await post_notif(user.id, 'Welcome to Matcha!', '/');
 					});
-					ws.send(JSON.stringify({ notifs: notifs_serialize }));
-					post_notif(user.id, 'test', 'test');
 				} catch (e) {
 					console.error(e);
 					ws.send(
@@ -63,7 +72,7 @@ app.get(
 				}
 			},
 			onClose: async (_event, ws) => {
-				const user = ws.user;
+				const user = (ws as ExtendedWebSocket).user;
 				if (user) {
 					user.online = false;
 					await user.save();
@@ -71,7 +80,7 @@ app.get(
 					connectedUsers.delete(user.id);
 				}
 			},
-		};
+		}));
 	})
 );
 

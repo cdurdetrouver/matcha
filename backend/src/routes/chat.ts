@@ -30,7 +30,7 @@ app.put('/:id', async(c: Context) => {
 	return c.json({message: "Chat successfully updated"});
 });
 
-app.get("/:id", upgradeWebSocket( async (c) => {
+app.get("/:id", upgradeWebSocket( async (c: Context) => {
 	let chat: Chat, user_chat : User;
 	
 	const id = Number(c.req.param('id'));
@@ -43,12 +43,13 @@ app.get("/:id", upgradeWebSocket( async (c) => {
 				ws.send('Server cannot perform checks !');
 				return ;
 			}
-			const { message, user } = ret_check;
+			const { message, user, ret_val } = ret_check;
 			if (message != undefined || user == null) {
 				if (message)
 					ws.send(message);
 				else
 					ws.send('Server cannot perform checks !');
+				ws.close(ret_val);
 				return ;
 			}
 			try {
@@ -56,13 +57,15 @@ app.get("/:id", upgradeWebSocket( async (c) => {
 			}
 			catch (_e) {
 				ws.send("chat not found");
+				ws.close(404);
 				return ;
 			}
 			if (!((await Chats_Users.get_chats_by_user(user.id))).includes(chat.id)) {
 				ws.send("User not in the chat");
+				ws.close(403);
 				return ;
 			}
-			user_chat = user
+			user_chat = new User(user);
 			joinGroup(chat.id, ws, chan_layer);
 			ws.send("Welcome to your WebSocket!");
 		},
@@ -73,7 +76,6 @@ app.get("/:id", upgradeWebSocket( async (c) => {
 				return ;
 			}
 			const message: Message = new Message (JSON.parse(event.data));
-			console.log("user_chat", user_chat)
 			message.user_id = user_chat.id;
 			message.chat_id = chat.id;
 			try {
@@ -88,6 +90,7 @@ app.get("/:id", upgradeWebSocket( async (c) => {
 				const full_message = await Message.get_by_id(message.id);
 				console.log(full_message);
 				await broadcastToGroup(chat.id, full_message, chan_layer);
+				console.log(await Message.get_10_mess_by_time(full_message.send_at, false, chat.id));
 			}
 			catch (_e) {
 				console.log(_e);

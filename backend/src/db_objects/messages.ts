@@ -111,6 +111,19 @@ export class Message {
 		return res.rows.map((row) => new Message(row));
 	}
 
+	static async get_10_mess_by_time(
+		time: number, After_Tstamp: boolean, chat_id:number) {
+
+		const date = (new Date(time)).toISOString()
+		const c = After_Tstamp ? '>' : '<';
+		const res = await client.queryObject<Message>(
+			`
+				SELECT * FROM "${TABLE}" WHERE send_at ${c} '${date}' AND chat_id = ${chat_id} limit 10;
+			`,
+		);
+		return res.rows.map((row) => new Message(row));
+	}
+
 	async serialize(): Promise<MessageType> {
 		let user;
 		if (this.user_id)

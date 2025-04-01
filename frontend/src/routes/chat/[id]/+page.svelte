@@ -1,5 +1,7 @@
 <script lang="ts">
 	import Chat from '$lib/components/chat/Chat.svelte';
+	import { PUBLIC_WEBSOCKET_HOST } from '$env/static/public';
+	import { onMount } from 'svelte';
 
 	export let data;
 
@@ -13,8 +15,28 @@
 			"card w-fit p-4 rounded-tl-none space-y-2 variant-soft"
 		]
 	}
-
 	let currentMessage = '';
+	let socket:WebSocket;
+
+	onMount(() => {
+		socket = new WebSocket(PUBLIC_WEBSOCKET_HOST + `/api/chat/${data.chatid}`);
+
+		socket.onopen = (event) => {
+			console.log("socket open");
+		}
+		socket.onmessage = (event) => {
+			console.log(event.data);
+		};
+		socket.onclose = (event) => {
+			console.log("socket closed");
+		}
+	});
+
+	function sendMessage()
+	{
+		if (socket && currentMessage != '')
+			socket.send(JSON.stringify({ type: 'message', content: currentMessage}));
+	}
 </script>
 
 <main class="h-[92vh] flex flex-col">
@@ -27,7 +49,7 @@
 		</ul>
 	</section>
 	<div class="h-fit p-4">
-		<div class="input-group input-group-divider grid-cols-[auto_1fr_auto] rounded-container-token">
+		<form class="input-group input-group-divider grid-cols-[auto_1fr_auto] rounded-container-token" on:submit={sendMessage}>
 			<button class="input-group-shim">+</button>
 			<textarea
 				bind:value={currentMessage}
@@ -37,7 +59,7 @@
 				placeholder="Write a message..."
 				rows="1"
 			/>
-			<button class="variant-filled-primary">Send</button>
-		</div>
+			<button class="variant-filled-primary" type="submit">Send</button>
+		</form>
 	</div>
 </main>

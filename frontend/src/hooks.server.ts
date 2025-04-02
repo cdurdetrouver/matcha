@@ -23,10 +23,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.user = user;
 
-	if (!user || !user.completed) {
-		if (!isPathAllowed(url.pathname)) throw redirect(302, '/complete');
-		else return resolve(event);
-	}
+	// if (!user || !user.completed) {
+	// 	if (!isPathAllowed(url.pathname)) throw redirect(302, '/complete');
+	// 	else return resolve(event);
+	// }
 
 	return resolve(event);
 };

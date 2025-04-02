@@ -1,34 +1,107 @@
 import { Hono, type Context } from 'hono';
 import { upgradeWebSocket } from 'hono/deno';
 import { check_cookies } from '../utils/jwt.ts';
+import { Notif } from '../db_objects/notif.ts';
+import { WSContext } from 'hono/ws';
+import { User } from '../db_objects/user.ts';
 
 const app = new Hono();
+interface ExtendedWebSocket extends WSContext<WebSocket> {
+	user: User;
+}
+
+const connectedUsers = new Map<number, WSContext<WebSocket>>();
 
 app.get(
 	'/ws',
-	upgradeWebSocket(async (c) => {
-		const ret_check = await check_cookies(c);
-
-		return {
+	upgradeWebSocket((c) => {
+		return check_cookies(c).then((ret_check) => ({
 			onOpen: (_event, ws) => {
-				if (ret_check.user == null) {
-					ws.send('Server cannot perform checks !');
+				const { user } = ret_check;
+				if (user == null) {
+					ws.send(
+						JSON.stringify({
+							type: 'error',
+							message: 'Unauthorized',
+						})
+					);
 					ws.close();
 					return;
 				}
-				console.log('Connection opened');
-				ws.send('Hello from server!');
+				try {
+					(ws as ExtendedWebSocket).user = user;
+
+					connectedUsers.set(user.id, ws);
+
+					user.online = true;
+					user.save().then(async () => {
+						const notifs = await Notif.get_all_by_user_id(user.id);
+						const notifs_serialize = notifs.map((notif: Notif) => {
+							return notif.serialize();
+						});
+						ws.send(
+							JSON.stringify({
+								type: 'init',
+								notifs: notifs_serialize,
+							})
+						);
+						// await post_notif(user.id, 'Welcome to Matcha!', '/');
+					});
+				} catch (e) {
+					console.error(e);
+					ws.send(
+						JSON.stringify({
+							type: 'error',
+							message: 'Error while fetching notifications',
+						})
+					);
+					ws.close();
+					return;
+				}
 			},
-			onMessage(event, ws) {
-				console.log(`Message from client: ${event.data}`);
-				ws.send('Hello from server!');
+			onMessage: async (event, ws) => {
+				const data = JSON.parse(String(event.data));
+				if (data.type === 'delete') {
+					await Notif.delete(data.id);
+					ws.send(
+						JSON.stringify({
+							type: 'delete',
+							id: data.id,
+						})
+					);
+				}
 			},
-			onClose: () => {
-				console.log('Connection closed');
+			onClose: async (_event, ws) => {
+				const user = (ws as ExtendedWebSocket).user;
+				if (user) {
+					user.online = false;
+					await user.save();
+
+					connectedUsers.delete(user.id);
+				}
 			},
-		};
+		}));
 	})
 );
+
+export async function post_notif(
+	user_id: number,
+	content: string,
+	redirect: string
+) {
+	const notif = new Notif(content, user_id, redirect);
+	await notif.create();
+
+	const ws = connectedUsers.get(user_id);
+	if (ws) {
+		ws.send(
+			JSON.stringify({
+				type: 'new',
+				notif: notif.serialize(),
+			})
+		);
+	}
+}
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Route not Found' }, 404);

@@ -2,7 +2,6 @@ export type NotifType = {
 	content: string;
 	redirect: string;
 	id: number;
-	read: boolean;
 	send_at: number;
 };
 

@@ -1,7 +1,6 @@
 services:
   frontend:
-    build:
-      ./frontend
+    build: ./frontend
     container_name: frontend
     volumes:
       - ./frontend:/app
@@ -33,8 +32,7 @@ services:
       - matcha.net
 
   backend:
-    build:
-      ./backend
+    build: ./backend
     container_name: backend
     volumes:
       - ./backend:/app
@@ -42,8 +40,6 @@ services:
       - matcha.net
     ports:
       - "8000:8000"
-    environment:
-      - APP_URL=http://localhost:8000
     depends_on:
       db:
         condition: service_healthy

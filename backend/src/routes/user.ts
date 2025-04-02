@@ -14,8 +14,8 @@ import {
 import { Chats_Users } from '../db_objects/chats_users.ts';
 import { Chat } from '../db_objects/chats.ts';
 import { User } from '../db_objects/user.ts';
-import { Block_Users } from "../db_objects/block_users.ts";
-import { ChatType } from "../types/chat.ts";
+import { Block_Users } from '../db_objects/block_users.ts';
+import { ChatType } from '../types/chat.ts';
 
 const app = new Hono();
 
@@ -29,8 +29,13 @@ app.get('/chats', async (c: Context) => {
 
 	const chats_ids = await Chats_Users.get_chats_by_user(user.id);
 	const chats = await Chat.get_all_by_ids(chats_ids);
-	const chats_serialize: ChatType[] = await Promise.all(chats.map(async (chat: Chat) => await chat.serialize()));
-	return c.json({ message: 'User chats found !', chats: chats_serialize }, 200);
+	const chats_serialize: ChatType[] = await Promise.all(
+		chats.map(async (chat: Chat) => await chat.serialize())
+	);
+	return c.json(
+		{ message: 'User chats found !', chats: chats_serialize },
+		200
+	);
 });
 
 app.all('/chats', (c: Context) => {
@@ -69,7 +74,10 @@ app.get('/refresh_token', async (c: Context) => {
 		'Set-Cookie',
 		`access_token=${access_token}; HttpOnly; Path=/`
 	);
-	return c.json({ message: 'User logged in!', user:user_info.serialize_me() }, 200);
+	return c.json(
+		{ message: 'User logged in!', user: user_info.serialize_me() },
+		200
+	);
 });
 
 app.all('/refresh_token', (c: Context) => {
@@ -131,7 +139,7 @@ app.post('/register', async (c: Context) => {
 	const hash_pass = hashSync(password, saltRounds);
 	const user_register = new User(username, hash_pass, email);
 	try {
-		user_register.create();
+		await user_register.create();
 	} catch (_e) {
 		return c.json({ message: 'User creation failed !' }, 500);
 	}
@@ -172,7 +180,10 @@ app.put('/:id', async (c: Context) => {
 	user.email = body.email;
 	try {
 		user.save();
-		return c.json({ message: 'User updated!', user: user.serialize_me() }, 200);
+		return c.json(
+			{ message: 'User updated!', user: user.serialize_me() },
+			200
+		);
 	} catch (_e) {
 		return c.json({ message: 'User update failed !' }, 500);
 	}
@@ -246,10 +257,7 @@ app.post('/block_user/:id', async (c: Context) => {
 	try {
 		await Block_Users.block_user(ret_check.user.id, id);
 	} catch (_e) {
-		return c.json(
-			{ message: 'Error while blocking the user' },
-			500
-		);
+		return c.json({ message: 'Error while blocking the user' }, 500);
 	}
 
 	return c.json({ message: 'Blocked users list updated' }, 200);
@@ -281,10 +289,7 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 	try {
 		await Block_Users.delete_block(id, ret_check.user.id);
 	} catch (_e) {
-		return c.json(
-			{ message: 'Error while unblocking the user' },
-			500
-		);
+		return c.json({ message: 'Error while unblocking the user' }, 500);
 	}
 
 	return c.json({ message: 'Blocked users list updated' }, 200);

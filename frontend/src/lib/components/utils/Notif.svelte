@@ -43,17 +43,17 @@
 </button>
 <div class="card p-4 w-80 shadow-xl" data-popup="notifs">
 	{#if notifs.length != 0}
-		<nav class="list-nav">
+		<nav class="list-nav max-h-[30vh] overflow-y-auto">
 			<ul>
 				{#each notifs as notif}
 					{#if notif != notifs[0]}
 						<hr />
 					{/if}
 					<a href={notif.redirect} class="grid grid-cols-5 h-[5vh] group items-center relative">
-						<span class="col-span-4">{notif.message}</span>
+						<span class="col-span-4">{notif.content}</span>
 						<div class="col-span-1 h-full">
 							<span class="absolute right-0 bottom-0 ml-2 group-hover:hidden text-gray-400 text-xs">
-								{timeDifference(Date.now(), notif.created_at)}
+								{timeDifference(Date.now(), notif.send_at)}
 							</span>
 							<button
 								on:click={(event) => {
@@ -77,6 +77,8 @@
 			</ul>
 		</nav>
 	{:else}
-		<span>No notifications for the moment</span>
+		<div class="w-full h-10 flex items-center justify-center">
+			<span>No notifications for the moment</span>
+		</div>
 	{/if}
 </div>

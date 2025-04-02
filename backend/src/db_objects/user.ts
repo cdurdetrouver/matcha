@@ -10,7 +10,7 @@ export class User {
 	avatar?: string;
 	online: boolean = false;
 	id: number = 0;
-	created_at: number = Date.now();
+	created_at: bigint = BigInt(Date.now());
 
 	constructor(
 		usernameOrOther: string | Partial<User>,
@@ -24,15 +24,11 @@ export class User {
 			this.avatar = usernameOrOther.avatar;
 			this.online = usernameOrOther.online ?? false;
 			this.id = usernameOrOther.id ?? 0;
-			this.created_at = usernameOrOther.created_at ?? Date.now();
+			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
 			this.email = email!;
-			this.avatar = undefined;
-			this.online = false;
-			this.id = 0;
-			this.created_at = Date.now();
 		}
 	}
 
@@ -68,7 +64,7 @@ export class User {
 				email VARCHAR(255) NOT NULL UNIQUE,
 				avatar VARCHAR(255) DEFAULT NULL,
 				online BOOLEAN DEFAULT FALSE,
-				created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);
 	}
@@ -102,8 +98,7 @@ export class User {
 			[id]
 		);
 		const user = res.rows[0];
-		if (user == undefined)
-			throw Error();
+		if (user == undefined) throw Error();
 		return new User(user);
 	}
 
@@ -128,16 +123,24 @@ export class User {
 			[field_value]
 		);
 		const user = res.rows[0];
-		if (user == undefined)
-			throw Error();
+		if (user == undefined) throw Error();
 		return new User(user);
+	}
+
+	static async getall(): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT * FROM "${TABLE}";
+			`
+		);
+		return res.rows.map((row) => new User(row));
 	}
 
 	serialize(): UserType {
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
-			created_at: this.created_at,
+			created_at: Number(this.created_at),
 			avatar: this.avatar,
 		};
 		return user;
@@ -148,7 +151,7 @@ export class User {
 			username: this.username,
 			id: this.id,
 			email: this.email,
-			created_at: this.created_at,
+			created_at: Number(this.created_at),
 			avatar: this.avatar,
 		};
 		return user;

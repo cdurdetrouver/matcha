@@ -9,6 +9,7 @@
 	import { onMount } from 'svelte';
 	import { PUBLIC_WEBSOCKET_HOST } from '$env/static/public';
 	import type { Notif } from '$lib/types/notif.ts';
+	import { WebSocketManager } from '$lib/script/request';
 
 	initializeStores();
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
@@ -19,11 +20,13 @@
 	let notifs: Notif[] = [];
 
 	onMount(() => {
-		socket = new WebSocket(PUBLIC_WEBSOCKET_HOST + '/api/notif/ws');
+		socket = new WebSocketManager('/api/notif/ws');
 
-		socket.onmessage = (event) => {
-			console.log(event.data);
-		};
+		socket.setOnMessageHook((data) => {
+			console.log('Received data:', data);
+			if (data.type === 'new') notifs.push(data.notif);
+			else if (data.type === 'init') notifs = data.notifs;
+		});
 	});
 </script>
 

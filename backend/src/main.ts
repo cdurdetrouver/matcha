@@ -6,12 +6,14 @@ import chat from './routes/chat.ts';
 import notif from './routes/notif.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
-import { Chat } from "./db_objects/chats.ts";
-import { Chats_Users } from "./db_objects/chats_users.ts";
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
-const allowedOrigin = ['http://localhost:5173', 'ws://localhost:5173', 'bess-f2r4s19'];
+const allowedOrigin = [
+	'http://localhost:5173',
+	'ws://localhost:5173',
+	'bess-f2r4s19',
+];
 
 app.use('*', (c, next) => {
 	if (c.req.header('upgrade')?.toLowerCase() === 'websocket') {
@@ -54,23 +56,8 @@ try {
 	await client.connect();
 	await init_db();
 	console.log('Connected to the database');
-	let chat: Chat;
 
-	try {
-		chat = await Chat.get_by_id(1);
-	}
-	catch (_e) {
-		chat = new Chat("test");
-		try {
-			await chat.create();
-		}
-		catch (e) {
-			console.log(e);
-		}
-	}
-	//await Chats_Users.add_user_chat(0, chat.id);
-
-	Deno.serve(app.fetch);
+	Deno.serve({ port: 8000 }, app.fetch);
 } catch (e) {
 	console.error(e);
 }

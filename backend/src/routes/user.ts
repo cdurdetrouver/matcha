@@ -299,6 +299,15 @@ app.all('/unblock_user/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.post('/full_register', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check.user == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+});
+
 //app.post change_password
 
 app.notFound((c: Context) => {

@@ -10,10 +10,10 @@ export class User {
 	avatar?: string;
 	online: boolean = false;
 	complete_profile: boolean = false;
-	gender: string;
-	sexual_preferences: string;
-	interests: string[];
-	photo_ids: string[];
+	gender?: string;
+	sexual_preferences?: string;
+	interests?: string[];
+	photo_ids?: string[];
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
 
@@ -29,25 +29,16 @@ export class User {
 			this.avatar = usernameOrOther.avatar;
 			this.online = usernameOrOther.online ?? false;
 			this.complete_profile = usernameOrOther.complete_profile ?? false;
-			this.gender = usernameOrOther.gender ?? "not specified";
-			this.sexual_preferences = usernameOrOther.sexual_preferences ?? "not specified";
-			this.interests = usernameOrOther.interests ?? [];
-			this.photo_ids = usernameOrOther.photo_ids ?? [];
+			this.gender = usernameOrOther.gender ?? undefined;
+			this.sexual_preferences = usernameOrOther.sexual_preferences ?? undefined;
+			this.interests = usernameOrOther.interests ?? undefined;
+			this.photo_ids = usernameOrOther.photo_ids ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
 			this.email = email!;
-			this.avatar = undefined;
-			this.online = false;
-			this.complete_profile = false;
-			this.gender = "not specified";
-			this.sexual_preferences = "not specified";
-			this.interests = [];
-			this.photo_ids = [];
-			this.id = 0;
-			this.created_at = Date.now();
 		}
 	}
 
@@ -60,8 +51,13 @@ export class User {
 					password = $2,
 					email = $3,
 					avatar = $4,
-					online = $5
-				WHERE id = $6;
+					online = $5,
+					complete_profile = $6,
+					gender = $7,
+					sexual_preferences = $8,
+					interests = $9,
+					photo_ids = $10
+				WHERE id = $11;
 			`,
 			[
 				this.username,
@@ -69,6 +65,11 @@ export class User {
 				this.email,
 				this.avatar,
 				this.online,
+				this.complete_profile,
+				this.gender,
+				this.sexual_preferences,
+				this.interests,
+				this.photo_ids,
 				this.id,
 			]
 		);
@@ -83,6 +84,10 @@ export class User {
 				email VARCHAR(255) NOT NULL UNIQUE,
 				avatar VARCHAR(255) DEFAULT NULL,
 				online BOOLEAN DEFAULT FALSE,
+				gender VARCHAR(255) DEFAULT NULL,
+				sexual_preferences VARCHAR(255) DEFAULT NULL,
+				interests VARCHAR(255) ARRAY DEFAULT NULL,
+				photo_ids VARCHAR(255) ARRAY DEFAULT NULL,
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);

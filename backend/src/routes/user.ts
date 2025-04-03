@@ -3,7 +3,7 @@ import {
 	hashSync,
 	genSaltSync,
 } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
-import { user_match, user_check } from '../utils/user.ts';
+import { user_match, user_check, check_password } from '../utils/user.ts';
 import { getCookie, deleteCookie } from 'hono/cookie';
 import {
 	get_access_token,
@@ -47,12 +47,14 @@ app.all('/chats', (c: Context) => {
 app.post('/password', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	const { password } = await c.req.json();
-	if (ret_check.user == null)
+	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-
+	const [valid, ret_message] = check_password(password, user.username);
+	if (!valid)
+		return c.json({message: ret_message}, 401);
 	const saltRounds = genSaltSync(12);
 	const hash_pass = hashSync(password, saltRounds);
 	user.password = hash_pass;
@@ -152,7 +154,7 @@ app.all('/login', (c: Context) => {
 app.post('/full_register', async (c: Context) => {
 	const body = await c.req.json();
 	const ret_check = await check_cookies(c);
-	if (ret_check.user == null)
+	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
@@ -245,11 +247,12 @@ app.put('/:id', async (c: Context) => {
 	}
 });
 
-app.post('/image', async (c: Context) => {
+app.post('/avatar', async (c: Context) => {
 	const ret_check = await check_cookies(c);
-	const body = await c.req.parseBody()
-	console.log("file :", body.file);
-	if (ret_check.user == null)
+	const body = await c.req.parseBody();
+	let link;
+
+	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
@@ -258,16 +261,82 @@ app.post('/image', async (c: Context) => {
 		return c.json({message: "Failed to retrieved the image"}, 422);
 	const file: File = body['file'];
 	const { type } = file;
-	const file_type = type.split('/')[0];
-	if (file_type == 'image')
+	if (!(type.split('/')[0] === "image"))
 		return c.json({message: "Failed to retrieved the image, bad file"}, 422);
 	const images = await Images_Users.get_images_by_user(user.id);
 	if (images.length == 5)
 		return c.json({message: "User already had 5 pics."}, 403);
 	const name = user.username + '_' + images.length;
 	await Images_Users.post_image_user(user.id, name);
-	await post_file(file, name);
-	const link = get_signed_url(name, Date.now() + 15 * 60 * 1000);
+	try {
+		await post_file(file, name);
+		link = await get_signed_url(name, 86400);
+	}
+	catch(_e) {
+		return c.json({message: "Failed to save the image"}, 500);
+	}
+	return c.json({message: 'Image saved !', image: link}, 200);
+})
+
+app.get('/image/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	let user_get: User;
+
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	try {
+		user_get = await User.get_by_id(id);
+	}
+	catch (_e){
+		return c.json({message: "User target not found"}, 404);
+	}
+	const images = await Images_Users.get_images_by_user(user_get.id);
+	const links: string[] = [];
+	try {
+		for (let i: number = 0; i < images.length; i++){
+			const name = user.username + '_' + i;
+			const link = await get_signed_url(name, 86400);
+			links.push(link);
+		}
+	}
+	catch(_e) {
+		return c.json({message: "Failed to save the image"}, 500);
+	}
+	return c.json({message: 'Images succesfully retrieved !', images: links}, 200);
+})
+
+app.post('/image', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	const body = await c.req.parseBody();
+	let link;
+
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	if (body['file'] == undefined || !(body['file'] instanceof File))
+		return c.json({message: "Failed to retrieved the image"}, 422);
+	const file: File = body['file'];
+	const { type } = file;
+	if (!(type.split('/')[0] === "image"))
+		return c.json({message: "Failed to retrieved the image, bad file"}, 422);
+	const images = await Images_Users.get_images_by_user(user.id);
+	if (images.length == 5)
+		return c.json({message: "User already had 5 pics."}, 403);
+	const name = user.username + '_' + images.length;
+	await Images_Users.post_image_user(user.id, name);
+	try {
+		await post_file(file, name);
+		link = await get_signed_url(name, 86400);
+	}
+	catch(_e) {
+		return c.json({message: "Failed to save the image"}, 500);
+	}
 	return c.json({message: 'Image saved !', image: link}, 200);
 })
 
@@ -328,7 +397,7 @@ app.all('/:id', (c: Context) => {
 app.post('/block_user/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
-	if (ret_check.user == null)
+	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
@@ -345,7 +414,7 @@ app.post('/block_user/:id', async (c: Context) => {
 	}
 
 	try {
-		await Block_Users.block_user(ret_check.user.id, id);
+		await Block_Users.block_user(user.id, id);
 	} catch (_e) {
 		return c.json({ message: 'Error while blocking the user' }, 500);
 	}
@@ -360,7 +429,7 @@ app.all('/block_user/:id', (c: Context) => {
 app.delete('/unblock_user/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
-	if (ret_check.user == null)
+	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
@@ -377,7 +446,7 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 	}
 
 	try {
-		await Block_Users.delete_block(id, ret_check.user.id);
+		await Block_Users.delete_block(id, user.id);
 	} catch (_e) {
 		return c.json({ message: 'Error while unblocking the user' }, 500);
 	}

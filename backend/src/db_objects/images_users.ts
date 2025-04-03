@@ -14,14 +14,13 @@ export class Images_Users {
 	}
 
 	static async post_image_user(user_id: number, image_name: string) {
-		const res = await client.queryObject<{ id: number}>(
+		await client.queryObject(
 			`
 				INSERT INTO "${TABLE}" (user_id, image_name)
-				VALUES ($1, $2) RETURN id;
+				VALUES ($1, $2);
 			`,
 			[user_id, image_name]
 		);
-		return res.rows[0].id;
 	}
 
 	static async get_images_by_user(user_id: number): Promise<string[]> {

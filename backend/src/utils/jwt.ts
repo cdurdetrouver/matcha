@@ -31,7 +31,6 @@ export async function check_cookies(c: Context): Promise<{
 			user: null,
 		};
 	try {
-		console.log(id_ret);
 		const user_info = await User.get_by_id(Number(id_ret));
 		return { user: user_info };
 	} catch (_error) {

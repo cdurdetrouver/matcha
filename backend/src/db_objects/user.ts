@@ -3,6 +3,8 @@ import { client } from '../main.ts';
 
 const TABLE = 'users';
 
+//get post delete
+
 export class User {
 	username: string;
 	password: string;
@@ -10,10 +12,11 @@ export class User {
 	avatar?: string;
 	online: boolean = false;
 	complete_profile: boolean = false;
+	lover: boolean = false;
+	friendly: boolean = false;
 	gender?: string;
 	sexual_preferences?: string;
 	interests?: string[];
-	photo_ids?: string[];
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
 
@@ -32,7 +35,6 @@ export class User {
 			this.gender = usernameOrOther.gender ?? undefined;
 			this.sexual_preferences = usernameOrOther.sexual_preferences ?? undefined;
 			this.interests = usernameOrOther.interests ?? undefined;
-			this.photo_ids = usernameOrOther.photo_ids ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
 		} else {
@@ -55,9 +57,8 @@ export class User {
 					complete_profile = $6,
 					gender = $7,
 					sexual_preferences = $8,
-					interests = $9,
-					photo_ids = $10
-				WHERE id = $11;
+					interests = $9
+				WHERE id = $10;
 			`,
 			[
 				this.username,
@@ -69,7 +70,6 @@ export class User {
 				this.gender,
 				this.sexual_preferences,
 				this.interests,
-				this.photo_ids,
 				this.id,
 			]
 		);
@@ -84,10 +84,10 @@ export class User {
 				email VARCHAR(255) NOT NULL UNIQUE,
 				avatar VARCHAR(255) DEFAULT NULL,
 				online BOOLEAN DEFAULT FALSE,
+				complete_profile BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
-				photo_ids VARCHAR(255) ARRAY DEFAULT NULL,
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);

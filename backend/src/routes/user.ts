@@ -16,6 +16,8 @@ import { Chat } from '../db_objects/chats.ts';
 import { User } from '../db_objects/user.ts';
 import { Block_Users } from '../db_objects/block_users.ts';
 import { ChatType } from '../types/chat.ts';
+import { Images_Users } from "../db_objects/images_users.ts";
+import { get_signed_url, post_file } from "../utils/google_file.ts";
 
 const app = new Hono();
 
@@ -42,6 +44,26 @@ app.all('/chats', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.post('/password', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	const { password } = await c.req.json();
+	if (ret_check.user == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+
+	const saltRounds = genSaltSync(12);
+	const hash_pass = hashSync(password, saltRounds);
+	user.password = hash_pass;
+	await user.save();
+	return c.json({message: "Password succesfully changed"}, 200);
+})
+
+app.all('/password', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.delete('/logout', (c: Context) => {
 	deleteCookie(c, `access_token`);
 	deleteCookie(c, `refresh_token`);
@@ -54,6 +76,7 @@ app.all('/logout', (c: Context) => {
 
 app.get('/refresh_token', async (c: Context) => {
 	const refresh_token = getCookie(c, 'refresh_token');
+	let user_info: User;
 
 	if (!refresh_token)
 		return c.json({ message: 'No refresh token provided.' }, 401);
@@ -65,8 +88,12 @@ app.get('/refresh_token', async (c: Context) => {
 	if (token_type != 'refresh' || id_ret == undefined)
 		return c.json({ message: 'Wrong token type provided.' }, 401);
 	if (message) return c.json({ message: message }, 401);
-	const user_info = await User.get_by_id(Number(id_ret));
-	if (user_info == null) return c.json({ message: 'User not found !' }, 404);
+	try {
+		user_info = await User.get_by_id(Number(id_ret));
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found !' }, 404);
+	}
 	const access_token = await get_access_token(user_info);
 
 	deleteCookie(c, `access_token`);
@@ -119,6 +146,35 @@ app.post('/login', async (c: Context) => {
 });
 
 app.all('/login', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.post('/full_register', async (c: Context) => {
+	const body = await c.req.json();
+	const ret_check = await check_cookies(c);
+	if (ret_check.user == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	const { lover, friendly, interests } = body;
+	if (lover == undefined || friendly == undefined || interests == undefined)
+		return c.json({message: "body not correctly format."}, 422);
+	if (lover == true) {
+		const {gender, sexual_preferences} = body;
+		user.gender = gender;
+		user.sexual_preferences = sexual_preferences;
+		user.lover = lover;
+	}
+	user.friendly = friendly;
+	user.interests = interests;
+	if ((await Images_Users.get_images_by_user(user.id)).length == 5)
+		user.complete_profile = true;
+	await user.save();
+	return c.json({message: 'User fully register'}, 200);
+});
+
+app.all('/full_register', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
@@ -189,6 +245,36 @@ app.put('/:id', async (c: Context) => {
 	}
 });
 
+app.post('/image', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	const body = await c.req.parseBody()
+	console.log("file :", body.file);
+	if (ret_check.user == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	if (body['file'] == undefined || !(body['file'] instanceof File))
+		return c.json({message: "Failed to retrieved the image"}, 422);
+	const file: File = body['file'];
+	const { type } = file;
+	const file_type = type.split('/')[0];
+	if (file_type == 'image')
+		return c.json({message: "Failed to retrieved the image, bad file"}, 422);
+	const images = await Images_Users.get_images_by_user(user.id);
+	if (images.length == 5)
+		return c.json({message: "User already had 5 pics."}, 403);
+	const name = user.username + '_' + images.length;
+	await Images_Users.post_image_user(user.id, name);
+	await post_file(file, name);
+	const link = get_signed_url(name, Date.now() + 15 * 60 * 1000);
+	return c.json({message: 'Image saved !', image: link}, 200);
+})
+
+app.all('/image', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.get('/me', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
@@ -197,6 +283,10 @@ app.get('/me', async (c: Context) => {
 	if (user == null || message != undefined)
 		return c.json({ message: message }, ret_val);
 	return c.json({ message: 'user found', user: user.serialize_me() }, 200);
+});
+
+app.all('/me', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
 app.get('/:id', async (c: Context) => {
@@ -298,17 +388,6 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 app.all('/unblock_user/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
-
-app.post('/full_register', async (c: Context) => {
-	const ret_check = await check_cookies(c);
-	if (ret_check.user == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-});
-
-//app.post change_password
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Route not Found' }, 404);

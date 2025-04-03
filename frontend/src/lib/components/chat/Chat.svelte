@@ -2,48 +2,47 @@
 	import { Avatar } from '@skeletonlabs/skeleton';
 	import { formatDate } from '$lib/script/date';
 	import Icon from '@iconify/svelte';
-	import { onMount } from 'svelte'
+	import { onMount } from 'svelte';
 	import type { Message } from '$lib/types/chat';
 
-	export let message:Message;
-	export let classes:string[];
+	export let message: Message;
+	export let classes: string[];
 
 	let isChecked = false;
-	let content:string = '';
+	let content: string = '';
 
-	const expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
+	const expression =
+		/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
 	const regex = new RegExp(expression);
 
-	function getLinks(message:string)
-	{
-		let stringArray:string[] = message.split(/(\s+)/);
+	function getLinks(message: string) {
+		let stringArray: string[] = message.split(/(\s+)/);
 		let newstring = new Array();
-		for (var i = 0; i < stringArray.length; i++)
-		{
+		for (var i = 0; i < stringArray.length; i++) {
 			if (stringArray[i].match(regex))
-				newstring.push(`<a class="text-blue-500 underline" target="_blank" alt='website' href="${stringArray[i]}">${stringArray[i]}</a>`)
-			else
-				newstring.push(stringArray[i]);
+				newstring.push(
+					`<a class="text-blue-500 underline" target="_blank" alt='website' href="${stringArray[i]}">${stringArray[i]}</a>`
+				);
+			else newstring.push(stringArray[i]);
 		}
-		return (newstring.join(''));
+		return newstring.join('');
 	}
 
-	onMount( async () => {
-		if (message.message)
-			content = getLinks(message.message);
+	onMount(async () => {
+		if (message.content) content = getLinks(message.content);
 
 		const video = document.getElementById('myVideo') as HTMLVideoElement;
 
 		const canvas = document.createElement('canvas');
 		const context = canvas.getContext('2d');
 
-		if (video && context){
+		if (video && context) {
 			canvas.width = video.videoWidth;
 			canvas.height = video.videoHeight;
 
 			video.currentTime = 0.1;
 
-			video.addEventListener('seeked', function() {
+			video.addEventListener('seeked', function () {
 				context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
 				const dataUrl = canvas.toDataURL();
@@ -67,10 +66,17 @@
 	{:else if message.type == 'image'}
 		<div class="cursor-pointer size-fit">
 			{#if isChecked}
-				<button type="button" class="fixed top-0 left-0 w-full h-full z-[1000] bg-black bg-opacity-80 flex justify-center items-center" 
-					on:click={() => isChecked = !isChecked}
+				<button
+					type="button"
+					class="fixed top-0 left-0 w-full h-full z-[1000] bg-black bg-opacity-80 flex justify-center items-center"
+					on:click={() => (isChecked = !isChecked)}
 				>
-					<button on:click={() => isChecked = !isChecked} type="button" class="absolute top-10 right-10 w-[5vw] h-[5vh]"><Icon icon="maki:cross"  style="color: #fff" class="size-full" /></button>
+					<button
+						on:click={() => (isChecked = !isChecked)}
+						type="button"
+						class="absolute top-10 right-10 w-[5vw] h-[5vh]"
+						><Icon icon="maki:cross" style="color: #fff" class="size-full" /></button
+					>
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 					<img
@@ -81,24 +87,49 @@
 					/>
 				</button>
 			{/if}
-			<button type="button" class="card card-hover relative" on:click={() => isChecked = !isChecked}>
-				<img src={message.image} alt="Message id {message.id}" class="rounded-xl max-w-[50vw] lg:max-w-[30vw]"/>
+			<button
+				type="button"
+				class="card card-hover relative"
+				on:click={() => (isChecked = !isChecked)}
+			>
+				<img
+					src={message.image}
+					alt="Message id {message.id}"
+					class="rounded-xl max-w-[50vw] lg:max-w-[30vw]"
+				/>
 			</button>
 		</div>
-	{:else if message.type == "video"}
+	{:else if message.type == 'video'}
 		<div class="cursor-pointer size-fit">
 			{#if isChecked}
-				<button type="button" class="fixed top-0 left-0 w-full h-full z-[1000] bg-black bg-opacity-80 flex justify-center items-center" 
-					on:click={() => isChecked = !isChecked}
+				<button
+					type="button"
+					class="fixed top-0 left-0 w-full h-full z-[1000] bg-black bg-opacity-80 flex justify-center items-center"
+					on:click={() => (isChecked = !isChecked)}
 				>
-					<button type="button" on:click={() => isChecked = !isChecked} class="absolute top-10 right-10 w-[5vw] h-[5vh]"><Icon icon="maki:cross"  style="color: #fff" class="size-full" /></button>
+					<button
+						type="button"
+						on:click={() => (isChecked = !isChecked)}
+						class="absolute top-10 right-10 w-[5vw] h-[5vh]"
+						><Icon icon="maki:cross" style="color: #fff" class="size-full" /></button
+					>
 					<!-- svelte-ignore a11y-media-has-caption -->
-					<video controls class="max-w-[90vw] max-h-[90vh] md:max-w-[80vw] md:max-h-[80vh]" src={message.video} on:click|stopPropagation>
-				</button>
+					<video
+						controls
+						class="max-w-[90vw] max-h-[90vh] md:max-w-[80vw] md:max-h-[80vh]"
+						src={message.video}
+						on:click|stopPropagation
+					>
+					</video></button
+				>
 			{/if}
-			<button type="button" class="card card-hover relative" on:click={() => isChecked = !isChecked}>
+			<button
+				type="button"
+				class="card card-hover relative"
+				on:click={() => (isChecked = !isChecked)}
+			>
 				<!-- svelte-ignore a11y-media-has-caption -->
-				<video id="myVideo" class="rounded-xl max-w-[50vw] lg:max-w-[30vw]" src={message.video}/>
+				<video id="myVideo" class="rounded-xl max-w-[50vw] lg:max-w-[30vw]" src={message.video} />
 				<div class="absolute size-full top-0 left-0 z-[1] flex items-center justify-center">
 					<Icon icon="streamline:button-play-solid" width="32" style="color: #fff" />
 				</div>

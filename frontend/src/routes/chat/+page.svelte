@@ -1,8 +1,12 @@
-<script>
-	import ListChats from "$lib/components/utils/ListChats.svelte";
+<script lang="ts">
+	import { ChatsStore } from '$lib/stores/chats';
+	import ListChats from '$lib/components/utils/ListChats.svelte';
+	import type { Chat } from '$lib/types/chat.ts';
 
 	export let data;
 
+	let chats: Chat[] = [];
+	ChatsStore.subscribe((value) => chats.push(...value));
 </script>
 
 <div class="hidden md:block">
@@ -12,5 +16,5 @@
 </div>
 
 <div class="md:hidden block">
-	<ListChats chats={data.chats} user={data.user} chatid={data.chatid}/>
+	<ListChats {chats} user={data.user} chatid={data.chatid} />
 </div>

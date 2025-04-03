@@ -116,19 +116,22 @@ export class Message {
 			[chat_id]
 		);
 		const message = res.rows[0];
-		if (message == undefined)
-			throw Error();
+		if (message == undefined) throw Error();
 		return new Message(message);
 	}
 
-	static async get_10_mess_by_id(message_id: number, chat_id:number): Promise<Message[]> {
+	static async get_10_mess_by_id(chat_id: number): Promise<Message[]> {
 		const res = await client.queryObject<Message>(
 			`
-				SELECT * FROM "${TABLE}" WHERE id < '${message_id}'
-				 AND chat_id = ${chat_id} limit 10;
+				SELECT * FROM "${TABLE}"
+				WHERE chat_id = $1
+				ORDER BY id DESC
+				LIMIT 10;
 			`,
+			[chat_id]
 		);
-		return res.rows.map((row) => new Message(row));
+		console.log('res', res.rows);
+		return res.rows.map((row) => new Message(row)).reverse();
 	}
 
 	async serialize(): Promise<MessageType> {

@@ -1,12 +1,11 @@
 <script lang="ts">
-
 	import { Avatar } from '@skeletonlabs/skeleton';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import type { Chat } from '$lib/types/chat.ts';
 	import type { User } from '$lib/types/user.ts';
 
-	let search:string = "";
+	let search: string = '';
 
 	export let chats:Chat[];
 	export let user: User | null;
@@ -38,12 +37,11 @@
 	}
 </script>
 
-
 <header class="border-b border-surface-500/30 h-fit p-4">
 	<input class="input pl-2" type="search" placeholder="Search..." bind:value={search} />
 </header>
 <div class="flex flex-col items-center justify-start w-full overflow-y-scroll overflow-x-hidden">
-	{#each (search !== "" ? FilterChats(search, chats) : chats) as chat}
+	{#each search !== '' ? FilterChats(search, chats) : chats as chat}
 		<button
 			type="button"
 			class="btn w-full flex items-center justify-start gap-2.5 mt-[10px] {chat.id === chatid
@@ -63,9 +61,8 @@
 				<h3 class="h5">{chat.name}</h3>
 				<p class="text-sm truncate">
 					{#if chat.LastMessage}
-						{chat.LastMessage?.author?.id === user?.id
-							? 'Moi'
-							: chat.LastMessage?.author?.username} : {chat.LastMessage?.message}
+						{chat.LastMessage?.author?.id === user?.id ? 'Moi' : chat.LastMessage?.author?.username}
+						: {chat.LastMessage?.message}
 					{:else}
 						No Message
 					{/if}

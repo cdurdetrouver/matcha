@@ -1,65 +1,79 @@
 <script lang="ts">
 	import Chat from '$lib/components/chat/Chat.svelte';
-	import { PUBLIC_WEBSOCKET_HOST } from '$env/static/public';
+	import Announce from '$lib/components/chat/Announce.svelte';
 	import { onMount } from 'svelte';
+	import Icon from '@iconify/svelte';
+	import type { Message, Chat as ChatType } from '$lib/types/chat.js';
+	import { WebSocketManager } from '$lib/script/request.js';
+	import { goto } from '$app/navigation';
+	import { ChatsStore } from '$lib/stores/chats.js';
 
 	export let data;
+	let chats: ChatType[] = [];
+	ChatsStore.subscribe((value) => chats.push(...value));
 
 	let classes = {
-		"personal":[
-			"flex flex-col items-end justify-start gap-2 lg:flex-row-reverse lg:justify-start lg:items-start",
-			"card w-fit p-4 rounded-tr-none space-y-2 variant-soft-primary"
+		personal: [
+			'flex flex-col items-end justify-start gap-2 lg:flex-row-reverse lg:justify-start lg:items-start',
+			'card w-fit p-4 rounded-tr-none space-y-2 variant-soft-primary'
 		],
-		"other":[
-			"grid grid-rows-[auto_1fr] md:grid-cols-[auto_1fr] gap-2",
-			"card w-fit p-4 rounded-tl-none space-y-2 variant-soft"
+		other: [
+			'grid grid-rows-[auto_1fr] md:grid-cols-[auto_1fr] gap-2',
+			'card w-fit p-4 rounded-tl-none space-y-2 variant-soft'
 		]
-	}
+	};
+
+	let chat: ChatType | undefined;
+	let messages: Message[] = [];
 	let currentMessage = '';
-	let socket:WebSocket;
+	let socket: WebSocketManager;
 
-	onMount(() => {
-		socket = new WebSocket(PUBLIC_WEBSOCKET_HOST + `/api/chat/${data.chatid}`);
+	onMount(async () => {
+		chat = chats.find((chat) => chat.id === data.chatid);
+		socket = new WebSocketManager(`/api/chat/${data.chatid}`);
 
-		socket.onopen = (event) => {
-			console.log("socket open");
-		}
-		socket.onmessage = (event) => {
-			console.log(event.data);
-		};
-		socket.onclose = (event) => {
-			console.log("socket closed");
-		}
+		socket.setOnMessageHook((data) => {
+			console.log(data);
+			if (data.type === 'init') messages = data.messages;
+			else if (data.type === 'message') messages = [...messages, data.message];
+			else if (data.type === 'history') messages = [...data.messages, ...messages];
+		});
 	});
 
-	function sendMessage()
-	{
-		if (socket && currentMessage != '')
-			socket.send(JSON.stringify({ type: 'message', content: currentMessage}));
+	function sendMessage() {
+		if (socket && currentMessage != '') socket.send(JSON.stringify(currentMessage));
+		currentMessage = '';
 	}
 </script>
 
 <main class="h-[92vh] flex flex-col">
 	<header class="h-fit p-4 flex items-center justify-center relative">
 		<a href="/chat" class="md:hidden absolute top-1/2 -translate-y-1/2 left-[10px]">
-			<Icon icon="ic:round-arrow-back" width="24" height="24"/>
+			<Icon icon="ic:round-arrow-back" width="24" height="24" />
 		</a>
-		<h2 class="h2">{data.chat.name}</h2>
+		{#if chat}
+			<h2 class="h2">{chat.name}</h2>
+		{/if}
 	</header>
 	<section class="h-full overflow-scroll">
 		<ul class="size-full p-10 flex flex-col gap-2.5">
-			{#each data.messages as message}
-				{#if message.type == "announce"}
-					<Announce {message}/>
+			{#each messages as message}
+				{#if message.type == 'announce'}
+					<Announce {message} />
 				{:else}
-					<Chat {message} classes={classes[message.author?.id === data.user?.id ? "personal" : "other"]}/>
+					<Chat
+						{message}
+						classes={classes[message.author?.id === data.user?.id ? 'personal' : 'other']}
+					/>
 				{/if}
-				
 			{/each}
 		</ul>
 	</section>
 	<div class="h-fit p-4">
-		<form class="input-group input-group-divider grid-cols-[auto_1fr_auto] rounded-container-token" on:submit={sendMessage}>
+		<form
+			class="input-group input-group-divider grid-cols-[auto_1fr_auto] rounded-container-token"
+			on:submit|preventDefault={sendMessage}
+		>
 			<button class="input-group-shim">+</button>
 			<textarea
 				bind:value={currentMessage}

@@ -23,7 +23,6 @@
 		socket = new WebSocketManager('/api/notif/ws');
 
 		socket.setOnMessageHook((data) => {
-			console.log('Received data:', data);
 			if (data.type === 'new') notifs.push(data.notif);
 			else if (data.type === 'init') notifs = data.notifs;
 		});

@@ -5,7 +5,7 @@
 	import Icon from '@iconify/svelte';
 	import type { Message, Chat as ChatType } from '$lib/types/chat.js';
 	import { WebSocketManager } from '$lib/script/request.js';
-	import { goto } from '$app/navigation';
+	import { tick } from 'svelte';
 	import { ChatsStore } from '$lib/stores/chats.js';
 
 	export let data;
@@ -23,6 +23,7 @@
 		]
 	};
 
+	let chatContainer: HTMLElement | null = null;
 	let chat: ChatType | undefined;
 	let messages: Message[] = [];
 	let currentMessage = '';
@@ -32,17 +33,30 @@
 		chat = chats.find((chat) => chat.id === data.chatid);
 		socket = new WebSocketManager(`/api/chat/${data.chatid}`);
 
-		socket.setOnMessageHook((data) => {
+		socket.setOnMessageHook(async (data) => {
 			console.log(data);
 			if (data.type === 'init') messages = data.messages;
 			else if (data.type === 'message') messages = [...messages, data.message];
 			else if (data.type === 'history') messages = [...data.messages, ...messages];
+
+			await scrollToBottom();
 		});
+
+		await scrollToBottom();
 	});
 
-	function sendMessage() {
+	async function sendMessage() {
 		if (socket && currentMessage != '') socket.send(JSON.stringify(currentMessage));
 		currentMessage = '';
+	}
+
+	async function scrollToBottom() {
+		if (chatContainer) {
+			console.log(chatContainer.scrollTop, chatContainer.scrollHeight);
+			await tick(); // Wait for DOM updates
+			chatContainer.scrollTop = chatContainer.scrollHeight;
+			console.log(chatContainer.scrollTop, chatContainer.scrollHeight);
+		}
 	}
 </script>
 
@@ -55,7 +69,7 @@
 			<h2 class="h2">{chat.name}</h2>
 		{/if}
 	</header>
-	<section class="h-full overflow-scroll">
+	<section class="h-full overflow-scroll" bind:this={chatContainer}>
 		<ul class="size-full p-10 flex flex-col gap-2.5">
 			{#each messages as message}
 				{#if message.type == 'announce'}

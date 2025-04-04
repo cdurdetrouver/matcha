@@ -1,9 +1,9 @@
 <script lang="ts">
-	export let data;
-
-	data.posts;
+	import Feed from '$lib/components/Feed.svelte';
+	let feeds = ['test', 'bonjour'];
 </script>
 
-<div class="size-full flex items-center justify-center">
-	<h1 class="h1">Feed</h1>
+<div class="size-full bg-[red]">
+	<!-- <Feed {feeds} /> -->
+	ok
 </div>

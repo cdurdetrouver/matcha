@@ -7,7 +7,6 @@
 	import { storePopup } from '@skeletonlabs/skeleton';
 	import { autoModeWatcher } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
-	import { PUBLIC_WEBSOCKET_HOST } from '$env/static/public';
 	import type { Notif } from '$lib/types/notif.ts';
 	import { WebSocketManager } from '$lib/script/request';
 

@@ -60,7 +60,7 @@ app.post('/password', async (c: Context) => {
 	const hash_pass = hashSync(password, saltRounds);
 	user.password = hash_pass;
 	await user.save();
-	return c.json({message: "Password succesfully changed"}, 200);
+	return c.json({message: "Password successfully changed"}, 200);
 });
 
 app.all('/password', (c: Context) => {

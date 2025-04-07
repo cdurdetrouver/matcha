@@ -1,9 +1,8 @@
 import { UserType } from '../types/user.ts';
 import { client } from '../main.ts';
+import { Image } from "./images.ts";
 
 const TABLE = 'users';
-
-//get post delete
 
 export class User {
 	username: string;
@@ -160,23 +159,32 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	serialize(): UserType {
+	async serialize(): Promise<UserType> {
+		const avatar: Image = await Image.get_by_field('filename', this.avatar!);
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
 			created_at: Number(this.created_at),
-			avatar: this.avatar,
+			avatar: await avatar.serialize(),
 		};
 		return user;
 	}
 
-	serialize_me(): UserType {
+	async serialize_me(): Promise<UserType> {
+		let avatar;
+		try {
+			avatar = await Image.get_by_field('filename', this.avatar!);
+			avatar = await avatar.serialize();
+		}
+		catch (_e) {
+			avatar = undefined;
+		}
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
 			email: this.email,
 			created_at: Number(this.created_at),
-			avatar: this.avatar,
+			avatar: avatar,
 		};
 		return user;
 	}

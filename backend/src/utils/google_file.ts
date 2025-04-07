@@ -57,3 +57,9 @@ export async function get_signed_url(filename: string, expiration?: number) {
 
 	return signedUrl;
 }
+
+export async function delete_file(filename: string, expiration: number) {
+	const signedUrl = await storage.getSignedUrl(filename, expiration, 'DELETE');
+
+	return signedUrl;
+}

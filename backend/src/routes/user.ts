@@ -16,8 +16,9 @@ import { Chat } from '../db_objects/chats.ts';
 import { User } from '../db_objects/user.ts';
 import { Block_Users } from '../db_objects/block_users.ts';
 import { ChatType } from '../types/chat.ts';
-import { Images_Users } from "../db_objects/images_users.ts";
-import { get_signed_url, post_file } from "../utils/google_file.ts";
+import { Image } from "../db_objects/images.ts";
+import { delete_file, post_file } from "../utils/google_file.ts";
+
 
 const app = new Hono();
 
@@ -60,7 +61,7 @@ app.post('/password', async (c: Context) => {
 	user.password = hash_pass;
 	await user.save();
 	return c.json({message: "Password succesfully changed"}, 200);
-})
+});
 
 app.all('/password', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
@@ -104,7 +105,7 @@ app.get('/refresh_token', async (c: Context) => {
 		`access_token=${access_token}; HttpOnly; Path=/`
 	);
 	return c.json(
-		{ message: 'User logged in!', user: user_info.serialize_me() },
+		{ message: 'User logged in!', user: await user_info.serialize_me() },
 		200
 	);
 });
@@ -114,6 +115,7 @@ app.all('/refresh_token', (c: Context) => {
 });
 
 app.post('/login', async (c: Context) => {
+
 	const { email, password } = await c.req.json();
 
 	if (!email || !password)
@@ -141,7 +143,7 @@ app.post('/login', async (c: Context) => {
 			`refresh_token=${refresh_token}; HttpOnly; Path=/`
 		);
 		return c.json(
-			{ message: 'User logged in!', user: ret_user.serialize_me() },
+			{ message: 'User logged in!', user: await ret_user.serialize_me() },
 			200
 		);
 	}
@@ -170,7 +172,7 @@ app.post('/full_register', async (c: Context) => {
 	}
 	user.friendly = friendly;
 	user.interests = interests;
-	if ((await Images_Users.get_images_by_user(user.id)).length == 5)
+	if ((await Image.get_by_user(user.id)).length == 5)
 		user.complete_profile = true;
 	await user.save();
 	return c.json({message: 'User fully register'}, 200);
@@ -215,7 +217,7 @@ app.post('/register', async (c: Context) => {
 		`refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`
 	);
 	return c.json(
-		{ message: 'User created!', user: user_register.serialize_me() },
+		{ message: 'User created!', user: await user_register.serialize_me() },
 		200
 	);
 });
@@ -239,7 +241,7 @@ app.put('/:id', async (c: Context) => {
 	try {
 		user.save();
 		return c.json(
-			{ message: 'User updated!', user: user.serialize_me() },
+			{ message: 'User updated!', user: await user.serialize_me() },
 			200
 		);
 	} catch (_e) {
@@ -250,33 +252,56 @@ app.put('/:id', async (c: Context) => {
 app.post('/avatar', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	const body = await c.req.parseBody();
-	let link;
+	let image_serialized;
 
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	if (body['file'] == undefined || !(body['file'] instanceof File))
+	if (body['avatar'] == undefined || !(body['avatar'] instanceof File))
 		return c.json({message: "Failed to retrieved the image"}, 422);
-	const file: File = body['file'];
-	const { type } = file;
-	if (!(type.split('/')[0] === "image"))
-		return c.json({message: "Failed to retrieved the image, bad file"}, 422);
-	const images = await Images_Users.get_images_by_user(user.id);
-	if (images.length == 5)
-		return c.json({message: "User already had 5 pics."}, 403);
-	const name = user.username + '_' + images.length;
-	await Images_Users.post_image_user(user.id, name);
+	const file: File = body['avatar'];
+	if (!(file.type.split('/')[0] === "image"))
+		return c.json({message: "Bad file"}, 422);
+	const name = user.username + '_avatar';
+	let image;
+	try {
+		await Image.get_by_field('filename', name);
+		await delete_file(name, 86400);
+		image = await Image.get_by_field('filename', name);
+	}
+	catch(_e) {
+		image = await Image.post_image_user(user.id, name);
+	}
 	try {
 		await post_file(file, name);
-		link = await get_signed_url(name, 86400);
+		image_serialized = await image.serialize();
 	}
 	catch(_e) {
 		return c.json({message: "Failed to save the image"}, 500);
 	}
-	return c.json({message: 'Image saved !', image: link}, 200);
-})
+	return c.json({message: 'Image saved !', image: image_serialized}, 200);
+});
+
+app.delete('/image/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	try {
+		const image = await Image.get_by_field('id', id.toString());
+		await delete_file(image.filename, 86400);
+	}
+	catch (_e){
+		return c.json({message: "Can't delete the image"}, 500);
+	}
+	return c.json({message: 'Images succesfully deleted !'}, 200);
+});
 
 app.get('/image/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
@@ -294,25 +319,15 @@ app.get('/image/:id', async (c: Context) => {
 	catch (_e){
 		return c.json({message: "User target not found"}, 404);
 	}
-	const images = await Images_Users.get_images_by_user(user_get.id);
-	const links: string[] = [];
-	try {
-		for (let i: number = 0; i < images.length; i++){
-			const name = user.username + '_' + i;
-			const link = await get_signed_url(name, 86400);
-			links.push(link);
-		}
-	}
-	catch(_e) {
-		return c.json({message: "Failed to save the image"}, 500);
-	}
-	return c.json({message: 'Images succesfully retrieved !', images: links}, 200);
-})
+	const images = await Image.get_by_user(user_get.id);
+	images.filter(image => image.filename != user_get.username + '_avatar')
+	const images_sarialize =  await Promise.all(images.map(async (image) => await image.serialize()));
+	return c.json({message: 'Images succesfully retrieved !', images: images_sarialize}, 200);
+});
 
 app.post('/image', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	const body = await c.req.parseBody();
-	let link;
 
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
@@ -325,20 +340,20 @@ app.post('/image', async (c: Context) => {
 	const { type } = file;
 	if (!(type.split('/')[0] === "image"))
 		return c.json({message: "Failed to retrieved the image, bad file"}, 422);
-	const images = await Images_Users.get_images_by_user(user.id);
-	if (images.length == 5)
+	const images = await Image.get_by_user(user.id);
+	if (images.length >= 6)
 		return c.json({message: "User already had 5 pics."}, 403);
 	const name = user.username + '_' + images.length;
-	await Images_Users.post_image_user(user.id, name);
+	await Image.post_image_user(user.id, name);
+	const image = new Image(name);
 	try {
 		await post_file(file, name);
-		link = await get_signed_url(name, 86400);
 	}
 	catch(_e) {
 		return c.json({message: "Failed to save the image"}, 500);
 	}
-	return c.json({message: 'Image saved !', image: link}, 200);
-})
+	return c.json({message: 'Image saved !', image: await image.serialize()}, 200);
+});
 
 app.all('/image', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
@@ -351,7 +366,7 @@ app.get('/me', async (c: Context) => {
 	const { message, ret_val, user } = ret_check;
 	if (user == null || message != undefined)
 		return c.json({ message: message }, ret_val);
-	return c.json({ message: 'user found', user: user.serialize_me() }, 200);
+	return c.json({ message: 'user found', user: await user.serialize_me() }, 200);
 });
 
 app.all('/me', (c: Context) => {

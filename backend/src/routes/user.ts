@@ -320,8 +320,8 @@ app.get('/image/:id', async (c: Context) => {
 		return c.json({message: "User target not found"}, 404);
 	}
 	const images = await Image.get_by_user(user_get.id);
-	images.filter(image => image.filename != user_get.username + '_avatar')
-	const images_sarialize =  await Promise.all(images.map(async (image) => await image.serialize()));
+	const filtered_images = images.filter(image => image.filename != user_get.username + '_avatar');
+	const images_sarialize =  await Promise.all(filtered_images.map(async (image) => await image.serialize()));
 	return c.json({message: 'Images succesfully retrieved !', images: images_sarialize}, 200);
 });
 

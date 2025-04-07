@@ -163,7 +163,7 @@ app.post('/full_register', async (c: Context) => {
 		return c.json({ message: message }, 401);
 	const { lover, friendly, interests } = body;
 	if (lover == undefined || friendly == undefined || interests == undefined)
-		return c.json({message: "body not correctly format."}, 422);
+		return c.json({message: "Body not correctly formatted."}, 422);
 	if (lover == true) {
 		const {gender, sexual_preferences} = body;
 		user.gender = gender;

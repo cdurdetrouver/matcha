@@ -1,6 +1,183 @@
 <script lang="ts">
+	import { RadioGroup, RadioItem, Autocomplete, popup, FileDropzone } from '@skeletonlabs/skeleton';
+	import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
+	import Icon from '@iconify/svelte';
+
+	const GenderOptions: AutocompleteOption<string>[] = [
+		{ label: 'Male', value: 'male' },
+		{ label: 'Female', value: 'female' },
+		{ label: 'Non-binary', value: 'non-binary' },
+		{ label: 'Genderqueer', value: 'genderqueer' },
+		{ label: 'Genderfluid', value: 'genderfluid' },
+		{ label: 'Agender', value: 'agender' },
+		{ label: 'Other', value: 'other' }
+	];
+
+	let GenderpopupSettings: PopupSettings = {
+		event: 'focus-click',
+		target: 'GenderpopupAutocomplete',
+		placement: 'bottom'
+	};
+
+	const SexualOptions: AutocompleteOption<string>[] = [
+		{ label: 'Heterosexual', value: 'male' },
+		{ label: 'Homosexual', value: 'female' },
+		{ label: 'Bisexual', value: 'non-binary' },
+		{ label: 'Asexual', value: 'genderqueer' },
+		{ label: 'Pansexual', value: 'genderfluid' },
+		{ label: 'Demisexual', value: 'agender' },
+		{ label: 'Queer', value: 'other' },
+		{ label: 'Polysexual', value: 'other' },
+		{ label: 'Other', value: 'other' }
+	];
+
+	let SexualpopupSettings: PopupSettings = {
+		event: 'focus-click',
+		target: 'SexualpopupAutocomplete',
+		placement: 'bottom'
+	};
+
+	let value: number = 1;
+	let inputGender = '';
+	let inputSexual = '';
+	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
+
+	async function complete() {
+		alert(inputGender + value);
+		if (!dropzoneFiles[0]) alert('Please select a profile picture.');
+		for (let i = 0; i < dropzoneFiles.length; i++) {
+			const file = dropzoneFiles[i];
+
+			if (!file) {
+				continue;
+			}
+			alert(file[0].name);
+		}
+	}
+
+	function onFlavorSelectionGender(event: CustomEvent<AutocompleteOption<string>>): void {
+		inputGender = event.detail.label;
+	}
+
+	function onFlavorSelectionSexual(event: CustomEvent<AutocompleteOption<string>>): void {
+		inputSexual = event.detail.label;
+	}
 </script>
 
-<div class="size-full flex items-center justify-center">
-	<button class="btn variant-filled-primary mx-10 px-10">Complete your profile</button>
-</div>
+<main class="flex items-center justify-center size-full pt-[5vh] pb-[5vh]">
+	<form
+		class="card w-full h-full max-w-[60vw] grid grid-cols-2 gap-10"
+		on:submit|preventDefault={complete}
+	>
+		<div class="p-4 overflow-hidden">
+			<div class="row-span-3 flex items-center justify-center">
+				<RadioGroup class="uppercase">
+					<RadioItem bind:group={value} name="justify" value={0}>
+						<div class="flex items-center justify-center gap-2">
+							<Icon icon="mdi:heart" style="color: cyan" width="1.5em" />
+							<p>Friend</p>
+						</div>
+					</RadioItem>
+					<RadioItem bind:group={value} name="justify" value={1}>
+						<p>Both</p>
+					</RadioItem>
+					<RadioItem bind:group={value} name="justify" value={2}>
+						<div class="flex items-center justify-center gap-2">
+							<p>Love</p>
+							<Icon icon="mdi:heart" style="color: red" width="1.5em" />
+						</div>
+					</RadioItem>
+				</RadioGroup>
+			</div>
+			<div class="row-span-3">
+				<h4 class="h4">Choose your Gender :</h4>
+				<input
+					class="input p-2"
+					type="search"
+					name="demo"
+					bind:value={inputGender}
+					placeholder="Search..."
+					use:popup={GenderpopupSettings}
+					disabled={value < 1}
+				/>
+				<div
+					class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
+					tabindex="-1"
+					data-popup="GenderpopupAutocomplete"
+				>
+					<Autocomplete
+						bind:input={inputGender}
+						options={GenderOptions}
+						on:selection={onFlavorSelectionGender}
+					/>
+				</div>
+			</div>
+			<div class="row-span-3 bg-brown-500">
+				<h4 class="h4">Choose your Sexual Orientation Preferences :</h4>
+				<input
+					class="input p-2"
+					type="search"
+					name="demo"
+					bind:value={inputSexual}
+					placeholder="Search..."
+					use:popup={SexualpopupSettings}
+					disabled={value < 1}
+				/>
+				<div
+					class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
+					tabindex="-1"
+					data-popup="SexualpopupAutocomplete"
+				>
+					<Autocomplete
+						bind:input={inputSexual}
+						options={SexualOptions}
+						on:selection={onFlavorSelectionSexual}
+					/>
+				</div>
+			</div>
+		</div>
+		<div class="h-full p-4">
+			<div
+				class="grid grid-cols-3 max-h-[70%] min-h-[70%] h-[70%] max-w-[100%] min-w-[100%] w-[100%] gap-4"
+			>
+				{#each Array(6) as _, index}
+					{#if dropzoneFiles[index]}
+						<div class="rounded-2xl overflow-hidden flex items-center justify-center bg-black">
+							<img
+								src={URL.createObjectURL(dropzoneFiles[index][0])}
+								alt="Preview"
+								class="w-full h-full object-contain"
+							/>
+						</div>
+					{:else}
+						<div class="size-full">
+							<FileDropzone
+								name={`fileInput${index}`}
+								accept="image/*"
+								bind:files={dropzoneFiles[index]}
+								class="size-full"
+							>
+								<svelte:fragment slot="lead">
+									<i class="flex items-center justify-center">
+										<Icon icon="bx:file" width="2em" />
+									</i>
+								</svelte:fragment>
+								<svelte:fragment slot="message">
+									{#if index === 0}
+										Choose your Profile Picture
+									{:else}
+										Upload a post
+									{/if}
+								</svelte:fragment>
+								<svelte:fragment slot="meta">PNG, JPG and GIF allowed.</svelte:fragment>
+							</FileDropzone>
+						</div>
+					{/if}
+				{/each}
+			</div>
+			<div class="w-full h-[30%] flex items-center justify-center">
+				<button class="btn variant-filled" type="submit">Finish</button>
+			</div>
+		</div>
+	</form>
+</main>

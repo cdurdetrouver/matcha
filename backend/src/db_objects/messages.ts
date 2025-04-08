@@ -134,7 +134,7 @@ export class Message {
 	async serialize(): Promise<MessageType> {
 		let user;
 		if (this.user_id)
-			user = (await User.get_by_id(this.user_id)).serialize();
+			user = await (await User.get_by_id(this.user_id)).serialize();
 
 		const message: MessageType = {
 			content: this.content,

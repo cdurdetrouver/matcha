@@ -4,6 +4,7 @@ import { client } from '../main.ts';
 import { User } from './user.ts';
 import { Message } from "./messages.ts";
 import type { MessageType } from '../types/message.ts';
+import { Image } from "./images.ts";
 
 
 const TABLE = 'chats';
@@ -114,19 +115,22 @@ export class Chat {
 	async serialize(): Promise<ChatType> {
 		const users_id = await Chats_Users.get_users_by_chat(this.id);
 		const users = await User.get_all_by_ids(users_id);
-		const users_serialize = users.map((user) => user.serialize());
+		const users_serialize = await Promise.all(users.map(async (user) => await user.serialize()));
 		let last_message: MessageType | undefined = undefined;
+		let avatar;
 		try {
+			avatar = await (await await Image.get_avatar_by_user(this.id)).serialize();
 			last_message = await (await Message.get_last_message(this.id)).serialize();
 		}
-		catch (_e) {;}
-
+		catch (_e) {
+			avatar = undefined;
+		}
 		const chat: ChatType = {
 			name: this.name,
 			id: this.id,
 			users: users_serialize,
 			created_at: Number(this.created_at),
-			avatar: this.avatar,
+			avatar: avatar,
 			LastMessage: last_message,
 		};
 		return chat;

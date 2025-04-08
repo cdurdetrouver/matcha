@@ -1,5 +1,6 @@
 import { UserType } from '../types/user.ts';
 import { client } from '../main.ts';
+import { Image } from "./images.ts";
 
 const TABLE = 'users';
 
@@ -7,8 +8,13 @@ export class User {
 	username: string;
 	password: string;
 	email: string;
-	avatar?: string;
 	online: boolean = false;
+	complete_profile: boolean = false;
+	lover: boolean = false;
+	friendly: boolean = false;
+	gender?: string;
+	sexual_preferences?: string;
+	interests?: string[];
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
 
@@ -21,8 +27,11 @@ export class User {
 			this.username = usernameOrOther.username!;
 			this.password = usernameOrOther.password!;
 			this.email = usernameOrOther.email!;
-			this.avatar = usernameOrOther.avatar;
 			this.online = usernameOrOther.online ?? false;
+			this.complete_profile = usernameOrOther.complete_profile ?? false;
+			this.gender = usernameOrOther.gender ?? undefined;
+			this.sexual_preferences = usernameOrOther.sexual_preferences ?? undefined;
+			this.interests = usernameOrOther.interests ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
 		} else {
@@ -40,16 +49,22 @@ export class User {
 					username = $1,
 					password = $2,
 					email = $3,
-					avatar = $4,
-					online = $5
-				WHERE id = $6;
+					online = $4,
+					complete_profile = $5,
+					gender = $6,
+					sexual_preferences = $7,
+					interests = $8
+				WHERE id = $9;
 			`,
 			[
 				this.username,
 				this.password,
 				this.email,
-				this.avatar,
 				this.online,
+				this.complete_profile,
+				this.gender,
+				this.sexual_preferences,
+				this.interests,
 				this.id,
 			]
 		);
@@ -62,8 +77,11 @@ export class User {
 				username VARCHAR(255) NOT NULL UNIQUE,
 				password VARCHAR(255) NOT NULL,
 				email VARCHAR(255) NOT NULL UNIQUE,
-				avatar VARCHAR(255) DEFAULT NULL,
 				online BOOLEAN DEFAULT FALSE,
+				complete_profile BOOLEAN DEFAULT FALSE,
+				gender VARCHAR(255) DEFAULT NULL,
+				sexual_preferences VARCHAR(255) DEFAULT NULL,
+				interests VARCHAR(255) ARRAY DEFAULT NULL,
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);
@@ -72,11 +90,11 @@ export class User {
 	async create() {
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (username, password, email, avatar, online) 
-				VALUES ($1, $2, $3, $4, $5)
+				INSERT INTO "${TABLE}" (username, password, email, online) 
+				VALUES ($1, $2, $3, $4)
 				RETURNING id
 	 		`,
-			[this.username, this.password, this.email, this.avatar, this.online]
+			[this.username, this.password, this.email, this.online]
 		);
 		this.id = res.rows[0].id;
 	}
@@ -98,7 +116,7 @@ export class User {
 			[id]
 		);
 		const user = res.rows[0];
-		if (user == undefined) throw Error();
+		if (user == undefined) throw Error('User not found');
 		return new User(user);
 	}
 
@@ -123,7 +141,7 @@ export class User {
 			[field_value]
 		);
 		const user = res.rows[0];
-		if (user == undefined) throw Error();
+		if (user == undefined) throw Error('User not found');
 		return new User(user);
 	}
 
@@ -136,23 +154,32 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	serialize(): UserType {
+	async serialize(): Promise<UserType> {
+		const avatar = await Image.get_avatar_by_user(this.id);
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
 			created_at: Number(this.created_at),
-			avatar: this.avatar,
+			avatar: await avatar.serialize(),
 		};
 		return user;
 	}
 
-	serialize_me(): UserType {
+	async serialize_me(): Promise<UserType> {
+		let avatar;
+		try {
+			avatar = await Image.get_avatar_by_user(this.id);
+			avatar = await avatar.serialize();
+		}
+		catch (_e) {
+			avatar = undefined;
+		}
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
 			email: this.email,
 			created_at: Number(this.created_at),
-			avatar: this.avatar,
+			avatar: avatar,
 		};
 		return user;
 	}

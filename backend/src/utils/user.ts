@@ -85,7 +85,7 @@ async function check_email(
 	}
 }
 
-function check_password(
+export function check_password(
 	password: string,
 	username: string
 ): [boolean, string | undefined] {

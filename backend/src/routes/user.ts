@@ -216,6 +216,10 @@ app.post('/register', async (c: Context) => {
 		'Set-Cookie',
 		`refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`
 	);
+	const randomNumber: number = Math.floor(Math.random() * 2);
+	const name = "avatar_default_" + randomNumber;
+	await Image.post(user_register.id, name, 'avatar');
+
 	return c.json(
 		{ message: 'User created!', user: await user_register.serialize_me() },
 		200

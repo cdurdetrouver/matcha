@@ -27,11 +27,15 @@ export class Image {
 	static async init_table() {
 		await client.queryObject(`
 			CREATE TABLE IF NOT EXISTS "${TABLE}" (
-    		id SERIAL PRIMARY KEY,
-			user_id INT REFERENCES Users(id) ON DELETE CASCADE,
-			filename VARCHAR(255) UNIQUE,
-			type VARCHAR(255)
+				id SERIAL PRIMARY KEY,
+				user_id INT REFERENCES Users(id) ON DELETE CASCADE,
+				filename VARCHAR(255),
+				type VARCHAR(255)
 			);
+
+			CREATE UNIQUE INDEX IF NOT EXISTS unique_filename_non_default
+			ON "${TABLE}"(filename)
+			WHERE filename NOT LIKE 'avatar_default%';
 		`);
 	}
 

@@ -67,7 +67,16 @@ app.all('/password', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
-app.delete('/logout', (c: Context) => {
+app.delete('/logout', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+
+	user.connected_at = BigInt(Date.now());
+	await user.save();
 	deleteCookie(c, `access_token`);
 	deleteCookie(c, `refresh_token`);
 	return c.json({ message: 'User logged out!' }, 200);
@@ -421,7 +430,7 @@ app.get('/:id', async (c: Context) => {
 	}
 	if (user_info == undefined)
 		return c.json({ message: 'User not found' }, 404);
-	return c.json({ message: 'user found', user: user_info.serialize() }, 200);
+	return c.json({ message: 'user found', user: await user_info.serialize() }, 200);
 });
 
 app.delete('/:id', async (c: Context) => {

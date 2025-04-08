@@ -17,6 +17,7 @@ export class User {
 	interests?: string[];
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
+	connected_at: bigint = BigInt(Date.now());
 
 	constructor(
 		usernameOrOther: string | Partial<User>,
@@ -34,6 +35,7 @@ export class User {
 			this.interests = usernameOrOther.interests ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
+			this.connected_at = usernameOrOther.connected_at ?? BigInt(Date.now());
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
@@ -53,8 +55,9 @@ export class User {
 					complete_profile = $5,
 					gender = $6,
 					sexual_preferences = $7,
-					interests = $8
-				WHERE id = $9;
+					interests = $8,
+					connected_at = $9
+				WHERE id = $10;
 			`,
 			[
 				this.username,
@@ -65,6 +68,7 @@ export class User {
 				this.gender,
 				this.sexual_preferences,
 				this.interests,
+				this.connected_at,
 				this.id,
 			]
 		);
@@ -82,7 +86,8 @@ export class User {
 				gender VARCHAR(255) DEFAULT NULL,
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
-				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
+				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);
 	}
@@ -160,6 +165,7 @@ export class User {
 			username: this.username,
 			id: this.id,
 			created_at: Number(this.created_at),
+			connected_at: Number(this.connected_at),
 			avatar: await avatar.serialize(),
 		};
 		return user;
@@ -179,6 +185,7 @@ export class User {
 			id: this.id,
 			email: this.email,
 			created_at: Number(this.created_at),
+			connected_at: Number(this.connected_at),
 			avatar: avatar,
 		};
 		return user;

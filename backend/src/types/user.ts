@@ -5,5 +5,6 @@ export type UserType = {
 	id: number;
 	email?: string;
 	created_at: number;
+	connected_at: number;
 	avatar?: ImageType;
 }

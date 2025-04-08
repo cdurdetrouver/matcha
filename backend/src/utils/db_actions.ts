@@ -12,4 +12,5 @@ export async function init_db() {
 	await Message.init_table();
 	await Notif.init_table();
 	await Image.init_table();
+
 }

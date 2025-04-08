@@ -8,7 +8,6 @@ export class User {
 	username: string;
 	password: string;
 	email: string;
-	avatar?: string;
 	online: boolean = false;
 	complete_profile: boolean = false;
 	lover: boolean = false;
@@ -28,7 +27,6 @@ export class User {
 			this.username = usernameOrOther.username!;
 			this.password = usernameOrOther.password!;
 			this.email = usernameOrOther.email!;
-			this.avatar = usernameOrOther.avatar;
 			this.online = usernameOrOther.online ?? false;
 			this.complete_profile = usernameOrOther.complete_profile ?? false;
 			this.gender = usernameOrOther.gender ?? undefined;
@@ -51,19 +49,17 @@ export class User {
 					username = $1,
 					password = $2,
 					email = $3,
-					avatar = $4,
-					online = $5,
-					complete_profile = $6,
-					gender = $7,
-					sexual_preferences = $8,
-					interests = $9
-				WHERE id = $10;
+					online = $4,
+					complete_profile = $5,
+					gender = $6,
+					sexual_preferences = $7,
+					interests = $8
+				WHERE id = $9;
 			`,
 			[
 				this.username,
 				this.password,
 				this.email,
-				this.avatar,
 				this.online,
 				this.complete_profile,
 				this.gender,
@@ -81,7 +77,6 @@ export class User {
 				username VARCHAR(255) NOT NULL UNIQUE,
 				password VARCHAR(255) NOT NULL,
 				email VARCHAR(255) NOT NULL UNIQUE,
-				avatar VARCHAR(255) DEFAULT NULL,
 				online BOOLEAN DEFAULT FALSE,
 				complete_profile BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
@@ -95,11 +90,11 @@ export class User {
 	async create() {
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (username, password, email, avatar, online) 
-				VALUES ($1, $2, $3, $4, $5)
+				INSERT INTO "${TABLE}" (username, password, email, online) 
+				VALUES ($1, $2, $3, $4)
 				RETURNING id
 	 		`,
-			[this.username, this.password, this.email, this.avatar, this.online]
+			[this.username, this.password, this.email, this.online]
 		);
 		this.id = res.rows[0].id;
 	}
@@ -121,7 +116,7 @@ export class User {
 			[id]
 		);
 		const user = res.rows[0];
-		if (user == undefined) throw Error();
+		if (user == undefined) throw Error('User not found');
 		return new User(user);
 	}
 
@@ -146,7 +141,7 @@ export class User {
 			[field_value]
 		);
 		const user = res.rows[0];
-		if (user == undefined) throw Error();
+		if (user == undefined) throw Error('User not found');
 		return new User(user);
 	}
 
@@ -160,7 +155,7 @@ export class User {
 	}
 
 	async serialize(): Promise<UserType> {
-		const avatar: Image = await Image.get_by_field('filename', this.avatar!);
+		const avatar = await Image.get_avatar_by_user(this.id);
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
@@ -173,7 +168,7 @@ export class User {
 	async serialize_me(): Promise<UserType> {
 		let avatar;
 		try {
-			avatar = await Image.get_by_field('filename', this.avatar!);
+			avatar = await Image.get_avatar_by_user(this.id);
 			avatar = await avatar.serialize();
 		}
 		catch (_e) {

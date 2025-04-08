@@ -119,7 +119,7 @@ export class Chat {
 		let last_message: MessageType | undefined = undefined;
 		let avatar;
 		try {
-			avatar = await (await Image.get_by_field('filename', this.avatar!)).serialize();
+			avatar = await (await await Image.get_avatar_by_user(this.id)).serialize();
 			last_message = await (await Message.get_last_message(this.id)).serialize();
 		}
 		catch (_e) {

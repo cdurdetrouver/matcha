@@ -172,7 +172,7 @@ app.post('/full_register', async (c: Context) => {
 	}
 	user.friendly = friendly;
 	user.interests = interests;
-	if ((await Image.get_by_user(user.id)).length == 5)
+	if ((await Image.get_post_by_user(user.id)).length == 5)
 		user.complete_profile = true;
 	await user.save();
 	return c.json({message: 'User fully register'}, 200);
@@ -201,7 +201,7 @@ app.post('/register', async (c: Context) => {
 	try {
 		await user_register.create();
 	} catch (_e) {
-		return c.json({ message: 'User creation failed !' }, 500);
+		return c.json({ message: 'User creation failed !' }, 422);
 	}
 	const access_token = await get_access_token(user_register);
 	const refresh_token = await get_refresh_token(user_register);
@@ -245,8 +245,29 @@ app.put('/:id', async (c: Context) => {
 			200
 		);
 	} catch (_e) {
-		return c.json({ message: 'User update failed !' }, 500);
+		return c.json({ message: 'User update failed !' }, 422);
 	}
+});
+
+app.get('/avatar/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let avatar;
+	if (isNaN(id))
+		return c.json({message: "User target not found"}, 404);
+	try {
+		avatar = await Image.get_avatar_by_user(id);
+	}
+	catch (_e) {
+		return c.json({message: "User target not found"}, 404);
+	}
+	const avatar_serialized = await avatar.serialize();
+	return c.json({message: 'Avatar found !', avatar: avatar_serialized}, 200);
 });
 
 app.post('/avatar', async (c: Context) => {
@@ -267,19 +288,16 @@ app.post('/avatar', async (c: Context) => {
 	const name = user.username + '_avatar';
 	let image;
 	try {
-		await Image.get_by_field('filename', name);
-		await delete_file(name, 86400);
-		image = await Image.get_by_field('filename', name);
-	}
-	catch(_e) {
-		image = await Image.post_image_user(user.id, name);
-	}
-	try {
-		await post_file(file, name);
+		image = await Image.get_avatar_by_user(user.id);
+		await delete_file(name);
+		await post_file(name, file);
 		image_serialized = await image.serialize();
 	}
-	catch(_e) {
-		return c.json({message: "Failed to save the image"}, 500);
+	catch(e) {
+		if (e instanceof Error && e.message === 'Avatar not found')
+			image = await Image.post(user.id, name, 'avatar');
+		else
+			return c.json({message: "Failed to save the image"}, 422);
 	}
 	return c.json({message: 'Image saved !', image: image_serialized}, 200);
 });
@@ -293,12 +311,16 @@ app.delete('/image/:id', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
+
 	try {
-		const image = await Image.get_by_field('id', id.toString());
-		await delete_file(image.filename, 86400);
+		const image = await Image.get_by_id(id);
+		if (image.user_id != user.id)
+			return c.json({message: "Trying to do bad things"}, 401);
+		await delete_file(image.filename);
+		await Image.delete_by_id(id);
 	}
 	catch (_e){
-		return c.json({message: "Can't delete the image"}, 500);
+		return c.json({message: "Image not found"}, 404);
 	}
 	return c.json({message: 'Images succesfully deleted !'}, 200);
 });
@@ -319,15 +341,15 @@ app.get('/image/:id', async (c: Context) => {
 	catch (_e){
 		return c.json({message: "User target not found"}, 404);
 	}
-	const images = await Image.get_by_user(user_get.id);
-	const filtered_images = images.filter(image => image.filename != user_get.username + '_avatar');
-	const images_sarialize =  await Promise.all(filtered_images.map(async (image) => await image.serialize()));
+	const images = await Image.get_post_by_user(user_get.id);
+	const images_sarialize =  await Promise.all(images.map(async (image) => await image.serialize()));
 	return c.json({message: 'Images succesfully retrieved !', images: images_sarialize}, 200);
 });
 
 app.post('/image', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	const body = await c.req.parseBody();
+	const index = [0,1,2,3,4]
 
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
@@ -340,17 +362,22 @@ app.post('/image', async (c: Context) => {
 	const { type } = file;
 	if (!(type.split('/')[0] === "image"))
 		return c.json({message: "Failed to retrieved the image, bad file"}, 422);
-	const images = await Image.get_by_user(user.id);
-	if (images.length >= 6)
+	const images = await Image.get_post_by_user(user.id);
+	console.log(images);
+	if (images.length >= 5)
 		return c.json({message: "User already had 5 pics."}, 403);
-	const name = user.username + '_' + images.length;
-	await Image.post_image_user(user.id, name);
-	const image = new Image(name);
+	let name = user.username + '_' + images.length;
+	if (images.filter((image) => image.filename === name)) {
+		const index_post = images.map((image) => Number(image.filename.split('_')[1]));
+		const missing = index.filter(item => index_post.indexOf(item) < 0);
+		name = user.username + '_' + missing[0];
+	}
+	const image = await Image.post(user.id, name, 'post');
 	try {
-		await post_file(file, name);
+		await post_file(name, file);
 	}
 	catch(_e) {
-		return c.json({message: "Failed to save the image"}, 500);
+		return c.json({message: "Failed to save the image"}, 422);
 	}
 	return c.json({message: 'Image saved !', image: await image.serialize()}, 200);
 });
@@ -381,7 +408,13 @@ app.get('/:id', async (c: Context) => {
 	const { message, ret_val, user } = ret_check;
 	if (user == null || message != undefined)
 		return c.json({ message: message }, ret_val);
-	const user_info = await User.get_by_id(id);
+	let user_info;
+	try {
+		user_info = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
 	if (user_info == undefined)
 		return c.json({ message: 'User not found' }, 404);
 	return c.json({ message: 'user found', user: user_info.serialize() }, 200);
@@ -401,7 +434,7 @@ app.delete('/:id', async (c: Context) => {
 		await User.delete(id);
 		return c.json({ message: 'User Deleted' }, 200);
 	} catch (_e) {
-		return c.json({ message: 'User deletion failed !' }, 500);
+		return c.json({ message: 'User deletion failed !' }, 422);
 	}
 });
 
@@ -421,19 +454,16 @@ app.post('/block_user/:id', async (c: Context) => {
 
 	try {
 		await User.get_by_id(id);
-	} catch (_e) {
-		return c.json(
-			{ message: 'The user you try to blocked does not exists !' },
-			404
-		);
-	}
-
-	try {
 		await Block_Users.block_user(user.id, id);
-	} catch (_e) {
-		return c.json({ message: 'Error while blocking the user' }, 500);
+	} catch (e) {
+		if (e instanceof Error && e.message === 'User not found')
+			return c.json(
+				{ message: 'The user you try to blocked does not exists !' },
+				404
+			);
+		else
+			return c.json({ message: 'Error while blocking the user' }, 422);
 	}
-
 	return c.json({ message: 'Blocked users list updated' }, 200);
 });
 
@@ -453,19 +483,19 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 
 	try {
 		await User.get_by_id(id);
-	} catch (_e) {
+		await Block_Users.delete_block(id, user.id);
+	} catch (e) {
+		if (e instanceof Error && e.message === 'User not found')
+			return c.json(
+				{ message: 'The user you try to unblocked does not exists !' },
+				404
+			);
+		else
 		return c.json(
-			{ message: 'The user you try to unblocked does not exists !' },
-			404
+			{ message: 'Error while unblocking the user' },
+			422
 		);
 	}
-
-	try {
-		await Block_Users.delete_block(id, user.id);
-	} catch (_e) {
-		return c.json({ message: 'Error while unblocking the user' }, 500);
-	}
-
 	return c.json({ message: 'Blocked users list updated' }, 200);
 });
 

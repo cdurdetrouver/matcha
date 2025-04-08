@@ -170,7 +170,7 @@ app.post('/full_register', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	const { lover, friendly, interests } = body;
+	const { lover, friendly, interests, description } = body;
 	if (lover == undefined || friendly == undefined || interests == undefined)
 		return c.json({message: "Body not correctly formatted."}, 422);
 	if (lover == true) {
@@ -179,6 +179,7 @@ app.post('/full_register', async (c: Context) => {
 		user.sexual_preferences = sexual_preferences;
 		user.lover = lover;
 	}
+	user.description = description;
 	user.friendly = friendly;
 	user.interests = interests;
 	if ((await Image.get_post_by_user(user.id)).length == 5)

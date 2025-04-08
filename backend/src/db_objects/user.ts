@@ -15,6 +15,7 @@ export class User {
 	gender?: string;
 	sexual_preferences?: string;
 	interests?: string[];
+	description?: string;
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
 	connected_at: bigint = BigInt(Date.now());
@@ -33,6 +34,7 @@ export class User {
 			this.gender = usernameOrOther.gender ?? undefined;
 			this.sexual_preferences = usernameOrOther.sexual_preferences ?? undefined;
 			this.interests = usernameOrOther.interests ?? undefined;
+			this.description = usernameOrOther.description ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
 			this.connected_at = usernameOrOther.connected_at ?? BigInt(Date.now());
@@ -55,9 +57,10 @@ export class User {
 					complete_profile = $5,
 					gender = $6,
 					sexual_preferences = $7,
-					interests = $8,
-					connected_at = $9
-				WHERE id = $10;
+					description = $8,
+					interests = $9,
+					connected_at = $10
+				WHERE id = $11;
 			`,
 			[
 				this.username,
@@ -67,6 +70,7 @@ export class User {
 				this.complete_profile,
 				this.gender,
 				this.sexual_preferences,
+				this.description,
 				this.interests,
 				this.connected_at,
 				this.id,
@@ -85,6 +89,7 @@ export class User {
 				complete_profile BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
+				description VARCHAR(255) DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000

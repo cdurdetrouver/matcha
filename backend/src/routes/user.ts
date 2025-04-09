@@ -170,22 +170,23 @@ app.post('/full_register', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	const { lover, friendly, interests, description } = body;
-	if (lover == undefined || friendly == undefined || interests == undefined)
+	const { wanted, interests, description, location } = body;
+	if (wanted == undefined || interests == undefined)
 		return c.json({message: "Body not correctly formatted."}, 422);
-	if (lover == true) {
+	if (wanted >= 1) {
 		const {gender, sexual_preferences} = body;
 		user.gender = gender;
 		user.sexual_preferences = sexual_preferences;
-		user.lover = lover;
 	}
 	user.description = description;
-	user.friendly = friendly;
 	user.interests = interests;
-	if ((await Image.get_post_by_user(user.id)).length == 5)
-		user.complete_profile = true;
+	user.location = location;
+
+	if ((await Image.get_post_by_user(user.id)).length < 1)
+		return c.json({message: 'User need at least 1 post'}, 400);
+	user.complete_profile = true;
 	await user.save();
-	return c.json({message: 'User fully register'}, 200);
+	return c.json({message: 'User fully register', user: await user.serialize()}, 200);
 });
 
 app.all('/full_register', (c: Context) => {

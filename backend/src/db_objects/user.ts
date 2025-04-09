@@ -10,11 +10,11 @@ export class User {
 	email: string;
 	online: boolean = false;
 	complete_profile: boolean = false;
-	lover: boolean = false;
-	friendly: boolean = false;
+	wanted: number = 0;
 	gender?: string;
 	sexual_preferences?: string;
 	interests?: string[];
+	location?: string[2];
 	description?: string;
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
@@ -59,8 +59,9 @@ export class User {
 					sexual_preferences = $7,
 					description = $8,
 					interests = $9,
-					connected_at = $10
-				WHERE id = $11;
+					location = $10,
+					connected_at = $11
+				WHERE id = $12;
 			`,
 			[
 				this.username,
@@ -72,6 +73,7 @@ export class User {
 				this.sexual_preferences,
 				this.description,
 				this.interests,
+				this.location,
 				this.connected_at,
 				this.id,
 			]
@@ -91,6 +93,7 @@ export class User {
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
 				description VARCHAR(255) DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
+				location VARCHAR(255)[2] DEFAULT NULL,
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
@@ -172,6 +175,14 @@ export class User {
 			created_at: Number(this.created_at),
 			connected_at: Number(this.connected_at),
 			avatar: await avatar.serialize(),
+			complete_profile: this.complete_profile,
+			online: this.online,
+			wanted: this.wanted,
+			gender: this.gender,
+			sexual_preferences: this.sexual_preferences,
+			description: this.description,
+			interests: this.interests,
+			location: this.location,
 		};
 		return user;
 	}
@@ -192,6 +203,14 @@ export class User {
 			created_at: Number(this.created_at),
 			connected_at: Number(this.connected_at),
 			avatar: avatar,
+			complete_profile: this.complete_profile,
+			online: this.online,
+			wanted: this.wanted,
+			gender: this.gender,
+			sexual_preferences: this.sexual_preferences,
+			description: this.description,
+			interests: this.interests,
+			location: this.location,
 		};
 		return user;
 	}

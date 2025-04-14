@@ -3,6 +3,6 @@
 	let feeds = ["je m'apelle pj et je veux du cul", 'test'];
 </script>
 
-<div class="h-[95vh] w-[100vw]">
+<div class="size-full">
 	<Feed {feeds} />
 </div>

@@ -54,7 +54,11 @@
 </script>
 
 <div class={classes[0]}>
-	<Avatar src={message.author?.avatar} width="w-12" />
+	{#if message.author?.avatar}
+		<Avatar src={message.author?.avatar.link} width="w-12" />
+	{:else}
+		<Avatar src="/images/default-avatar.png" width='w-12'/>
+	{/if}
 	{#if message.type == 'chat'}
 		<div class={classes[1]}>
 			<header class="flex justify-between items-center gap-5">

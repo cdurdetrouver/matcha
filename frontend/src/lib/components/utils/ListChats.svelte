@@ -28,7 +28,7 @@
 		const searchLower = search.toLowerCase();
 
 		for (let i = 0; i < chats.length; i++) {
-			if (chats[i].name.toLowerCase().includes(searchLower)) {
+			if (chats[i].name?.toLowerCase().includes(searchLower)) {
 				newChats.push(chats[i]);
 			}
 		}
@@ -50,9 +50,9 @@
 			on:click={() => goto('/chat/' + chat.id)}
 		>
 			<Avatar
-				src={chat.avatar}
+				src={chat.avatar?.link}
 				alt="Chat {chat.id}"
-				initials={getInitials(chat.name)}
+				initials={getInitials(chat.name ?? "")}
 				class="min-w-10 max-w-10"
 				rounded={page.params.id === String(chat.id) ? 'rounded-3xl' : 'rounded-full'}
 			/>
@@ -62,7 +62,7 @@
 				<p class="text-sm truncate">
 					{#if chat.LastMessage}
 						{chat.LastMessage?.author?.id === user?.id ? 'Moi' : chat.LastMessage?.author?.username}
-						: {chat.LastMessage?.message}
+						: {chat.LastMessage?.content}
 					{:else}
 						No Message
 					{/if}

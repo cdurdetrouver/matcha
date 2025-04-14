@@ -5,5 +5,5 @@
 </script>
 
 <div class="w-full text-center">
-	<p class="p-4">{message.message}</p>
+	<p class="p-4">{message.content}</p>
 </div>

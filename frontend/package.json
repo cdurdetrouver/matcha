@@ -19,6 +19,7 @@
     "@sveltejs/adapter-auto": "^3.3.1",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@types/hammerjs": "^2.0.46",
     "@types/node": "22.13.5",
     "autoprefixer": "10.4.20",
     "postcss": "8.5.3",
@@ -34,6 +35,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@floating-ui/dom": "^1.6.13"
+    "@floating-ui/dom": "^1.6.13",
+    "hammerjs": "^2.0.8"
   }
 }

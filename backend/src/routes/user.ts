@@ -67,7 +67,16 @@ app.all('/password', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
-app.delete('/logout', (c: Context) => {
+app.delete('/logout', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+
+	user.connected_at = BigInt(Date.now());
+	await user.save();
 	deleteCookie(c, `access_token`);
 	deleteCookie(c, `refresh_token`);
 	return c.json({ message: 'User logged out!' }, 200);
@@ -161,21 +170,23 @@ app.post('/full_register', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	const { lover, friendly, interests } = body;
-	if (lover == undefined || friendly == undefined || interests == undefined)
+	const { wanted, interests, description, location } = body;
+	if (wanted == undefined || interests == undefined)
 		return c.json({message: "Body not correctly formatted."}, 422);
-	if (lover == true) {
+	if (wanted >= 1) {
 		const {gender, sexual_preferences} = body;
 		user.gender = gender;
 		user.sexual_preferences = sexual_preferences;
-		user.lover = lover;
 	}
-	user.friendly = friendly;
+	user.description = description;
 	user.interests = interests;
-	if ((await Image.get_post_by_user(user.id)).length == 5)
-		user.complete_profile = true;
+	user.location = location;
+
+	if ((await Image.get_post_by_user(user.id)).length < 1)
+		return c.json({message: 'User need at least 1 post'}, 400);
+	user.complete_profile = true;
 	await user.save();
-	return c.json({message: 'User fully register'}, 200);
+	return c.json({message: 'User fully register', user: await user.serialize()}, 200);
 });
 
 app.all('/full_register', (c: Context) => {
@@ -421,7 +432,7 @@ app.get('/:id', async (c: Context) => {
 	}
 	if (user_info == undefined)
 		return c.json({ message: 'User not found' }, 404);
-	return c.json({ message: 'user found', user: user_info.serialize() }, 200);
+	return c.json({ message: 'user found', user: await user_info.serialize() }, 200);
 });
 
 app.delete('/:id', async (c: Context) => {

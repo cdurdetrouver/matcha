@@ -10,13 +10,15 @@ export class User {
 	email: string;
 	online: boolean = false;
 	complete_profile: boolean = false;
-	lover: boolean = false;
-	friendly: boolean = false;
+	wanted: number = 0;
 	gender?: string;
 	sexual_preferences?: string;
 	interests?: string[];
+	location?: string[2];
+	description?: string;
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
+	connected_at: bigint = BigInt(Date.now());
 
 	constructor(
 		usernameOrOther: string | Partial<User>,
@@ -32,8 +34,10 @@ export class User {
 			this.gender = usernameOrOther.gender ?? undefined;
 			this.sexual_preferences = usernameOrOther.sexual_preferences ?? undefined;
 			this.interests = usernameOrOther.interests ?? undefined;
+			this.description = usernameOrOther.description ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
+			this.connected_at = usernameOrOther.connected_at ?? BigInt(Date.now());
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
@@ -53,8 +57,11 @@ export class User {
 					complete_profile = $5,
 					gender = $6,
 					sexual_preferences = $7,
-					interests = $8
-				WHERE id = $9;
+					description = $8,
+					interests = $9,
+					location = $10,
+					connected_at = $11
+				WHERE id = $12;
 			`,
 			[
 				this.username,
@@ -64,7 +71,10 @@ export class User {
 				this.complete_profile,
 				this.gender,
 				this.sexual_preferences,
+				this.description,
 				this.interests,
+				this.location,
+				this.connected_at,
 				this.id,
 			]
 		);
@@ -81,8 +91,11 @@ export class User {
 				complete_profile BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
+				description VARCHAR(255) DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
-				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
+				location VARCHAR(255)[2] DEFAULT NULL,
+				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
 		`);
 	}
@@ -160,7 +173,16 @@ export class User {
 			username: this.username,
 			id: this.id,
 			created_at: Number(this.created_at),
+			connected_at: Number(this.connected_at),
 			avatar: await avatar.serialize(),
+			complete_profile: this.complete_profile,
+			online: this.online,
+			wanted: this.wanted,
+			gender: this.gender,
+			sexual_preferences: this.sexual_preferences,
+			description: this.description,
+			interests: this.interests,
+			location: this.location,
 		};
 		return user;
 	}
@@ -179,7 +201,16 @@ export class User {
 			id: this.id,
 			email: this.email,
 			created_at: Number(this.created_at),
+			connected_at: Number(this.connected_at),
 			avatar: avatar,
+			complete_profile: this.complete_profile,
+			online: this.online,
+			wanted: this.wanted,
+			gender: this.gender,
+			sexual_preferences: this.sexual_preferences,
+			description: this.description,
+			interests: this.interests,
+			location: this.location,
 		};
 		return user;
 	}

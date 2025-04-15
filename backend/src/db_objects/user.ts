@@ -166,6 +166,25 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
+	async get_posts_users_by_loc(radius: number): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+
+			SELECT * FROM "${TABLE}" 
+			WHERE ST_DWithin(
+				location,
+				ST_SetSRID(ST_MakePoint(${this.location[0]},
+				${this.location[1]}), 4326), ${radius})
+			AND id != ${this.id}
+			AND id NOT IN (
+				SELECT seen_id FROM seen_users
+				WHERE user_id = ${this.id}
+			);
+		`,
+		);
+		return res.rows.map((row) => new User(row));
+	}
+
 	static async get_by_field(
 		field_name: string,
 		field_value: string

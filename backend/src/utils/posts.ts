@@ -1,3 +1,4 @@
+import { Seen_Users } from "../db_objects/seen_users.ts";
 import { User } from '../db_objects/user.ts';
 
 export async function get_list_users(user: User): Promise<User[]> {
@@ -7,8 +8,8 @@ export async function get_list_users(user: User): Promise<User[]> {
 		const res = await user.get_all_by_loc(10);
 		//delete user already saw
 		for (let i = 0; i < list_user.length; i++) {
-			//if res.id is not in viewed_users
-			list_user.push(res[i]);
+			if (!await Seen_Users.is_user_seen_by(user.id, list_user[i].id))
+				list_user.push(res[i]);
 		}
 	}
 	return list_user;

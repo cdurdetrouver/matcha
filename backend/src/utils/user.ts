@@ -5,13 +5,11 @@ export async function user_match(
 	email: string,
 	password: string
 ): Promise<{ ret_user?: User; err_password?: string; err_email?: string }> {
-	let ret_user: User;
-	try {
-		ret_user = await User.get_by_field('email', email);
-	} catch (_e) {
+	let ret_user;
+	ret_user = await User.get_by_field('email', email);
+	if (ret_user.length == 0)
 		return { err_email: 'Wrong email' };
-	}
-
+	ret_user = ret_user[0];
 	const is_valid_pass = await compare(password, ret_user.password);
 	if (!is_valid_pass) return { err_password: 'Wrong password' };
 	return { ret_user };
@@ -62,12 +60,10 @@ async function check_username(
 			false,
 			'Username should only contain letters, digits, and underscores (_).',
 		];
-	try {
-		await User.get_by_field('username', username);
+	const list = await User.get_by_field('username', username);
+	if (list.length > 0)
 		return [false, 'Username already used.'];
-	} catch (_e) {
-		return [true, undefined];
-	}
+	return [true, undefined];
 }
 
 async function check_email(
@@ -77,12 +73,10 @@ async function check_email(
 
 	if (!re_email.test(email)) return [false, 'Wrong email format'];
 
-	try {
-		await User.get_by_field('email', email);
+	const list = await User.get_by_field('email', email);
+	if (list.length > 0)
 		return [false, 'Email already used.'];
-	} catch (_e) {
-		return [true, undefined];
-	}
+	return [true, undefined];
 }
 
 export function check_password(

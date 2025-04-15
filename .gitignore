@@ -29,7 +29,7 @@ deno.lock
 package-lock.json
 
 # DB
-
+pgadmin
 db
-
+pass.pgpass
 google.env.json

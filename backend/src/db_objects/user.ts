@@ -15,7 +15,7 @@ export class User {
 	gender?: string;
 	sexual_preferences?: string;
 	interests?: string[];
-	location?: string[2];
+	location: string[] = ['0', '0'];
 	description?: string;
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
@@ -64,7 +64,7 @@ export class User {
 					sexual_preferences = $8,
 					description = $9,
 					interests = $10,
-					location = $11,
+					location = ST_SetSRID(ST_MakePoint($10, $11), 4326),
 					connected_at = $12
 				WHERE id = $13;
 			`,
@@ -79,7 +79,8 @@ export class User {
 				this.sexual_preferences,
 				this.description,
 				this.interests,
-				this.location,
+				this.location[0],
+				this.location[1],
 				this.connected_at,
 				this.id,
 			]
@@ -88,6 +89,8 @@ export class User {
 
 	static async init_table() {
 		await client.queryObject(`
+			CREATE EXTENSION IF NOT EXISTS postgis;
+
 			CREATE TABLE IF NOT EXISTS "${TABLE}" (
 				id SERIAL PRIMARY KEY,
 				username VARCHAR(255) NOT NULL UNIQUE,
@@ -100,10 +103,11 @@ export class User {
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
 				description VARCHAR(255) DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
-				location VARCHAR(255)[2] DEFAULT NULL,
+				location GEOGRAPHY(POINT, 4326),
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
 			);
+			CREATE INDEX ON users USING GIST(location);
 		`);
 	}
 
@@ -150,19 +154,29 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
+	async get_all_by_loc(radius: number): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT * FROM "${TABLE}" WHERE ST_DWithin(location,
+				ST_SetSRID(ST_MakePoint(${this.location[0]}
+				, ${this.location[1]}), 4326),
+        		${radius});
+			`,
+		);
+		return res.rows.map((row) => new User(row));
+	}
+
 	static async get_by_field(
 		field_name: string,
 		field_value: string
-	): Promise<User> {
+	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT * FROM "${TABLE}" WHERE ${field_name} = $1;
 			`,
 			[field_value]
 		);
-		const user = res.rows[0];
-		if (user == undefined) throw Error('User not found');
-		return new User(user);
+		return res.rows.map((row) => new User(row));
 	}
 
 	static async getall(): Promise<User[]> {

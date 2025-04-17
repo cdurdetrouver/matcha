@@ -119,3 +119,19 @@ export function check_password(
 		return [false, 'Username is forbidden in password'];
 	return [true, undefined];
 }
+
+export async function get_info_loc(lat: number, long: number): Promise<string> {
+	const response = await fetch(
+		`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${long}&localityLanguage=en`
+	);
+	if (!response.ok) return 'Unknown location';
+	const data = await response.json();
+	console.log(data);
+	if (data.city != undefined)
+		return data.city;
+	if (data.locality != undefined)
+		return data.locality;
+	if (data.principalSubdivision != undefined)
+		return data.principalSubdivision;
+	return 'Unknown location';
+}

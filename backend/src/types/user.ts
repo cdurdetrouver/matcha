@@ -15,5 +15,5 @@ export type UserType = {
 	sexual_preferences?: string;
 	description?: string;
 	interests?: string[];
-	location?: string[];
+	location?: number[];
 }

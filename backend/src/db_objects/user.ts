@@ -3,6 +3,22 @@ import { client } from '../main.ts';
 import { Image } from './images.ts';
 
 const TABLE = 'users';
+const USERFIELDS = `
+  username,
+  password,
+  email,
+  online,
+  complete_profile,
+  wanted,
+  gender,
+  sexual_preferences,
+  description,
+  interests,
+  ST_X(location::geometry) AS long,
+  ST_Y(location::geometry) AS lat,
+  created_at,
+  connected_at
+`;
 
 export class User {
 	username: string;
@@ -15,7 +31,8 @@ export class User {
 	gender?: string;
 	sexual_preferences?: string;
 	interests?: string[];
-	location: string[] = ['0', '0'];
+	lat: number = 0;
+	long: number = 0;
 	description?: string;
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
@@ -65,8 +82,9 @@ export class User {
 					description = $9,
 					interests = $10,
 					location = ST_SetSRID(ST_MakePoint($10, $11), 4326),
-					connected_at = $12
-				WHERE id = $13;
+					connected_at = $12,
+					wanted = $13
+				WHERE id = $14;
 			`,
 			[
 				this.username,
@@ -79,9 +97,10 @@ export class User {
 				this.sexual_preferences,
 				this.description,
 				this.interests,
-				this.location[0],
-				this.location[1],
+				this.long,
+				this.lat,
 				this.connected_at,
+				this.wanted,
 				this.id,
 			]
 		);
@@ -97,6 +116,7 @@ export class User {
 				password VARCHAR(255) NOT NULL,
 				email VARCHAR(255) NOT NULL UNIQUE,
 				online BOOLEAN DEFAULT FALSE,
+				wanted INTEGER DEFAULT 0,
 				complete_profile BOOLEAN DEFAULT FALSE,
 				email_verif BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
@@ -135,10 +155,12 @@ export class User {
 	static async get_by_id(id: number): Promise<User> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT * FROM "${TABLE}" WHERE id = $1;
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE id = $1;
 			`,
 			[id]
 		);
+		console.log(res.rows);
+		console.log("roooow[0]", res.rows[0]);
 		const user = res.rows[0];
 		if (user == undefined) throw Error('User not found');
 		return new User(user);
@@ -158,9 +180,9 @@ export class User {
 		const res = await client.queryObject<User>(
 			`
 				SELECT * FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint(${this.location[0]}
-				, ${this.location[1]}), 4326),
-        		${radius});
+				ST_SetSRID(ST_MakePoint(${this.long}
+				, ${this.lat}), 4326),
+        		${radius * 1000});
 			`,
 		);
 		return res.rows.map((row) => new User(row));
@@ -173,8 +195,8 @@ export class User {
 			SELECT * FROM "${TABLE}" 
 			WHERE ST_DWithin(
 				location,
-				ST_SetSRID(ST_MakePoint(${this.location[0]},
-				${this.location[1]}), 4326), ${radius})
+				ST_SetSRID(ST_MakePoint(${this.long},
+				${this.lat}), 4326), ${radius * 1000})
 			AND id != ${this.id}
 			AND id NOT IN (
 				SELECT seen_id FROM seen_users
@@ -223,7 +245,7 @@ export class User {
 			sexual_preferences: this.sexual_preferences,
 			description: this.description,
 			interests: this.interests,
-			location: this.location,
+			location: [this.lat, this.long],
 		};
 		return user;
 	}
@@ -251,7 +273,7 @@ export class User {
 			sexual_preferences: this.sexual_preferences,
 			description: this.description,
 			interests: this.interests,
-			location: this.location,
+			location: [this.lat, this.long],
 		};
 		return user;
 	}

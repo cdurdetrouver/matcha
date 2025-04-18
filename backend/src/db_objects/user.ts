@@ -168,7 +168,7 @@ export class User {
 	static async get_all_by_ids(ids: number[]): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT * FROM "${TABLE}" WHERE id = ANY($1);
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE id = ANY($1);
 			`,
 			[ids]
 		);
@@ -178,7 +178,7 @@ export class User {
 	async get_all_by_loc(radius: number): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT * FROM "${TABLE}" WHERE ST_DWithin(location,
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
 				ST_SetSRID(ST_MakePoint(${this.long}
 				, ${this.lat}), 4326),
         		${radius * 1000});
@@ -191,7 +191,7 @@ export class User {
 		const res = await client.queryObject<User>(
 			`
 
-			SELECT * FROM "${TABLE}" 
+			SELECT ${USERFIELDS} FROM "${TABLE}" 
 			WHERE ST_DWithin(
 				location,
 				ST_SetSRID(ST_MakePoint(${this.long},
@@ -212,7 +212,7 @@ export class User {
 	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT * FROM "${TABLE}" WHERE ${field_name} = $1;
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ${field_name} = $1;
 			`,
 			[field_value]
 		);
@@ -222,7 +222,7 @@ export class User {
 	static async getall(): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT * FROM "${TABLE}";
+				SELECT ${USERFIELDS} FROM "${TABLE}";
 			`
 		);
 		return res.rows.map((row) => new User(row));

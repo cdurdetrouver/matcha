@@ -184,7 +184,8 @@ app.post('/full_register', async (c: Context) => {
 	}
 	user.description = description;
 	user.interests = interests;
-	user.lat, user.long = location;
+	user.lat  = Number(location[0]);
+	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User need at least 1 post' }, 400);
 	user.complete_profile = true;

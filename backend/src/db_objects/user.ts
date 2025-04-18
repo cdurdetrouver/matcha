@@ -4,20 +4,21 @@ import { Image } from './images.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
-  username,
-  password,
-  email,
-  online,
-  complete_profile,
-  wanted,
-  gender,
-  sexual_preferences,
-  description,
-  interests,
-  ST_X(location::geometry) AS long,
-  ST_Y(location::geometry) AS lat,
-  created_at,
-  connected_at
+	id,
+	username,
+	password,
+	email,
+	online,
+	complete_profile,
+	wanted,
+	gender,
+	sexual_preferences,
+	description,
+	interests,
+	ST_X(location::geometry) AS long,
+	ST_Y(location::geometry) AS lat,
+	created_at,
+	connected_at
 `;
 
 export class User {
@@ -159,8 +160,6 @@ export class User {
 			`,
 			[id]
 		);
-		console.log(res.rows);
-		console.log("roooow[0]", res.rows[0]);
 		const user = res.rows[0];
 		if (user == undefined) throw Error('User not found');
 		return new User(user);

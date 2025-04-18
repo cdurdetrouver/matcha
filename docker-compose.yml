@@ -25,7 +25,7 @@ services:
             - POSTGRES_USER=postgresuser
             - POSTGRES_PASSWORD=postgrespassword
         ports:
-            - "5433:5432"
+            - "5432:5432"
         volumes:
             - ./db:/var/lib/postgresql/data
         networks:
@@ -39,7 +39,7 @@ services:
         networks:
             - matcha.net
         ports:
-            - "8003:8000"
+            - "8000:8000"
         depends_on:
             db:
                 condition: service_healthy

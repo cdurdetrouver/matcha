@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { request } from '$lib/script/request';
 	import { Avatar } from '@skeletonlabs/skeleton';
+	import Carousel from './utils/Carousel.svelte';
 	import { onMount } from 'svelte';
 
 	export let feeds: string[];
@@ -14,6 +14,7 @@
 			const placeholder = PlaceHolders[index];
 			var textelement = placeholder.querySelector('#text') as HTMLElement;
 			var hammertime = new Hammer(card);
+			card.classList.remove('moving');
 
 			hammertime.on('pan', function (ev) {
 				ev.target.classList.add('moving');
@@ -33,7 +34,6 @@
 					'deg)';
 
 				if (ev.deltaX > 0) {
-					placeholder.classList.remove('placeholder');
 					placeholder.classList.add('friend');
 					placeholder.classList.remove('love');
 					textelement.innerHTML = 'friend';
@@ -44,9 +44,9 @@
 				}
 			});
 
-			hammertime.on('panend', function (event) {
-				event.target.classList.remove('moving');
-				event.target.style.transform = 'translate(-50%, -50%)';
+			hammertime.on('panend', function (ev) {
+				ev.target.classList.remove('moving');
+				ev.target.style.transform = 'translate(-50%, -50%)';
 
 				placeholder.classList.remove('love');
 				placeholder.classList.remove('friend');
@@ -54,7 +54,13 @@
 			});
 
 			hammertime.on('swipe', async function (ev) {
-				feeds = feeds.filter((_, i) => i !== index);
+				if (ev.deltaX > 0) {
+					console.log('friend');
+				} else if (ev.deltaX < 0) {
+					console.log('love');
+				}
+
+				feeds = feeds.filter((e, i) => i !== index);
 			});
 		});
 	});
@@ -72,10 +78,15 @@
 	{#each feeds as feed}
 		<div class="relative snap-start size-full">
 			<div
-				class="tinder--card bg-black size-full md:h-[90%] md:w-[30%] overflow-hidden rounded-3xl shadow-2xl select-none relative"
+				class="tinder--card moving bg-black size-full md:h-[90%] xl:w-[30%] md:w-[40%] overflow-hidden rounded-3xl shadow-2xl select-none relative"
 			>
 				<div class="absolute size-full flex items-center justify-center">
-					<img class="size-full object-contain" src={feed} alt="test" />
+					<Carousel
+						images={[
+							{ link: '/blast.jpg', filename: 'blast', id: 0, user_id: 1 },
+							{ link: '/outerwilds.jpg', filename: 'outerwilds', id: 1, user_id: 1 }
+						]}
+					/>
 				</div>
 				<div class=" absolute size-full flex items-end flex-col justify-end p-10">
 					<a href="/user/1" class="z-[10]">
@@ -87,7 +98,9 @@
 					</a>
 				</div>
 			</div>
-			<div class="placeholder size-full md:h-[90%] md:w-[30%] rounded-3xl shadow-2xl">
+			<div
+				class="placeholder friend love size-full md:h-[90%] xl:w-[30%] md:w-[40%] rounded-3xl shadow-2xl"
+			>
 				<h1 id="text" class="h1">ok</h1>
 			</div>
 		</div>
@@ -100,6 +113,7 @@
 		cursor: -moz-grab;
 		cursor: grab;
 		position: absolute;
+		transition: all 0.5s ease-in-out;
 		will-change: transform;
 		top: 50%;
 		left: 50%;
@@ -107,7 +121,7 @@
 	}
 
 	.placeholder {
-		display: flex;
+		display: none;
 		justify-content: center;
 		align-items: center;
 		position: absolute;
@@ -118,42 +132,21 @@
 		user-select: none;
 		overflow: hidden;
 		z-index: -1;
-		background-color: orange;
 	}
 	.friend {
 		display: flex;
-		justify-content: center;
-		align-items: center;
-		position: absolute;
-		will-change: transform;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		user-select: none;
-		overflow: hidden;
-		z-index: -1;
-		background-color: blue;
+		background-color: #1e90ff;
 	}
 
 	.love {
-		background-color: red;
 		display: flex;
-	}
-
-	.tinder--card img,
-	.tinder--card .absolute {
-		will-change: transform;
-		transform: none;
-		pointer-events: none;
+		background-color: #e32636;
 	}
 
 	.moving.tinder--card {
 		cursor: -webkit-grabbing;
 		cursor: -moz-grabbing;
 		cursor: grabbing;
-	}
-
-	.z-context {
-		z-index: 100;
+		transition: none;
 	}
 </style>

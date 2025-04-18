@@ -41,6 +41,7 @@ services:
         - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
         - PGADMIN_LISTEN_PORT=5050
       volumes:
+        - ./pgadmin:/var/lib/pgadmin
         - ./pgadmin/servers.json:/pgadmin4/servers.json
         - ./pass.pgpass:/pgadmin4/.pgpass
       ports:
@@ -62,5 +63,8 @@ services:
           condition: service_healthy
 
 networks:
-    matcha.net:
-        driver: bridge
+  matcha.net:
+    driver: bridge
+
+volumes:
+  pgadmin:

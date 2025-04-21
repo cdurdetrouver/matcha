@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { RadioGroup, RadioItem, Autocomplete, popup, FileDropzone } from '@skeletonlabs/skeleton';
+	import {
+		RadioGroup,
+		RadioItem,
+		Autocomplete,
+		popup,
+		FileDropzone,
+		Stepper,
+		Step
+	} from '@skeletonlabs/skeleton';
 	import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 
@@ -38,9 +46,14 @@
 	};
 
 	let value: number = 1;
+	let username: string = '';
 	let inputGender = '';
 	let inputSexual = '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
+
+	function isValidOption(Options, input): boolean {
+		return Options.some((option) => option.label === input);
+	}
 
 	async function complete() {
 		alert(inputGender + value);
@@ -64,17 +77,19 @@
 	}
 </script>
 
-<main class="flex items-center justify-center size-full pt-[5vh] pb-[5vh]">
-	<form
-		class="card w-full h-full max-w-[60vw] grid grid-cols-2 gap-10"
-		on:submit|preventDefault={complete}
-	>
-		<div class="p-4 overflow-hidden">
-			<div class="row-span-3 flex items-center justify-center">
-				<RadioGroup class="uppercase">
+<main class="flex items-center justify-center size-full">
+	<div class="card p-4 text-token">
+		<Stepper on:complete={complete}>
+			<Step locked={username.length < 3}>
+				<svelte:fragment slot="header">Choose your username</svelte:fragment>
+				<input class="input p-2" placeholder="Enter your username" bind:value={username} />
+			</Step>
+			<Step>
+				<svelte:fragment slot="header">What's are you looking for ?</svelte:fragment>
+				<RadioGroup class="w-full uppercase">
 					<RadioItem bind:group={value} name="justify" value={0}>
 						<div class="flex items-center justify-center gap-2">
-							<Icon icon="mdi:heart" style="color: cyan" width="1.5em" />
+							<Icon icon="mdi:heart" style="color: #1e90ff" width="1.5em" />
 							<p>Friend</p>
 						</div>
 					</RadioItem>
@@ -84,13 +99,13 @@
 					<RadioItem bind:group={value} name="justify" value={2}>
 						<div class="flex items-center justify-center gap-2">
 							<p>Love</p>
-							<Icon icon="mdi:heart" style="color: red" width="1.5em" />
+							<Icon icon="mdi:heart" style="color: #e32636" width="1.5em" />
 						</div>
 					</RadioItem>
 				</RadioGroup>
-			</div>
-			<div class="row-span-3">
-				<h4 class="h4">Choose your Gender :</h4>
+			</Step>
+			<Step locked={!isValidOption(GenderOptions, inputGender) && value > 0}>
+				<svelte:fragment slot="header">What's your gender ?</svelte:fragment>
 				<input
 					class="input p-2"
 					type="search"
@@ -101,7 +116,7 @@
 					disabled={value < 1}
 				/>
 				<div
-					class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
+					class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto z-[100]"
 					tabindex="-1"
 					data-popup="GenderpopupAutocomplete"
 				>
@@ -111,9 +126,16 @@
 						on:selection={onFlavorSelectionGender}
 					/>
 				</div>
-			</div>
-			<div class="row-span-3 bg-brown-500">
-				<h4 class="h4">Choose your Sexual Orientation Preferences :</h4>
+				{#if value == 0}
+					<aside class="alert variant-ghost-warning">
+						<div class="alert-message">
+							<p>You should skip this step because you're not looking for some relationship</p>
+						</div>
+					</aside>
+				{/if}
+			</Step>
+			<Step locked={!isValidOption(SexualOptions, inputSexual) && value > 0}>
+				<svelte:fragment slot="header">What are you interrested for ?</svelte:fragment>
 				<input
 					class="input p-2"
 					type="search"
@@ -124,7 +146,7 @@
 					disabled={value < 1}
 				/>
 				<div
-					class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
+					class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto z-[100]"
 					tabindex="-1"
 					data-popup="SexualpopupAutocomplete"
 				>
@@ -134,8 +156,56 @@
 						on:selection={onFlavorSelectionSexual}
 					/>
 				</div>
-			</div>
-		</div>
+				{#if value == 0}
+					<aside class="alert variant-ghost-warning">
+						<div class="alert-message">
+							<p>You should skip this step because you're not looking for some relationship</p>
+						</div>
+					</aside>
+				{/if}
+			</Step>
+			<Step locked={true}>
+				<svelte:fragment slot="header">Choose a profile picture</svelte:fragment>
+				<div class="grid grid-cols-3 gap-4 w-[60vw] h-[60vh]">
+					{#each Array(6) as _, index}
+						{#if dropzoneFiles[index]}
+							<div class="rounded-2xl overflow-hidden flex items-center justify-center bg-black">
+								<img
+									src={URL.createObjectURL(dropzoneFiles[index][0])}
+									alt="Preview"
+									class="w-full h-full object-contain"
+								/>
+							</div>
+						{:else}
+							<div class="size-full">
+								<FileDropzone
+									name={`fileInput${index}`}
+									accept="image/*"
+									bind:files={dropzoneFiles[index]}
+									class="size-full"
+								>
+									<svelte:fragment slot="lead">
+										<i class="flex items-center justify-center">
+											<Icon icon="bx:file" width="2em" />
+										</i>
+									</svelte:fragment>
+									<svelte:fragment slot="message">
+										{#if index === 0}
+											Choose your Profile Picture
+										{:else}
+											Upload a post
+										{/if}
+									</svelte:fragment>
+									<svelte:fragment slot="meta">PNG, JPG and GIF allowed.</svelte:fragment>
+								</FileDropzone>
+							</div>
+						{/if}
+					{/each}
+				</div>
+			</Step>
+		</Stepper>
+	</div>
+	<!-- <div class="p-4 overflow-hidden">
 		<div class="h-full p-4">
 			<div
 				class="grid grid-cols-3 max-h-[70%] min-h-[70%] h-[70%] max-w-[100%] min-w-[100%] w-[100%] gap-4"
@@ -178,6 +248,5 @@
 			<div class="w-full h-[30%] flex items-center justify-center">
 				<button class="btn variant-filled" type="submit">Finish</button>
 			</div>
-		</div>
-	</form>
+		</div> -->
 </main>

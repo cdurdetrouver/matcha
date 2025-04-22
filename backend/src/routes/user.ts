@@ -18,6 +18,10 @@ import { Block_Users } from '../db_objects/block_users.ts';
 import { ChatType } from '../types/chat.ts';
 import { Image } from '../db_objects/images.ts';
 import { delete_file, post_file } from '../utils/google_file.ts';
+import { Email_Verif } from '../db_objects/email_verif.ts';
+import { FRONTEND_URL } from '../secret.ts';
+import nodemailer from 'npm:nodemailer';
+import { sendVerificationEmail } from '../utils/send_mail.ts';
 
 const app = new Hono();
 
@@ -213,27 +217,16 @@ app.post('/register', async (c: Context) => {
 	} catch (_e) {
 		return c.json({ message: 'User creation failed !' }, 422);
 	}
-	const access_token = await get_access_token(user_register);
-	const refresh_token = await get_refresh_token(user_register);
-
-	deleteCookie(c, `access_token`);
-	deleteCookie(c, `refresh_token`);
-	c.res.headers.append(
-		'Set-Cookie',
-		`access_token=${access_token}; HttpOnly; Secure; Path=/`
-	);
-	c.res.headers.append(
-		'Set-Cookie',
-		`refresh_token=${refresh_token}; HttpOnly; Secure; Path=/`
-	);
 	const randomNumber: number = Math.floor(Math.random() * 2);
 	const name = 'avatar_default_' + randomNumber;
 	await Image.post(user_register.id, name, 'avatar');
 
-	return c.json(
-		{ message: 'User created!', user: await user_register.serialize_me() },
-		200
-	);
+	const token = Email_Verif.create_token(user_register.id);
+	const url = `${FRONTEND_URL}/verif?token=${token}&userid=${user_register.id}`;
+
+	sendVerificationEmail(user_register.email, url);
+
+	return c.json({ message: 'User created!' }, 200);
 });
 
 app.all('/register', (c: Context) => {

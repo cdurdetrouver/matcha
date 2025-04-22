@@ -87,7 +87,7 @@
 	{#each feeds as feed}
 		<div class="relative snap-start size-full">
 			<div
-				class="tinder--card moving bg-black size-full md:h-[90%] xl:w-[30%] md:w-[40%] overflow-hidden rounded-3xl shadow-2xl select-none relative"
+				class="tinder--card moving bg-black w-[95%] h-[90%] xl:w-[30%] md:w-[40%] overflow-hidden rounded-3xl shadow-2xl select-none relative"
 			>
 				<div class="size-full select-none pointer-events-none">
 					<Carousel
@@ -106,7 +106,7 @@
 				</a>
 			</div>
 			<div
-				class="place-holder friend love size-full md:h-[90%] xl:w-[30%] md:w-[40%] rounded-3xl shadow-2xl"
+				class="place-holder friend love w-[95%] h-[90%] xl:w-[30%] md:w-[40%] rounded-3xl shadow-2xl"
 			>
 				<h1 id="text" class="h1">Placeholder Text</h1>
 			</div>

@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { PUBLIC_BACKEND_HOST } from "$env/static/public";
+	import { PUBLIC_BACKEND_HOST } from '$env/static/public';
 	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
+	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
 
-	let form : {
-		missing_email?: boolean,
-		missing_password?: boolean,
-		incorrect_email?:boolean,
-		incorrect_password?:boolean,
-		email?:string
+	const toastStore = getToastStore();
+
+	let form: {
+		missing_email?: boolean;
+		missing_password?: boolean;
+		incorrect_email?: boolean;
+		incorrect_password?: boolean;
+		email?: string;
 	} = {};
 
 	let email = form?.email || '';
@@ -22,14 +25,14 @@
 			form = {
 				missing_email: !email,
 				missing_password: !password,
-				email,
+				email
 			};
 		}
 
 		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/login`, {
-			method: "POST",
+			method: 'POST',
 			headers: {
-				"Content-Type": "application/json",
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
 				email: email,
@@ -41,7 +44,7 @@
 		if (res.status !== 200) {
 			form = {
 				incorrect_email: data_res.err_email,
-				incorrect_password: data_res.err_password,
+				incorrect_password: data_res.err_password
 			};
 			return;
 		}
@@ -49,6 +52,12 @@
 		const user = data_res.user as User;
 
 		SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+
+		const t: ToastSettings = {
+			message: "You're logged in 🎉",
+			background: 'variant-filled-success'
+		};
+		toastStore.trigger(t);
 
 		goto('/profile');
 	}

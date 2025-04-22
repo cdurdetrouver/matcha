@@ -7,6 +7,7 @@ export type UserType = {
 	online: boolean;
 	connected_at: number;
 	complete_profile: boolean;
+	email_verif: boolean;
 	wanted: number;
 	avatar?: ImageType;
 	email?: string;

@@ -46,17 +46,88 @@
 	};
 
 	let value: number = 1;
-	let username: string = '';
 	let inputGender = '';
 	let inputSexual = '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
+	let userLocation: { latitude: number | null; longitude: number | null; city: string } = {
+		latitude: null,
+		longitude: null,
+		city: ''
+	};
+	let locationError = '';
 
-	function isValidOption(Options: AutocompleteOption<string>[], input:string): boolean {
+	async function getCurrentPosition(latitude: number, longitude: number) {
+		try {
+			const response = await fetch(
+				`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+			);
+			const data = await response.json();
+			if (data) {
+				userLocation.city = data.city;
+			}
+		} catch (error) {
+			console.error('Error fetching location data :', error);
+		}
+	}
+
+	async function fetchLocationByIP() {
+		try {
+			const response = await fetch('http://ip-api.com/json/');
+			if (!response.ok) throw new Error('Failed to fetch location by IP');
+			const data = await response.json();
+			return {
+				latitude: data.lat,
+				longitude: data.lon,
+				city: data.city || 'Unknown'
+			};
+		} catch (error) {
+			console.error('Failed to fetch location by IP:', error);
+			return null;
+		}
+	}
+
+	function requestLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(
+				async (position) => {
+					userLocation.latitude = position.coords.latitude;
+					userLocation.longitude = position.coords.longitude;
+					locationError = '';
+					await getCurrentPosition(position.coords.latitude, position.coords.longitude);
+				},
+				async (error) => {
+					switch (error.code) {
+						case error.PERMISSION_DENIED:
+							locationError = 'User denied the request for Geolocation.';
+							break;
+						case error.POSITION_UNAVAILABLE:
+							locationError = 'Location information is unavailable.';
+							break;
+						case error.TIMEOUT:
+							locationError = 'The request to get user location timed out.';
+							break;
+						default:
+							locationError = 'An unknown error occurred.';
+							break;
+					}
+					const res = await fetchLocationByIP();
+					if (res) {
+						userLocation = res;
+						locationError = '';
+					}
+				}
+			);
+		} else {
+			locationError = 'Geolocation is not supported by this browser.';
+		}
+	}
+
+	function isValidOption(Options: AutocompleteOption<string>[], input: string): boolean {
 		return Options.some((option) => option.label === input);
 	}
 
 	async function complete() {
-		alert(inputGender + value);
+		alert(inputGender + ' ' + value);
 		if (!dropzoneFiles[0]) alert('Please select a profile picture.');
 		for (let i = 0; i < dropzoneFiles.length; i++) {
 			const file = dropzoneFiles[i];
@@ -81,8 +152,7 @@
 	}
 
 	function isPhotoValid(Files: (FileList | undefined)[]) {
-		if (Files[0] === undefined)
-			return false;
+		if (Files[0] === undefined) return false;
 
 		const allOtherFilesUndefined = Files.slice(1).every((file) => file === undefined);
 
@@ -95,9 +165,27 @@
 <main class="flex items-center justify-center size-full">
 	<div class="card p-4 text-token">
 		<Stepper on:complete={complete}>
-			<Step locked={username.length < 3}>
-				<svelte:fragment slot="header">Choose your username</svelte:fragment>
-				<input class="input p-2" placeholder="Enter your username" bind:value={username} />
+			<Step
+				locked={userLocation.city === '' ||
+					userLocation.latitude === null ||
+					userLocation.longitude === null}
+			>
+				<svelte:fragment slot="header">We need your location</svelte:fragment>
+				<div class="size-full flex items-center justify-center gap-5">
+					<button type="button" class="btn variant-filled" on:click={requestLocation}>
+						Request Location
+					</button>
+
+					<input
+						class="input p-2"
+						placeholder="Your location"
+						bind:value={userLocation.city}
+						readonly
+					/>
+				</div>
+				{#if locationError}
+					<p class="text-red-500">{locationError}</p>
+				{/if}
 			</Step>
 			<Step>
 				<svelte:fragment slot="header">What are you looking for ?</svelte:fragment>
@@ -180,73 +268,33 @@
 				{/if}
 			</Step>
 			<Step locked={!isPhotoValid(dropzoneFiles)}>
-				<svelte:fragment slot="header">Choose a profile picture and at least one post</svelte:fragment>
-				<div class="grid grid-cols-3 gap-4 w-[60vw] h-[60vh]">
+				<svelte:fragment slot="header"
+					>Choose a profile picture and at least one post</svelte:fragment
+				>
+				<div class="grid grid-cols-3 gap-4 w-full">
 					{#each Array(6) as _, index}
 						{#if dropzoneFiles[index]}
-						<div class="relative rounded-2xl overflow-hidden flex items-center justify-center bg-black group">
-							<img
-								src={URL.createObjectURL(dropzoneFiles[index][0])}
-								alt="Preview"
-								class="w-full h-full object-contain"
-							/>
-							<button
-								class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-								on:click={() => deleteImage(index)}
+							<div
+								class="relative rounded-2xl overflow-hidden flex items-center justify-center bg-black group size-full aspect-[0.75]"
 							>
-								<Icon icon="mdi:trash-can" width="1.5em" />
-							</button>
-						</div>
-						{:else}
-							<div class="size-full">
-								<FileDropzone
-									name={`fileInput${index}`}
-									accept="image/*"
-									bind:files={dropzoneFiles[index]}
-									class="size-full"
+								<img
+									src={URL.createObjectURL(dropzoneFiles[index][0])}
+									alt="Preview"
+									class="size-full object-contain absolute top-0 left-0"
+								/>
+								<button
+									class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+									on:click={() => deleteImage(index)}
 								>
-									<svelte:fragment slot="lead">
-										<i class="flex items-center justify-center">
-											<Icon icon="bx:file" width="2em" />
-										</i>
-									</svelte:fragment>
-									<svelte:fragment slot="message">
-										{#if index === 0}
-											Choose your Profile Picture
-										{:else}
-											Upload a post
-										{/if}
-									</svelte:fragment>
-									<svelte:fragment slot="meta">PNG, JPG and GIF allowed.</svelte:fragment>
-								</FileDropzone>
+									<Icon icon="mdi:trash-can" width="1.5em" />
+								</button>
 							</div>
-						{/if}
-					{/each}
-				</div>
-			</Step>
-		</Stepper>
-	</div>
-	<!-- <div class="p-4 overflow-hidden">
-		<div class="h-full p-4">
-			<div
-				class="grid grid-cols-3 max-h-[70%] min-h-[70%] h-[70%] max-w-[100%] min-w-[100%] w-[100%] gap-4"
-			>
-				{#each Array(6) as _, index}
-					{#if dropzoneFiles[index]}
-						<div class="rounded-2xl overflow-hidden flex items-center justify-center bg-black">
-							<img
-								src={URL.createObjectURL(dropzoneFiles[index][0])}
-								alt="Preview"
-								class="w-full h-full object-contain"
-							/>
-						</div>
-					{:else}
-						<div class="size-full">
+						{:else}
 							<FileDropzone
 								name={`fileInput${index}`}
 								accept="image/*"
 								bind:files={dropzoneFiles[index]}
-								class="size-full"
+								class="size-full aspect-[0.75]"
 							>
 								<svelte:fragment slot="lead">
 									<i class="flex items-center justify-center">
@@ -262,12 +310,10 @@
 								</svelte:fragment>
 								<svelte:fragment slot="meta">PNG, JPG and GIF allowed.</svelte:fragment>
 							</FileDropzone>
-						</div>
-					{/if}
-				{/each}
-			</div>
-			<div class="w-full h-[30%] flex items-center justify-center">
-				<button class="btn variant-filled" type="submit">Finish</button>
-			</div>
-		</div> -->
+						{/if}
+					{/each}
+				</div>
+			</Step>
+		</Stepper>
+	</div>
 </main>

@@ -1,6 +1,6 @@
 import { UserType } from '../types/user.ts';
 import { client } from '../main.ts';
-import { Image } from "./images.ts";
+import { Image } from './images.ts';
 
 const TABLE = 'users';
 
@@ -10,6 +10,7 @@ export class User {
 	email: string;
 	online: boolean = false;
 	complete_profile: boolean = false;
+	email_verif: boolean = false;
 	wanted: number = 0;
 	gender?: string;
 	sexual_preferences?: string;
@@ -31,13 +32,16 @@ export class User {
 			this.email = usernameOrOther.email!;
 			this.online = usernameOrOther.online ?? false;
 			this.complete_profile = usernameOrOther.complete_profile ?? false;
+			this.email_verif = usernameOrOther.email_verif ?? false;
 			this.gender = usernameOrOther.gender ?? undefined;
-			this.sexual_preferences = usernameOrOther.sexual_preferences ?? undefined;
+			this.sexual_preferences =
+				usernameOrOther.sexual_preferences ?? undefined;
 			this.interests = usernameOrOther.interests ?? undefined;
 			this.description = usernameOrOther.description ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
-			this.connected_at = usernameOrOther.connected_at ?? BigInt(Date.now());
+			this.connected_at =
+				usernameOrOther.connected_at ?? BigInt(Date.now());
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
@@ -55,13 +59,14 @@ export class User {
 					email = $3,
 					online = $4,
 					complete_profile = $5,
-					gender = $6,
-					sexual_preferences = $7,
-					description = $8,
-					interests = $9,
-					location = $10,
-					connected_at = $11
-				WHERE id = $12;
+					email_verif = $6,
+					gender = $7,
+					sexual_preferences = $8,
+					description = $9,
+					interests = $10,
+					location = $11,
+					connected_at = $12
+				WHERE id = $13;
 			`,
 			[
 				this.username,
@@ -69,6 +74,7 @@ export class User {
 				this.email,
 				this.online,
 				this.complete_profile,
+				this.email_verif,
 				this.gender,
 				this.sexual_preferences,
 				this.description,
@@ -89,6 +95,7 @@ export class User {
 				email VARCHAR(255) NOT NULL UNIQUE,
 				online BOOLEAN DEFAULT FALSE,
 				complete_profile BOOLEAN DEFAULT FALSE,
+				email_verif BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
 				description VARCHAR(255) DEFAULT NULL,
@@ -176,6 +183,7 @@ export class User {
 			connected_at: Number(this.connected_at),
 			avatar: await avatar.serialize(),
 			complete_profile: this.complete_profile,
+			email_verif: this.email_verif,
 			online: this.online,
 			wanted: this.wanted,
 			gender: this.gender,
@@ -192,8 +200,7 @@ export class User {
 		try {
 			avatar = await Image.get_avatar_by_user(this.id);
 			avatar = await avatar.serialize();
-		}
-		catch (_e) {
+		} catch (_e) {
 			avatar = undefined;
 		}
 		const user: UserType = {
@@ -204,6 +211,7 @@ export class User {
 			connected_at: Number(this.connected_at),
 			avatar: avatar,
 			complete_profile: this.complete_profile,
+			email_verif: this.email_verif,
 			online: this.online,
 			wanted: this.wanted,
 			gender: this.gender,

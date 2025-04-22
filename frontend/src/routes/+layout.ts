@@ -4,13 +4,11 @@ import { redirect } from '@sveltejs/kit';
 import { GetCookie } from '$lib/script/cookies';
 import type { LayoutLoad } from './$types';
 
-const publicPaths = ['/', '/login'];
+const publicPaths = ['/', '/login', '/verif'];
 const publicCompletePaths = [...publicPaths, '/complete', '/profile'];
 
-function isPathAllowed(path: string, paths = publicPaths):boolean {
-	return paths.some(
-		(allowedPath) => path === allowedPath || path.startsWith(allowedPath + '/')
-	);
+function isPathAllowed(path: string, paths = publicPaths): boolean {
+	return paths.some((allowedPath) => path === allowedPath || path.startsWith(allowedPath + '/'));
 }
 
 export const load: LayoutLoad = async ({ url }) => {

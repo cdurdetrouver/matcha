@@ -51,7 +51,7 @@
 	let inputSexual = '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
 
-	function isValidOption(Options, input): boolean {
+	function isValidOption(Options: AutocompleteOption<string>[], input:string): boolean {
 		return Options.some((option) => option.label === input);
 	}
 
@@ -75,6 +75,21 @@
 	function onFlavorSelectionSexual(event: CustomEvent<AutocompleteOption<string>>): void {
 		inputSexual = event.detail.label;
 	}
+
+	function deleteImage(index: number): void {
+		dropzoneFiles[index] = undefined;
+	}
+
+	function isPhotoValid(Files: (FileList | undefined)[]) {
+		if (Files[0] === undefined)
+			return false;
+
+		const allOtherFilesUndefined = Files.slice(1).every((file) => file === undefined);
+
+		if (allOtherFilesUndefined) return false;
+
+		return true;
+	}
 </script>
 
 <main class="flex items-center justify-center size-full">
@@ -85,7 +100,7 @@
 				<input class="input p-2" placeholder="Enter your username" bind:value={username} />
 			</Step>
 			<Step>
-				<svelte:fragment slot="header">What's are you looking for ?</svelte:fragment>
+				<svelte:fragment slot="header">What are you looking for ?</svelte:fragment>
 				<RadioGroup class="w-full uppercase">
 					<RadioItem bind:group={value} name="justify" value={0}>
 						<div class="flex items-center justify-center gap-2">
@@ -164,18 +179,24 @@
 					</aside>
 				{/if}
 			</Step>
-			<Step locked={true}>
-				<svelte:fragment slot="header">Choose a profile picture</svelte:fragment>
+			<Step locked={!isPhotoValid(dropzoneFiles)}>
+				<svelte:fragment slot="header">Choose a profile picture and at least one post</svelte:fragment>
 				<div class="grid grid-cols-3 gap-4 w-[60vw] h-[60vh]">
 					{#each Array(6) as _, index}
 						{#if dropzoneFiles[index]}
-							<div class="rounded-2xl overflow-hidden flex items-center justify-center bg-black">
-								<img
-									src={URL.createObjectURL(dropzoneFiles[index][0])}
-									alt="Preview"
-									class="w-full h-full object-contain"
-								/>
-							</div>
+						<div class="relative rounded-2xl overflow-hidden flex items-center justify-center bg-black group">
+							<img
+								src={URL.createObjectURL(dropzoneFiles[index][0])}
+								alt="Preview"
+								class="w-full h-full object-contain"
+							/>
+							<button
+								class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+								on:click={() => deleteImage(index)}
+							>
+								<Icon icon="mdi:trash-can" width="1.5em" />
+							</button>
+						</div>
 						{:else}
 							<div class="size-full">
 								<FileDropzone

@@ -1,23 +1,25 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { PUBLIC_BACKEND_HOST } from "$env/static/public";
+	import { PUBLIC_BACKEND_HOST } from '$env/static/public';
 	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
+	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 
-	let form : {
-		missing_username?: boolean,
-		incorrect_username?:string,
-		missing_match?: boolean,
-		incorrect_match?:boolean,
-		missing_email?: boolean,
-		incorrect_email?:string,
-		missing_password?: boolean,
-		incorrect_password?:string,
-		email?:string,
-		username?:string,
-		password?:string,
-	} = {
-	};
+	const modalStore = getModalStore();
+
+	let form: {
+		missing_username?: boolean;
+		incorrect_username?: string;
+		missing_match?: boolean;
+		incorrect_match?: boolean;
+		missing_email?: boolean;
+		incorrect_email?: string;
+		missing_password?: boolean;
+		incorrect_password?: string;
+		email?: string;
+		username?: string;
+		password?: string;
+	} = {};
 
 	let email = form?.email || '';
 	let username = form?.username || '';
@@ -34,7 +36,7 @@
 				missing_username: !username,
 				missing_match: !match_password,
 				email,
-				username,
+				username
 			};
 
 			return;
@@ -49,9 +51,9 @@
 		}
 
 		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/register`, {
-			method: "POST",
+			method: 'POST',
 			headers: {
-				"Content-Type": "application/json"
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
 				email: email,
@@ -66,7 +68,7 @@
 			form = {
 				incorrect_email: data_res.err_email,
 				incorrect_username: data_res.err_username,
-				incorrect_password: data_res.err_password,
+				incorrect_password: data_res.err_password
 			};
 			return;
 		}
@@ -75,7 +77,14 @@
 
 		SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
 
-		goto('/profile');
+		const m: ModalSettings = {
+			type: 'alert',
+			title: 'You are now registered 🎉',
+			body: 'Next step is to confirm your email !'
+		};
+		modalStore.trigger(m);
+
+		goto('/complete');
 	}
 </script>
 
@@ -133,10 +142,10 @@
 	</form>
 	<hr />
 	<div class="flex flex-col gap-3 items-center">
-		<a href="test" class="btn variant-filled mx-20 flex gap-4"
+		<a href="test" class="btn bg-black text-white mx-20 flex gap-4"
 			><img class="h-[1em]" src="logo/42Paris.svg" alt="42 paris logo" />Register with Intra</a
 		>
-		<a href="test" class="btn bg-white mx-20 flex gap-4"
+		<a href="test" class="btn bg-white text-black mx-20 flex gap-4"
 			><img class="h-[1em]" src="logo/Google.svg" alt="Google logo" />Register with Google</a
 		>
 	</div>

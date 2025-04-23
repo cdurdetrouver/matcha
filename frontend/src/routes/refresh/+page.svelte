@@ -1,25 +1,13 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { PUBLIC_BACKEND_HOST } from "$env/static/public";
+	import { goto } from '$app/navigation';
+	import { PUBLIC_BACKEND_HOST } from '$env/static/public';
+	import { logoutUser } from '$lib/script/request';
 
-	let message:string = "";
-
-	async function logout() {
-		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/refresh_token`, {
-			method: "GET",
-			credentials: "include"
-		});
-		if (res.status !== 200) {
-			const data_res = await res.json();
-			message = data_res.message;
-			return;
-		}
-		goto("/");
-	};
+	let message: string = '';
 </script>
 
 <div class="size-full flex items-center justify-center">
-	<form on:submit|preventDefault={logout}>
+	<form on:submit|preventDefault={logoutUser}>
 		<button class="btn variant-filled-primary mx-10 px-10" type="submit">Refresh</button>
 	</form>
 	{#if message}

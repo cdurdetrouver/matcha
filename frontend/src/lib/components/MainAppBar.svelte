@@ -38,7 +38,7 @@
 			{:else}
 				<a class="btn-icon hover:variant-soft-primary" href="/profile" rel="noreferrer">
 					<Avatar
-						src={user.avatar}
+						src={user.avatar?.link}
 						alt="User Logo"
 						rounded="rounded-3xl"
 						width="w-[40px]"

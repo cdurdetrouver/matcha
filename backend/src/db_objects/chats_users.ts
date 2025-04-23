@@ -13,6 +13,15 @@ export class Chats_Users {
 		`);
 	}
 
+	static async getall(): Promise<number[]> {
+		const res = await client.queryObject<number>(
+			`
+                    SELECT * FROM "${TABLE}";
+                `
+		);
+		return res.rows.map((row) => row);
+	}
+
 	static async add_user_chat(user_id: number, chat_id: number) {
 		await client.queryObject(
 			`

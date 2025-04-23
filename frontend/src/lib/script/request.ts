@@ -79,6 +79,8 @@ export class WebSocketManager {
 		};
 
 		this.socket.onmessage = (event) => {
+			if (event.data === 'WebSocket connection opened') return;
+
 			const data = JSON.parse(event.data);
 			if (this.onMessageHook) this.onMessageHook(data);
 		};

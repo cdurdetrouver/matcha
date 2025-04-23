@@ -6,7 +6,6 @@ import chat from './routes/chat.ts';
 import notif from './routes/notif.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
-import { delete_file } from "./utils/google_file.ts";
 
 const app = new Hono<{ Variables: JwtVariables }>();
 

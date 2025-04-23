@@ -1,4 +1,4 @@
-import { ImageType } from "./image.ts";
+import { ImageType } from './image.ts';
 
 export type UserType = {
 	username: string;
@@ -7,6 +7,7 @@ export type UserType = {
 	online: boolean;
 	connected_at: number;
 	complete_profile: boolean;
+	email_verif: boolean;
 	wanted: number;
 	avatar?: ImageType;
 	email?: string;
@@ -15,4 +16,4 @@ export type UserType = {
 	description?: string;
 	interests?: string[];
 	location?: string[2];
-}
+};

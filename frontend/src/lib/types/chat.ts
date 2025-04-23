@@ -1,19 +1,21 @@
-import type { User } from "./user";
+import type { User } from './user.ts';
+import type { Image } from './image.ts';
 
 export type Message = {
 	id: number;
-	message?: string;
-	image?:string;
-	video?:string;
-	author: User;
+	content?: string;
+	image?: string;
+	video?: string;
+	author?: User;
 	created_at: number;
-	type:string;
-}
+	type: string;
+};
 
 export type Chat = {
-	id:number;
-	name:string;
+	id: number;
+	name?: string;
 	users: User[];
 	LastMessage?: Message;
-	avatar?: string;
-}
+	avatar?: Image;
+	created_at?: number;
+};

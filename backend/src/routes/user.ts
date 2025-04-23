@@ -22,6 +22,7 @@ import { Email_Verif } from '../db_objects/email_verif.ts';
 import { FRONTEND_URL } from '../secret.ts';
 import nodemailer from 'npm:nodemailer';
 import { sendVerificationEmail } from '../utils/send_mail.ts';
+import { Message } from '../db_objects/messages.ts';
 
 const app = new Hono();
 
@@ -138,6 +139,8 @@ app.post('/login', async (c: Context) => {
 		return c.json({ err_password, err_email }, 401);
 
 	if (ret_user != undefined) {
+		if (!ret_user.email_verif)
+			return c.json({ message: 'User not verified !' }, 401);
 		const access_token = await get_access_token(ret_user);
 		const refresh_token = await get_refresh_token(ret_user);
 
@@ -221,15 +224,67 @@ app.post('/register', async (c: Context) => {
 	const name = 'avatar_default_' + randomNumber;
 	await Image.post(user_register.id, name, 'avatar');
 
-	const token = Email_Verif.create_token(user_register.id);
+	const token = await Email_Verif.create_token(user_register.id);
 	const url = `${FRONTEND_URL}/verif?token=${token}&userid=${user_register.id}`;
 
-	sendVerificationEmail(user_register.email, url);
+	try {
+		sendVerificationEmail(user_register.email, url);
+	} catch (error) {
+		return c.json({ message: error }, 422);
+	}
 
 	return c.json({ message: 'User created!' }, 200);
 });
 
 app.all('/register', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.post('/verif', async (c: Context) => {
+	const { token, userid } = await c.req.json();
+
+	let ret_token;
+
+	try {
+		ret_token = await Email_Verif.get_by_user_id(userid);
+		if (ret_token == undefined) throw new Error('Token not found');
+	} catch (_e) {
+		return c.json({ message: 'You need to register first !' }, 422);
+	}
+
+	if (ret_token.expiration < Date.now())
+		return c.json({ message: 'Token expired !' }, 422);
+	if (ret_token.token != token)
+		return c.json({ message: 'Token not valid !' }, 422);
+	const user = await User.get_by_id(userid);
+	if (user == undefined) return c.json({ message: 'User not found !' }, 422);
+
+	if (user.email_verif)
+		return c.json({ message: 'User already verified !' }, 422);
+	user.email_verif = true;
+	await user.save();
+	await Email_Verif.delete_by_user_id(userid);
+
+	const access_token = await get_access_token(user);
+	const refresh_token = await get_refresh_token(user);
+	deleteCookie(c, 'access_token');
+	deleteCookie(c, 'refresh_token');
+
+	c.res.headers.append(
+		'Set-Cookie',
+		`access_token=${access_token}; HttpOnly; Path=/`
+	);
+	c.res.headers.append(
+		'Set-Cookie',
+		`refresh_token=${refresh_token}; HttpOnly; Path=/`
+	);
+	return c.json(
+		{ message: 'User verif !', user: await user.serialize_me() },
+		200
+	);
+});
+
+app.all('/verif', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

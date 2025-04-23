@@ -1,13 +1,29 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { request } from '$lib/script/request';
 	import { onMount } from 'svelte';
 
-	onMount(() => {
+	onMount(async () => {
 		const token = page.url.searchParams.get('token');
 		const userid = page.url.searchParams.get('userid');
 
 		if (!token || !userid) goto('/login');
+
+        try {
+            const res = await request('/api/user/verif', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token,
+                    userid
+                })
+            });
+        } catch (error) {
+            
+        }
 	});
 </script>
 

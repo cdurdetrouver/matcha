@@ -1,20 +1,21 @@
 import nodemailer from 'npm:nodemailer';
+import { GMAIL_PASS, GMAIL_EMAIL } from '../secret.ts';
 
 export async function sendVerificationEmail(to: string, url: string) {
 	const transporter = nodemailer.createTransport({
 		service: 'Gmail',
 		auth: {
-			user: 'your-email@gmail.com',
-			pass: 'your-email-password',
+			user: GMAIL_EMAIL,
+			pass: GMAIL_PASS,
 		},
 	});
 
 	const mailOptions = {
-		from: 'your-email@gmail.com',
+		from: GMAIL_EMAIL,
 		to,
 		subject: 'Email Verification',
 		html: `<p>Please verify your email by clicking the link below:</p>
-			 <a href="${url}">${url}</a>`,
+			 <a href="${url}">Verify</a>`,
 	};
 
 	try {

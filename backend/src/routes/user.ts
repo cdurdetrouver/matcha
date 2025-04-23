@@ -20,9 +20,7 @@ import { Image } from '../db_objects/images.ts';
 import { delete_file, post_file } from '../utils/google_file.ts';
 import { Email_Verif } from '../db_objects/email_verif.ts';
 import { FRONTEND_URL } from '../secret.ts';
-import nodemailer from 'npm:nodemailer';
 import { sendVerificationEmail } from '../utils/send_mail.ts';
-import { Message } from '../db_objects/messages.ts';
 
 const app = new Hono();
 
@@ -242,46 +240,27 @@ app.all('/register', (c: Context) => {
 
 app.post('/verif', async (c: Context) => {
 	const { token, userid } = await c.req.json();
-
-	let ret_token;
-
+	let ret_token = undefined;
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
-		if (ret_token == undefined) throw new Error('Token not found');
-	} catch (_e) {
-		return c.json({ message: 'You need to register first !' }, 422);
+		if (ret_token.expiration < Date.now())
+			throw new Error('Token expired !');
+		if (ret_token.token != token) throw new Error('Token not valid !');
+		const user = await User.get_by_id(userid);
+		if (user == undefined) throw new Error('User not found !');
+
+		if (user.email_verif) throw new Error('User already verified !');
+		user.email_verif = true;
+		await user.save();
+		await Email_Verif.delete_by_user_id(userid);
+		return c.json({ message: 'User verif !' }, 200);
+	} catch (error) {
+		if (ret_token != undefined) {
+			await Email_Verif.delete_by_user_id(userid);
+		}
+		if (error instanceof Error) return c.json({ message: error }, 422);
+		else return c.json({ message: 'You need to register first !' }, 422);
 	}
-
-	if (ret_token.expiration < Date.now())
-		return c.json({ message: 'Token expired !' }, 422);
-	if (ret_token.token != token)
-		return c.json({ message: 'Token not valid !' }, 422);
-	const user = await User.get_by_id(userid);
-	if (user == undefined) return c.json({ message: 'User not found !' }, 422);
-
-	if (user.email_verif)
-		return c.json({ message: 'User already verified !' }, 422);
-	user.email_verif = true;
-	await user.save();
-	await Email_Verif.delete_by_user_id(userid);
-
-	const access_token = await get_access_token(user);
-	const refresh_token = await get_refresh_token(user);
-	deleteCookie(c, 'access_token');
-	deleteCookie(c, 'refresh_token');
-
-	c.res.headers.append(
-		'Set-Cookie',
-		`access_token=${access_token}; HttpOnly; Path=/`
-	);
-	c.res.headers.append(
-		'Set-Cookie',
-		`refresh_token=${refresh_token}; HttpOnly; Path=/`
-	);
-	return c.json(
-		{ message: 'User verif !', user: await user.serialize_me() },
-		200
-	);
 });
 
 app.all('/verif', (c: Context) => {
@@ -352,8 +331,11 @@ app.post('/avatar', async (c: Context) => {
 	let image;
 	try {
 		image = await Image.get_avatar_by_user(user.id);
-		await delete_file(name);
+		if (image.filename.includes('default'))
+			await delete_file(image.filename);
+		await Image.delete_by_id(user.id);
 		await post_file(name, file);
+		image = await Image.post(user.id, name, 'avatar');
 		image_serialized = await image.serialize();
 	} catch (e) {
 		if (e instanceof Error && e.message === 'Avatar not found')

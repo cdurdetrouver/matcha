@@ -6,10 +6,25 @@
 		popup,
 		FileDropzone,
 		Stepper,
-		Step
+		Step,
+		InputChip
 	} from '@skeletonlabs/skeleton';
 	import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
+	import { request } from '$lib/script/request';
+	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+	import type { User } from '$lib/types/user';
+	import { SetCookie } from '$lib/script/cookies';
+	import { goto } from '$app/navigation';
+
+	const toastStore = getToastStore();
+
+	let tags = ['basketball', 'soccer', 'tennis'];
+	const TagOptions: AutocompleteOption<string>[] = [
+		{ label: 'basketball', value: 'basketball' },
+		{ label: 'soccer', value: 'soccer' },
+		{ label: 'tennis', value: 'tennis' }
+	];
 
 	const GenderOptions: AutocompleteOption<string>[] = [
 		{ label: 'Male', value: 'male' },
@@ -48,6 +63,8 @@
 	let value: number = 1;
 	let inputGender = '';
 	let inputSexual = '';
+	let birthdate = '';
+	let description = '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
 	let userLocation: { latitude: number | null; longitude: number | null; city: string } = {
 		latitude: null,
@@ -55,6 +72,25 @@
 		city: ''
 	};
 	let locationError = '';
+	let mytags: string[] = [];
+	let tag: string;
+
+	function isBirthdateValid(date: string): boolean {
+		if (!date) return false;
+
+		const birthDate = new Date(date);
+		const today = new Date();
+
+		const age = today.getFullYear() - birthDate.getFullYear();
+		const monthDiff = today.getMonth() - birthDate.getMonth();
+		const dayDiff = today.getDate() - birthDate.getDate();
+
+		if (age > 18 || (age === 18 && (monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0)))) {
+			return true;
+		}
+
+		return false;
+	}
 
 	async function getCurrentPosition(latitude: number, longitude: number) {
 		try {
@@ -126,25 +162,19 @@
 		return Options.some((option) => option.label === input);
 	}
 
-	async function complete() {
-		alert(inputGender + ' ' + value);
-		if (!dropzoneFiles[0]) alert('Please select a profile picture.');
-		for (let i = 0; i < dropzoneFiles.length; i++) {
-			const file = dropzoneFiles[i];
-
-			if (!file) {
-				continue;
-			}
-			alert(file[0].name);
-		}
-	}
-
 	function onFlavorSelectionGender(event: CustomEvent<AutocompleteOption<string>>): void {
 		inputGender = event.detail.label;
 	}
 
 	function onFlavorSelectionSexual(event: CustomEvent<AutocompleteOption<string>>): void {
 		inputSexual = event.detail.label;
+	}
+
+	function onFlavorSelectionTag(event: CustomEvent<AutocompleteOption<string>>): void {
+		if (mytags.includes(event.detail.label) === false) {
+			mytags = [...mytags, event.detail.label];
+			tag = '';
+		}
 	}
 
 	function deleteImage(index: number): void {
@@ -160,11 +190,118 @@
 
 		return true;
 	}
+
+	async function complete() {
+		try {
+			let avatar = dropzoneFiles[0];
+			if (!avatar) {
+				throw new Error('Failed to upload avatar');
+			}
+			const avatarFormData = new FormData();
+			avatarFormData.append('avatar', avatar[0]);
+			const req = await request('/api/user/avatar', {
+				method: 'POST',
+				body: avatarFormData,
+				credentials: 'include'
+			});
+
+			if (!req.ok) {
+				throw new Error('Failed to upload avatar');
+			}
+			for (let i = 1; i < dropzoneFiles.length; i++) {
+				const file = dropzoneFiles[i];
+
+				if (!file) {
+					continue;
+				}
+
+				const fileFormData = new FormData();
+				fileFormData.append('file', file[0]);
+
+				const req = await request('/api/user/image', {
+					method: 'POST',
+					body: fileFormData,
+					credentials: 'include'
+				});
+
+				if (!req.ok) {
+					throw new Error('Failed to upload image');
+				}
+			}
+
+			const req2 = await request('/api/user/full_register', {
+				method: 'POST',
+				body: JSON.stringify({
+					description,
+					gender: inputGender,
+					sexual: inputSexual,
+					location: [userLocation.latitude, userLocation.longitude],
+					wanted: value,
+					interests: mytags
+				}),
+				credentials: 'include'
+			});
+
+			if (!req2.ok) {
+				throw new Error('Failed to complete registration');
+			}
+
+			const res = await request(`/api/user/me`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				credentials: 'include'
+			});
+			if (!res.ok) {
+				throw new Error('Failed to fetch user data');
+			}
+			const data_res = await res.json();
+
+			const user = data_res.user as User;
+
+			SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+
+			const t: ToastSettings = {
+				message: 'You have successfully completed your profile 🎉',
+				background: 'variant-filled-success'
+			};
+			toastStore.trigger(t);
+
+			goto('/');
+		} catch (error) {
+			const t: ToastSettings = {
+				message: 'Error while complete: ' + error,
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
+	}
 </script>
 
 <main class="flex items-center justify-center size-full">
 	<div class="card p-4 text-token">
 		<Stepper on:complete={complete}>
+			<Step>
+				<svelte:fragment slot="header">Welcome to our app</svelte:fragment>
+				<p class="text-center">
+					We are glad to have you here. Please complete your profile to get started
+				</p>
+			</Step>
+			<Step locked={!isBirthdateValid(birthdate)}>
+				<svelte:fragment slot="header">Choose your birth date</svelte:fragment>
+				<input
+					class="input p-2"
+					type="date"
+					name="birthdate"
+					placeholder="Birth date..."
+					bind:value={birthdate}
+				/>
+				<div class="flex gap-2 items-center">
+					<Icon icon="material-symbols:info-outline" />
+					<p class="code">You must at least have 18 years old</p>
+				</div>
+			</Step>
 			<Step
 				locked={userLocation.city === '' ||
 					userLocation.latitude === null ||
@@ -263,6 +400,35 @@
 					<aside class="alert variant-ghost-warning">
 						<div class="alert-message">
 							<p>You should skip this step because you're not looking for some relationship</p>
+						</div>
+					</aside>
+				{/if}
+			</Step>
+			<Step>
+				<svelte:fragment slot="header">Choose your tags</svelte:fragment>
+				<InputChip bind:input={tag} bind:value={mytags} name="chips" whitelist={tags} />
+
+				<div class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto z-[100]" tabindex="-1">
+					<Autocomplete
+						bind:input={tag}
+						options={TagOptions}
+						on:selection={onFlavorSelectionTag}
+						denylist={mytags}
+					/>
+				</div>
+			</Step>
+			<Step locked={description === '' || description.length > 280}>
+				<svelte:fragment slot="header">Enter the description of your profile</svelte:fragment>
+				<textarea
+					class="input p-2"
+					name="demo"
+					bind:value={description}
+					placeholder="Enter your description..."
+				/>
+				{#if description.length > 280}
+					<aside class="alert variant-ghost-warning">
+						<div class="alert-message">
+							<p>You should have less than 280 characters</p>
 						</div>
 					</aside>
 				{/if}

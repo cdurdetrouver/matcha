@@ -21,7 +21,7 @@
 		for (var i = 0; i < stringArray.length; i++) {
 			if (stringArray[i].match(regex))
 				newstring.push(
-					`<a class="text-blue-500 underline" target="_blank" alt='website' href="${stringArray[i]}">${stringArray[i]}</a>`
+					`<a class="anchor" target="_blank" alt='website' href="${stringArray[i]}">${stringArray[i]}</a>`
 				);
 			else newstring.push(stringArray[i]);
 		}
@@ -57,7 +57,7 @@
 	{#if message.author?.avatar}
 		<Avatar src={message.author?.avatar.link} width="w-12" />
 	{:else}
-		<Avatar src="/images/default-avatar.png" width='w-12'/>
+		<Avatar src="/images/default-avatar.png" width="w-12" />
 	{/if}
 	{#if message.type == 'chat'}
 		<div class={classes[1]}>

@@ -26,9 +26,9 @@ export const load: LayoutLoad = async ({ url }) => {
 	} else {
 		const user = JSON.parse(userCookie);
 
-		// if (!user.complete_profile && !isPathAllowed(currentPath, publicCompletePaths)) {
-		// 	throw redirect(307, '/complete');
-		// }
+		if (!user.complete_profile && !isPathAllowed(currentPath, publicCompletePaths)) {
+			throw redirect(307, '/complete');
+		}
 	}
 
 	return {

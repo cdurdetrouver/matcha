@@ -140,7 +140,6 @@ app.post('/login', async (c: Context) => {
 		return c.json({ err_password, err_email }, 401);
 
 	if (ret_user != undefined) {
-		console.log('ret_user: ', ret_user);
 		if (!ret_user.email_verif)
 			return c.json({ message: 'User not verified !' }, 401);
 		const access_token = await get_access_token(ret_user);

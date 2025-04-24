@@ -140,6 +140,7 @@ app.post('/login', async (c: Context) => {
 		return c.json({ err_password, err_email }, 401);
 
 	if (ret_user != undefined) {
+		console.log('ret_user: ', ret_user);
 		if (!ret_user.email_verif)
 			return c.json({ message: 'User not verified !' }, 401);
 		const access_token = await get_access_token(ret_user);
@@ -222,7 +223,7 @@ app.post('/register', async (c: Context) => {
 		return c.json({ message: 'User creation failed !' }, 422);
 	}
 	const randomNumber: number = Math.floor(Math.random() * 2);
-	const name = 'avatar_default_' + randomNumber;
+	const name = 'avatar_' + randomNumber + '_default';
 	await Image.post(user_register.id, name, 'avatar');
 
 	const token = await Email_Verif.create_token(user_register.id);
@@ -246,6 +247,8 @@ app.post('/verif', async (c: Context) => {
 	let ret_token = undefined;
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
+		//console.log("rert_token: ", ret_token);
+		if (ret_token == undefined) throw new Error('Token not found !');
 		if (ret_token.expiration < Date.now())
 			throw new Error('Token expired !');
 		if (ret_token.token != token) throw new Error('Token not valid !');
@@ -258,6 +261,7 @@ app.post('/verif', async (c: Context) => {
 		await Email_Verif.delete_by_user_id(userid);
 		return c.json({ message: 'User verif !' }, 200);
 	} catch (error) {
+		console.log(error);
 		if (ret_token != undefined) {
 			await Email_Verif.delete_by_user_id(userid);
 		}
@@ -334,7 +338,7 @@ app.post('/avatar', async (c: Context) => {
 	let image;
 	try {
 		image = await Image.get_avatar_by_user(user.id);
-		if (image.filename.includes('default'))
+		if (!image.filename.endsWith('_default'))
 			await delete_file(image.filename);
 		await Image.delete_by_id(user.id);
 		await post_file(name, file);

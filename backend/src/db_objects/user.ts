@@ -10,6 +10,7 @@ const USERFIELDS = `
 	email,
 	online,
 	complete_profile,
+	email_verif,
 	wanted,
 	gender,
 	sexual_preferences,
@@ -82,10 +83,10 @@ export class User {
 					sexual_preferences = $8,
 					description = $9,
 					interests = $10,
-					location = ST_SetSRID(ST_MakePoint($10, $11), 4326),
-					connected_at = $12,
-					wanted = $13
-				WHERE id = $14;
+					location = ST_SetSRID(ST_MakePoint($11, $12), 4326),
+					connected_at = $13,
+					wanted = $14
+				WHERE id = $15;
 			`,
 			[
 				this.username,

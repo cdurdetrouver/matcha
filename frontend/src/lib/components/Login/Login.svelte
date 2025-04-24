@@ -42,6 +42,13 @@
 		});
 		const data_res = await res.json();
 		if (res.status !== 200) {
+			if (data_res.message) {
+				const t: ToastSettings = {
+					message: data_res.message,
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+			}
 			form = {
 				incorrect_email: data_res.err_email,
 				incorrect_password: data_res.err_password

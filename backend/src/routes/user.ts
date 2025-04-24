@@ -3,7 +3,7 @@ import {
 	hashSync,
 	genSaltSync,
 } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
-import { user_match, user_check, check_password } from '../utils/user.ts';
+import { user_match, user_check, check_password, get_info_loc } from '../utils/user.ts';
 import { getCookie, deleteCookie } from 'hono/cookie';
 import {
 	get_access_token,
@@ -21,6 +21,9 @@ import { delete_file, post_file } from '../utils/google_file.ts';
 import { Email_Verif } from '../db_objects/email_verif.ts';
 import { FRONTEND_URL } from '../secret.ts';
 import { sendVerificationEmail } from '../utils/send_mail.ts';
+import { Seen_Users } from "../db_objects/seen_users.ts";
+import { Loved_Users } from "../db_objects/loved_users.ts";
+import { Friendly_Users } from "../db_objects/friendly_users.ts";
 
 const app = new Hono();
 
@@ -181,8 +184,8 @@ app.post('/full_register', async (c: Context) => {
 	}
 	user.description = description;
 	user.interests = interests;
-	user.location = location;
-
+	user.lat  = Number(location[0]);
+	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User need at least 1 post' }, 400);
 	user.complete_profile = true;
@@ -219,7 +222,7 @@ app.post('/register', async (c: Context) => {
 		return c.json({ message: 'User creation failed !' }, 422);
 	}
 	const randomNumber: number = Math.floor(Math.random() * 2);
-	const name = 'avatar_default_' + randomNumber;
+	const name = 'avatar_' + randomNumber + '_default';
 	await Image.post(user_register.id, name, 'avatar');
 
 	const token = await Email_Verif.create_token(user_register.id);
@@ -243,6 +246,7 @@ app.post('/verif', async (c: Context) => {
 	let ret_token = undefined;
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
+		if (ret_token == undefined) throw new Error('Token not found !');
 		if (ret_token.expiration < Date.now())
 			throw new Error('Token expired !');
 		if (ret_token.token != token) throw new Error('Token not valid !');
@@ -255,6 +259,7 @@ app.post('/verif', async (c: Context) => {
 		await Email_Verif.delete_by_user_id(userid);
 		return c.json({ message: 'User verif !' }, 200);
 	} catch (error) {
+		console.log(error);
 		if (ret_token != undefined) {
 			await Email_Verif.delete_by_user_id(userid);
 		}
@@ -331,7 +336,7 @@ app.post('/avatar', async (c: Context) => {
 	let image;
 	try {
 		image = await Image.get_avatar_by_user(user.id);
-		if (image.filename.includes('default'))
+		if (!image.filename.endsWith('_default'))
 			await delete_file(image.filename);
 		await Image.delete_by_id(user.id);
 		await post_file(name, file);
@@ -412,7 +417,6 @@ app.post('/image', async (c: Context) => {
 			422
 		);
 	const images = await Image.get_post_by_user(user.id);
-	console.log(images);
 	if (images.length >= 5)
 		return c.json({ message: 'User already had 5 pics.' }, 403);
 	let name = user.username + '_' + images.length;
@@ -554,6 +558,136 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 
 app.all('/unblock_user/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.post('/seen/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let user_param;
+	console.log(user.lat, user.long);
+	await get_info_loc(user.lat, user.long);
+	try {
+		user_param = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
+	if (await Seen_Users.is_user_seen_by(user.id, user_param.id))
+		return c.json({ message: 'User already seen' }, 401);
+	await Seen_Users.see_user(user.id, user_param.id);
+	return c.json({ message: 'User seen list updated, user successfully added' }, 200);
+});
+
+app.delete('/seen/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let user_param;
+	try {
+		user_param = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
+	if (!await Seen_Users.is_user_seen_by(user.id, user_param.id))
+		return c.json({ message: 'No user matches' }, 401);
+	await Seen_Users.delete_saw(user.id, user_param.id);
+	return c.json({ message: 'User seen list updated, user successfully deleted' }, 200);
+});
+
+app.post('/loved/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let user_param;
+	try {
+		user_param = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
+	if (await Loved_Users.is_user_loved_by(user.id, user_param.id))
+		return c.json({ message: 'User already loved' }, 401);
+	//adding a chat between the two users maybe auto check if the db can auto create it just send a notif
+	await Loved_Users.love_user(user.id, user_param.id);
+	return c.json({ message: 'User loved list updated, user successfully added' }, 200);
+});
+
+app.delete('/loved/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let user_param;
+	try {
+		user_param = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
+	if (!await Loved_Users.is_user_loved_by(user.id, user_param.id))
+		return c.json({ message: 'No user matches' }, 401);
+	await Loved_Users.delete_love(user.id, user_param.id);
+	return c.json({ message: 'User loved list updated, user successfully deleted' }, 200);
+});
+
+app.post('/friend/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let user_param;
+	try {
+		user_param = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
+	if (await Friendly_Users.is_my_friend(user.id, user_param.id))
+		return c.json({ message: 'User already liked' }, 401);
+	//adding a chat between the two users maybe auto check if the db can auto create it just send a notif
+	await Friendly_Users.make_a_friend(user.id, user_param.id);
+	return c.json({ message: 'User friend list updated, user successfully added' }, 200);
+});
+
+app.delete('/friend/:id', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	let user_param;
+	try {
+		user_param = await User.get_by_id(id);
+	}
+	catch (_e) {
+		return c.json({ message: 'User not found' }, 404);
+	}
+	if (!await Friendly_Users.is_my_friend(user.id, user_param.id))
+		return c.json({ message: 'No user matches' }, 401);
+	await Friendly_Users.delete_friend(user.id, user_param.id);
+	return c.json({ message: 'User friend list updated, user successfully deleted' }, 200);
 });
 
 app.notFound((c: Context) => {

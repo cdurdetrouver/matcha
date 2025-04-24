@@ -27,7 +27,7 @@ export class Email_Verif {
 
 	static async get_by_user_id(
 		user_id: number
-	): Promise<{ expiration: number; token: string }> {
+	): Promise<{ expiration: number; token: string } | undefined> {
 		const res = await client.queryObject<{
 			expiration: number;
 			token: string;
@@ -38,6 +38,7 @@ export class Email_Verif {
 			`,
 			[user_id]
 		);
+		if (!res.rows[0]) return undefined;
 		return { expiration: res.rows[0].expiration, token: res.rows[0].token };
 	}
 

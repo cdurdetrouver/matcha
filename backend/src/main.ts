@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { init_db } from './utils/db_actions.ts';
 import user from './routes/user.ts';
+import post from './routes/post.ts';
 import chat from './routes/chat.ts';
 import notif from './routes/notif.ts';
 import type { JwtVariables } from 'hono/jwt';
@@ -37,6 +38,7 @@ app.use('*', (c, next) => {
 });
 
 app.route('/api/user', user);
+app.route('/api/posts', post);
 app.route('/api/chat', chat);
 app.route('/api/notif', notif);
 

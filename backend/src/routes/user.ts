@@ -246,7 +246,6 @@ app.post('/verif', async (c: Context) => {
 	let ret_token = undefined;
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
-		//console.log("rert_token: ", ret_token);
 		if (ret_token == undefined) throw new Error('Token not found !');
 		if (ret_token.expiration < Date.now())
 			throw new Error('Token expired !');

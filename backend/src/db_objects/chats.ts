@@ -121,7 +121,7 @@ export class Chat {
 		let avatar;
 		try {
 			avatar = await (
-				await await Image.get_avatar_by_user(this.id)
+				await Image.get_avatar_by_user(this.id)
 			).serialize();
 			last_message = await (
 				await Message.get_last_message(this.id)

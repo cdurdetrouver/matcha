@@ -1,67 +1,77 @@
 services:
-    frontend:
-        build: ./frontend
-        container_name: frontend
-        volumes:
-            - ./frontend:/app
-            - /app/node_modules
-        networks:
-            - matcha.net
-        ports:
-            - "5173:5173"
-        depends_on:
-            - backend
-    db:
-      container_name: db
-      image: postgis/postgis:17-3.4
-      healthcheck:
-        test: [ "CMD-SHELL", "pg_isready -U postgresuser -d matcha" ]
-        interval: 5s
-        retries: 5
-        start_period: 10s
-      environment:
-        - POSTGRES_DB=matcha
-        - POSTGRES_USER=postgresuser
-        - POSTGRES_PASSWORD=postgrespassword
-      ports:
-        - "5432:5432"
-      volumes:
-        - ./db:/var/lib/postgresql/data
-      networks:
-        - matcha.net
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - matcha.net
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+  db:
+    container_name: db
+    image: postgis/postgis:17-3.4
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgresuser -d matcha" ]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      - POSTGRES_DB=matcha
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - matcha.net
 
-    db_ui:
-      container_name: db_ui
-      image: dpage/pgadmin4
-      environment:
-        - PGADMIN_DEFAULT_EMAIL=user@domain.com
-        - PGADMIN_DEFAULT_PASSWORD=SuperSecret
-        - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
-        - PGADMIN_CONFIG_LOGIN_BANNER="Authorised users only!"
-        - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
-        - PGADMIN_LISTEN_PORT=5050
-      volumes:
-        - ./db_ui/servers.json:/pgadmin4/servers.json
-        - ./db_ui/pass.pgpass:/pgadmin4/.pgpass
-      ports:
-        - "5050:5050"
-      networks:
-        - matcha.net
+  db_ui:
+    container_name: db_ui
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
+      - PGADMIN_CONFIG_LOGIN_BANNER="Authorised users only!"
+      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
+      - PGADMIN_LISTEN_PORT=5050
+    volumes:
+      - ./db_ui/servers.json:/pgadmin4/servers.json
+      - ./db_ui/pass.pgpass:/pgadmin4/.pgpass
+    ports:
+      - "5050:5050"
+    networks:
+      - matcha.net
 
-    backend:
-      build: ./backend
-      container_name: backend
-      volumes:
-        - ./backend:/app
-      networks:
-        - matcha.net
-      ports:
-        - "8000:8000"
-      depends_on:
-        db:
-          condition: service_healthy
+  backend:
+    build: ./backend
+    container_name: backend
+    volumes:
+      - ./backend:/app
+    networks:
+      - matcha.net
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redisgraph:
+    container_name: redisgraph
+    image: redislabs/redisgraph:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - matcha.net
+    volumes:
+      - ./redis_data:/data
+    restart: unless-stopped
 
 networks:
   matcha.net:
     driver: bridge
-

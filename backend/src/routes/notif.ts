@@ -72,7 +72,22 @@ app.get(
 				}
 			},
 			onClose: async (_event, ws) => {
-				const user = (ws as ExtendedWebSocket).user;
+				let user = (ws as ExtendedWebSocket).user;
+				if (user == null) {
+					ws.close();
+					return;
+				}
+				user = await User.get_by_id(user.id);
+				if (user == null) {
+					ws.send(
+						JSON.stringify({
+							type: 'error',
+							message: 'User not found',
+						})
+					);
+					ws.close();
+					return;
+				}
 				if (user) {
 					user.online = false;
 					await user.save();

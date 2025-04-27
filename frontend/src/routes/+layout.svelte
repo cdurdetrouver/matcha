@@ -21,9 +21,13 @@
 	onMount(() => {
 		socket = new WebSocketManager('/api/notif/ws');
 
-		socket.setOnMessageHook((data) => {
-			if (data.type === 'new') notifs.push(data.notif);
-			else if (data.type === 'init') notifs = data.notifs;
+		socket.setOnOpenHook(() => {
+			data.user.online = true;
+		});
+
+		socket.setOnMessageHook((message) => {
+			if (message.type === 'new') notifs = [...notifs, message.notif];
+			else if (message.type === 'init') notifs = message.notifs;
 		});
 	});
 </script>

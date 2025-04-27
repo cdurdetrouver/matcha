@@ -1,4 +1,4 @@
-import { Image } from './image.ts';
+import { type Image } from './image';
 
 export type User = {
 	username: string;
@@ -15,5 +15,5 @@ export type User = {
 	sexual_preferences?: string;
 	description?: string;
 	interests?: string[];
-	location?: string[2];
+	location: number[];
 };

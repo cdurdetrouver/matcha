@@ -59,6 +59,9 @@ export class User {
 			this.description = usernameOrOther.description ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
+			this.lat = usernameOrOther.lat ?? 0;
+			this.long = usernameOrOther.long ?? 0;
+			this.wanted = usernameOrOther.wanted ?? 0;
 			this.connected_at =
 				usernameOrOther.connected_at ?? BigInt(Date.now());
 		} else {
@@ -183,7 +186,7 @@ export class User {
 				ST_SetSRID(ST_MakePoint(${this.long}
 				, ${this.lat}), 4326),
         		${radius * 1000});
-			`,
+			`
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -202,7 +205,7 @@ export class User {
 				SELECT seen_id FROM seen_users
 				WHERE user_id = ${this.id}
 			);
-		`,
+		`
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -245,36 +248,14 @@ export class User {
 			sexual_preferences: this.sexual_preferences,
 			description: this.description,
 			interests: this.interests,
-			location: [this.lat, this.long],
+			location: [Number(this.lat), Number(this.long)],
 		};
 		return user;
 	}
 
 	async serialize_me(): Promise<UserType> {
-		let avatar;
-		try {
-			avatar = await Image.get_avatar_by_user(this.id);
-			avatar = await avatar.serialize();
-		} catch (_e) {
-			avatar = undefined;
-		}
-		const user: UserType = {
-			username: this.username,
-			id: this.id,
-			email: this.email,
-			created_at: Number(this.created_at),
-			connected_at: Number(this.connected_at),
-			avatar: avatar,
-			complete_profile: this.complete_profile,
-			email_verif: this.email_verif,
-			online: this.online,
-			wanted: this.wanted,
-			gender: this.gender,
-			sexual_preferences: this.sexual_preferences,
-			description: this.description,
-			interests: this.interests,
-			location: [this.lat, this.long],
-		};
+		const user: UserType = await this.serialize();
+		user.email = this.email;
 		return user;
 	}
 }

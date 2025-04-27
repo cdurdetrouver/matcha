@@ -20,7 +20,7 @@
 
 	const toastStore = getToastStore();
 
-    export let data;
+	export let data;
 
 	let tags = ['basketball', 'soccer', 'tennis'];
 	const TagOptions: AutocompleteOption<string>[] = [
@@ -78,11 +78,11 @@
 	let mytags: string[] = [];
 	let tag: string;
 
-    onMount(() => {
-        if (data.user.complete_profile) {
-            goto('/profile');
-        }
-    })
+	onMount(() => {
+		if (data.user.complete_profile) {
+			goto('/user');
+		}
+	});
 
 	function isBirthdateValid(date: string): boolean {
 		if (!date) return false;
@@ -423,6 +423,7 @@
 					name="demo"
 					bind:value={description}
 					placeholder="Enter your description..."
+					rows="5"
 				/>
 				{#if description.length > 280}
 					<aside class="alert variant-ghost-warning">

@@ -130,7 +130,6 @@ export class Message {
 			`,
 			[chat_id]
 		);
-		console.log('res', res.rows);
 		return res.rows.map((row) => new Message(row)).reverse();
 	}
 

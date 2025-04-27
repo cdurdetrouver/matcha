@@ -1,6 +1,6 @@
 import { client } from '../main.ts';
-import { ImageType } from "../types/image.ts";
-import { get_signed_url } from "../utils/google_file.ts";
+import { ImageType } from '../types/image.ts';
+import { get_signed_url } from '../utils/google_file.ts';
 
 const TABLE = 'Image';
 
@@ -8,16 +8,19 @@ export class Image {
 	filename: string;
 	id: number = 0;
 	user_id: number = 0;
-	type?: string ;
+	type?: string;
 
-	constructor(linkOrOther: string | Partial<Image>, filename?: string, id?: number) {
+	constructor(
+		linkOrOther: string | Partial<Image>,
+		filename?: string,
+		id?: number
+	) {
 		if (typeof linkOrOther === 'object' && linkOrOther !== null) {
 			this.id = linkOrOther.id ?? 0;
 			this.filename = linkOrOther.filename!;
 			this.user_id = linkOrOther.user_id!;
 			this.type = linkOrOther.type!;
-		}
-		else {
+		} else {
 			this.user_id = id!;
 			this.filename = filename!;
 			this.id = id!;
@@ -39,7 +42,11 @@ export class Image {
 		`);
 	}
 
-	static async post(user_id: number, filename: string, type: string): Promise<Image> {
+	static async post(
+		user_id: number,
+		filename: string,
+		type: string
+	): Promise<Image> {
 		const res = await client.queryObject<{ id: number }>(
 			`
 				INSERT INTO "${TABLE}" (user_id, filename, type)
@@ -66,7 +73,7 @@ export class Image {
 		const res = await client.queryObject<string>(
 			`
 				SELECT * FROM "${TABLE}"
-				WHERE user_id = $1;
+				WHERE user_id = $1 AND type = 'avatar';
 			`,
 			[user_id]
 		);
@@ -89,13 +96,22 @@ export class Image {
 	}
 
 	static async delete_by_id(image_id: number) {
-		console.log('image_id', image_id);
 		await client.queryObject(
 			`
 				DELETE FROM "${TABLE}"
 				WHERE id = $1;
 			`,
 			[image_id]
+		);
+	}
+
+	static async delete_by_user_id(user_id: number) {
+		await client.queryObject(
+			`
+				DELETE FROM "${TABLE}"
+				WHERE user_id = $1;
+			`,
+			[user_id]
 		);
 	}
 

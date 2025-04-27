@@ -36,7 +36,7 @@
 					<Icon icon="mdi:account" width="24" height="24" />
 				</a>
 			{:else}
-				<a class="btn-icon hover:variant-soft-primary" href="/profile" rel="noreferrer">
+				<a class="btn-icon hover:variant-soft-primary" href="/user" rel="noreferrer">
 					<Avatar
 						src={user.avatar?.link}
 						alt="User Logo"

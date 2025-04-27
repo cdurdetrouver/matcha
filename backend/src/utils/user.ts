@@ -7,8 +7,7 @@ export async function user_match(
 ): Promise<{ ret_user?: User; err_password?: string; err_email?: string }> {
 	let ret_user;
 	ret_user = await User.get_by_field('email', email);
-	if (ret_user.length == 0)
-		return { err_email: 'Wrong email' };
+	if (ret_user.length == 0) return { err_email: 'Wrong email' };
 	ret_user = ret_user[0];
 	const is_valid_pass = await compare(password, ret_user.password);
 	if (!is_valid_pass) return { err_password: 'Wrong password' };
@@ -37,7 +36,7 @@ export async function user_check(
 	return { error: false };
 }
 
-async function check_username(
+export async function check_username(
 	username: string
 ): Promise<[boolean, string | undefined]> {
 	const re = /^\w+$/;
@@ -61,12 +60,11 @@ async function check_username(
 			'Username should only contain letters, digits, and underscores (_).',
 		];
 	const list = await User.get_by_field('username', username);
-	if (list.length > 0)
-		return [false, 'Username already used.'];
+	if (list.length > 0) return [false, 'Username already used.'];
 	return [true, undefined];
 }
 
-async function check_email(
+export async function check_email(
 	email: string
 ): Promise<[boolean, string | undefined]> {
 	const re_email = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -74,8 +72,7 @@ async function check_email(
 	if (!re_email.test(email)) return [false, 'Wrong email format'];
 
 	const list = await User.get_by_field('email', email);
-	if (list.length > 0)
-		return [false, 'Email already used.'];
+	if (list.length > 0) return [false, 'Email already used.'];
 	return [true, undefined];
 }
 
@@ -118,20 +115,4 @@ export function check_password(
 	if (password.includes(username))
 		return [false, 'Username is forbidden in password'];
 	return [true, undefined];
-}
-
-export async function get_info_loc(lat: number, long: number): Promise<string> {
-	const response = await fetch(
-		`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${long}&localityLanguage=en`
-	);
-	if (!response.ok) return 'Unknown location';
-	const data = await response.json();
-	console.log(data);
-	if (data.city != undefined)
-		return data.city;
-	if (data.locality != undefined)
-		return data.locality;
-	if (data.principalSubdivision != undefined)
-		return data.principalSubdivision;
-	return 'Unknown location';
 }

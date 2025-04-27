@@ -3,9 +3,15 @@
 	import { PUBLIC_BACKEND_HOST } from '$env/static/public';
 	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
-	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
+	import {
+		getModalStore,
+		getToastStore,
+		type ModalSettings,
+		type ToastSettings
+	} from '@skeletonlabs/skeleton';
 
 	const modalStore = getModalStore();
+	const toastStore = getToastStore();
 
 	let form: {
 		missing_username?: boolean;
@@ -65,6 +71,14 @@
 		});
 		const data_res = await res.json();
 		if (res.status !== 200) {
+			if (data_res.message) {
+				const t: ToastSettings = {
+					message: data_res.message,
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+				return;
+			}
 			form = {
 				incorrect_email: data_res.err_email,
 				incorrect_username: data_res.err_username,

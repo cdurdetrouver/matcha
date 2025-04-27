@@ -23,16 +23,21 @@ export class Seen_Users {
 		);
 	}
 
-	static async is_user_seen_by(user_id: number, seen_id:number): Promise<boolean> {
-		const res = await client.queryObject<{ seen_id: number, user_id: number }>(
+	static async is_user_seen_by(
+		user_id: number,
+		seen_id: number
+	): Promise<boolean> {
+		const res = await client.queryObject<{
+			seen_id: number;
+			user_id: number;
+		}>(
 			`
 				SELECT seen_id, user_id FROM "${TABLE}"
 				WHERE user_id = $1 AND seen_id = $2;
 			`,
 			[user_id, seen_id]
 		);
-		if (res.rows[0] == undefined)
-			return false;
+		if (res.rows[0] == undefined) return false;
 		return true;
 	}
 

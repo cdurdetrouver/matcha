@@ -77,7 +77,6 @@ app.get(
 		const ret_check = await check_cookies(c);
 		return {
 			onOpen: async (_event, ws) => {
-				let last_message: Message;
 				ws.send('WebSocket connection opened');
 				if (ret_check == null) {
 					ws.send(
@@ -118,8 +117,7 @@ app.get(
 				user_chat = new User(user);
 				joinGroup(chat.id, ws, chan_layer);
 				try {
-					last_message = await Message.get_last_message(chat.id);
-					console.log(last_message);
+					await Message.get_last_message(chat.id);
 				} catch (_e) {
 					ws.send(
 						JSON.stringify({ error: 'Failed to retrived history' })
@@ -127,7 +125,6 @@ app.get(
 					return;
 				}
 				const messages = await Message.get_10_mess_by_id(chat.id);
-				console.log(messages);
 				const messages_serialized: MessageType[] = await Promise.all(
 					messages.map(
 						async (message: Message) => await message.serialize()
@@ -163,7 +160,6 @@ app.get(
 				}
 				try {
 					const full_message = await Message.get_by_id(message.id);
-					console.log(full_message);
 					await broadcastToGroup(chat.id, full_message, chan_layer);
 				} catch (e) {
 					console.log(e);

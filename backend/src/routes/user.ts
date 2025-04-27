@@ -3,7 +3,12 @@ import {
 	hashSync,
 	genSaltSync,
 } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
-import { user_match, user_check, check_password, get_info_loc } from '../utils/user.ts';
+import {
+	user_match,
+	user_check,
+	check_password,
+	get_info_loc,
+} from '../utils/user.ts';
 import { getCookie, deleteCookie } from 'hono/cookie';
 import {
 	get_access_token,
@@ -21,9 +26,9 @@ import { delete_file, post_file } from '../utils/google_file.ts';
 import { Email_Verif } from '../db_objects/email_verif.ts';
 import { FRONTEND_URL } from '../secret.ts';
 import { sendVerificationEmail } from '../utils/send_mail.ts';
-import { Seen_Users } from "../db_objects/seen_users.ts";
-import { Loved_Users } from "../db_objects/loved_users.ts";
-import { Friendly_Users } from "../db_objects/friendly_users.ts";
+import { Seen_Users } from '../db_objects/seen_users.ts';
+import { Loved_Users } from '../db_objects/loved_users.ts';
+import { Friendly_Users } from '../db_objects/friendly_users.ts';
 
 const app = new Hono();
 
@@ -174,6 +179,11 @@ app.post('/full_register', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
+	if (user.complete_profile) {
+		return c.json({ message: 'User already fully registered !' }, 401);
+	}
+	if ((await Image.get_post_by_user(user.id)).length < 1)
+		return c.json({ message: 'User needs at least one post' }, 400);
 	const { wanted, interests, description, location } = body;
 	if (wanted == undefined || interests == undefined)
 		return c.json({ message: 'Body not correctly formatted.' }, 422);
@@ -184,7 +194,7 @@ app.post('/full_register', async (c: Context) => {
 	}
 	user.description = description;
 	user.interests = interests;
-	user.lat  = Number(location[0]);
+	user.lat = Number(location[0]);
 	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User need at least 1 post' }, 400);
@@ -243,7 +253,12 @@ app.all('/register', (c: Context) => {
 
 app.post('/verif', async (c: Context) => {
 	const { token, userid } = await c.req.json();
-	let ret_token = undefined;
+	let ret_token:
+		| {
+				expiration: number;
+				token: string;
+		  }
+		| undefined = undefined;
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
 		if (ret_token == undefined) throw new Error('Token not found !');
@@ -338,11 +353,12 @@ app.post('/avatar', async (c: Context) => {
 		image = await Image.get_avatar_by_user(user.id);
 		if (!image.filename.endsWith('_default'))
 			await delete_file(image.filename);
-		await Image.delete_by_id(user.id);
+		await Image.delete_by_id(image.id);
 		await post_file(name, file);
 		image = await Image.post(user.id, name, 'avatar');
 		image_serialized = await image.serialize();
 	} catch (e) {
+		console.log(e);
 		if (e instanceof Error && e.message === 'Avatar not found')
 			image = await Image.post(user.id, name, 'avatar');
 		else return c.json({ message: 'Failed to save the image' }, 422);
@@ -573,14 +589,16 @@ app.post('/seen/:id', async (c: Context) => {
 	await get_info_loc(user.lat, user.long);
 	try {
 		user_param = await User.get_by_id(id);
-	}
-	catch (_e) {
+	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}
 	if (await Seen_Users.is_user_seen_by(user.id, user_param.id))
 		return c.json({ message: 'User already seen' }, 401);
 	await Seen_Users.see_user(user.id, user_param.id);
-	return c.json({ message: 'User seen list updated, user successfully added' }, 200);
+	return c.json(
+		{ message: 'User seen list updated, user successfully added' },
+		200
+	);
 });
 
 app.delete('/seen/:id', async (c: Context) => {
@@ -594,14 +612,16 @@ app.delete('/seen/:id', async (c: Context) => {
 	let user_param;
 	try {
 		user_param = await User.get_by_id(id);
-	}
-	catch (_e) {
+	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}
-	if (!await Seen_Users.is_user_seen_by(user.id, user_param.id))
+	if (!(await Seen_Users.is_user_seen_by(user.id, user_param.id)))
 		return c.json({ message: 'No user matches' }, 401);
 	await Seen_Users.delete_saw(user.id, user_param.id);
-	return c.json({ message: 'User seen list updated, user successfully deleted' }, 200);
+	return c.json(
+		{ message: 'User seen list updated, user successfully deleted' },
+		200
+	);
 });
 
 app.post('/loved/:id', async (c: Context) => {
@@ -615,15 +635,17 @@ app.post('/loved/:id', async (c: Context) => {
 	let user_param;
 	try {
 		user_param = await User.get_by_id(id);
-	}
-	catch (_e) {
+	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}
 	if (await Loved_Users.is_user_loved_by(user.id, user_param.id))
 		return c.json({ message: 'User already loved' }, 401);
 	//adding a chat between the two users maybe auto check if the db can auto create it just send a notif
 	await Loved_Users.love_user(user.id, user_param.id);
-	return c.json({ message: 'User loved list updated, user successfully added' }, 200);
+	return c.json(
+		{ message: 'User loved list updated, user successfully added' },
+		200
+	);
 });
 
 app.delete('/loved/:id', async (c: Context) => {
@@ -637,14 +659,16 @@ app.delete('/loved/:id', async (c: Context) => {
 	let user_param;
 	try {
 		user_param = await User.get_by_id(id);
-	}
-	catch (_e) {
+	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}
-	if (!await Loved_Users.is_user_loved_by(user.id, user_param.id))
+	if (!(await Loved_Users.is_user_loved_by(user.id, user_param.id)))
 		return c.json({ message: 'No user matches' }, 401);
 	await Loved_Users.delete_love(user.id, user_param.id);
-	return c.json({ message: 'User loved list updated, user successfully deleted' }, 200);
+	return c.json(
+		{ message: 'User loved list updated, user successfully deleted' },
+		200
+	);
 });
 
 app.post('/friend/:id', async (c: Context) => {
@@ -658,15 +682,17 @@ app.post('/friend/:id', async (c: Context) => {
 	let user_param;
 	try {
 		user_param = await User.get_by_id(id);
-	}
-	catch (_e) {
+	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}
 	if (await Friendly_Users.is_my_friend(user.id, user_param.id))
 		return c.json({ message: 'User already liked' }, 401);
 	//adding a chat between the two users maybe auto check if the db can auto create it just send a notif
 	await Friendly_Users.make_a_friend(user.id, user_param.id);
-	return c.json({ message: 'User friend list updated, user successfully added' }, 200);
+	return c.json(
+		{ message: 'User friend list updated, user successfully added' },
+		200
+	);
 });
 
 app.delete('/friend/:id', async (c: Context) => {
@@ -680,14 +706,16 @@ app.delete('/friend/:id', async (c: Context) => {
 	let user_param;
 	try {
 		user_param = await User.get_by_id(id);
-	}
-	catch (_e) {
+	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}
-	if (!await Friendly_Users.is_my_friend(user.id, user_param.id))
+	if (!(await Friendly_Users.is_my_friend(user.id, user_param.id)))
 		return c.json({ message: 'No user matches' }, 401);
 	await Friendly_Users.delete_friend(user.id, user_param.id);
-	return c.json({ message: 'User friend list updated, user successfully deleted' }, 200);
+	return c.json(
+		{ message: 'User friend list updated, user successfully deleted' },
+		200
+	);
 });
 
 app.notFound((c: Context) => {

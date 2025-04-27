@@ -4,10 +4,10 @@ import { Chat } from '../db_objects/chats.ts';
 import { Message } from '../db_objects/messages.ts';
 import { Notif } from '../db_objects/notif.ts';
 import { Email_Verif } from '../db_objects/email_verif.ts';
-import { Image } from "../db_objects/images.ts";
-import { Friendly_Users } from "../db_objects/friendly_users.ts";
-import { Loved_Users } from "../db_objects/loved_users.ts";
-import { Seen_Users } from "../db_objects/seen_users.ts";
+import { Image } from '../db_objects/images.ts';
+import { Friendly_Users } from '../db_objects/friendly_users.ts';
+import { Loved_Users } from '../db_objects/loved_users.ts';
+import { Seen_Users } from '../db_objects/seen_users.ts';
 
 export async function init_db() {
 	await User.init_table();

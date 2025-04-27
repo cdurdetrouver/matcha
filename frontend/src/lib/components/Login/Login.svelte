@@ -48,6 +48,7 @@
 					background: 'variant-filled-error'
 				};
 				toastStore.trigger(t);
+				return;
 			}
 			form = {
 				incorrect_email: data_res.err_email,
@@ -66,7 +67,7 @@
 		};
 		toastStore.trigger(t);
 
-		goto('/profile');
+		goto('/user');
 	}
 </script>
 

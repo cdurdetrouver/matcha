@@ -16,8 +16,11 @@
 	import type { User } from '$lib/types/user';
 	import { SetCookie } from '$lib/script/cookies';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	const toastStore = getToastStore();
+
+	export let data;
 
 	let tags = ['basketball', 'soccer', 'tennis'];
 	const TagOptions: AutocompleteOption<string>[] = [
@@ -74,6 +77,12 @@
 	let locationError = '';
 	let mytags: string[] = [];
 	let tag: string;
+
+	onMount(() => {
+		if (data.user.complete_profile) {
+			goto('/user');
+		}
+	});
 
 	function isBirthdateValid(date: string): boolean {
 		if (!date) return false;
@@ -246,17 +255,7 @@
 				throw new Error('Failed to complete registration');
 			}
 
-			const res = await request(`/api/user/me`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				credentials: 'include'
-			});
-			if (!res.ok) {
-				throw new Error('Failed to fetch user data');
-			}
-			const data_res = await res.json();
+			const data_res = await req2.json();
 
 			const user = data_res.user as User;
 
@@ -424,6 +423,7 @@
 					name="demo"
 					bind:value={description}
 					placeholder="Enter your description..."
+					rows="5"
 				/>
 				{#if description.length > 280}
 					<aside class="alert variant-ghost-warning">

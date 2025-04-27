@@ -1,7 +1,6 @@
-
 export type ImageType = {
-	link: string,
-	filename: string,
-	user_id: number,
-	id: number,
-}
+	link: string;
+	filename: string;
+	user_id: number;
+	id: number;
+};

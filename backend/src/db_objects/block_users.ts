@@ -23,16 +23,21 @@ export class Block_Users {
 		);
 	}
 
-	static async is_user_blocked_by(blocker_id: number, blocked_id:number): Promise<boolean> {
-		const res = await client.queryObject<{ blocked_id: number, blocker_id: number }>(
+	static async is_user_blocked_by(
+		blocker_id: number,
+		blocked_id: number
+	): Promise<boolean> {
+		const res = await client.queryObject<{
+			blocked_id: number;
+			blocker_id: number;
+		}>(
 			`
 				SELECT blocked_id, blocker_id FROM "${TABLE}"
 				WHERE blocker_id = $1 AND blocked_id = $2;
 			`,
 			[blocker_id, blocked_id]
 		);
-		if (res.rows[0] == undefined)
-			return false;
+		if (res.rows[0] == undefined) return false;
 		return true;
 	}
 

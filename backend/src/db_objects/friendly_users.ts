@@ -23,16 +23,21 @@ export class Friendly_Users {
 		);
 	}
 
-	static async is_my_friend(user_id: number, friendly_id:number): Promise<boolean> {
-		const res = await client.queryObject<{ friendly_id: number, user_id: number }>(
+	static async is_my_friend(
+		user_id: number,
+		friendly_id: number
+	): Promise<boolean> {
+		const res = await client.queryObject<{
+			friendly_id: number;
+			user_id: number;
+		}>(
 			`
 				SELECT friendly_id, user_id FROM "${TABLE}"
 				WHERE user_id = $1 AND friendly_id = $2;
 			`,
 			[user_id, friendly_id]
 		);
-		if (res.rows[0] == undefined)
-			return false;
+		if (res.rows[0] == undefined) return false;
 		return true;
 	}
 

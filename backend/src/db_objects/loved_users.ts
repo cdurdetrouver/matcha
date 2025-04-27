@@ -23,16 +23,21 @@ export class Loved_Users {
 		);
 	}
 
-	static async is_user_loved_by(lover_id: number, loved_id:number): Promise<boolean> {
-		const res = await client.queryObject<{ loved_id: number, lover_id: number }>(
+	static async is_user_loved_by(
+		lover_id: number,
+		loved_id: number
+	): Promise<boolean> {
+		const res = await client.queryObject<{
+			loved_id: number;
+			lover_id: number;
+		}>(
 			`
 				SELECT loved_id, lover_id FROM "${TABLE}"
 				WHERE lover_id = $1 AND loved_id = $2;
 			`,
 			[lover_id, loved_id]
 		);
-		if (res.rows[0] == undefined)
-			return false;
+		if (res.rows[0] == undefined) return false;
 		return true;
 	}
 

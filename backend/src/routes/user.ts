@@ -2,14 +2,12 @@ import { Hono, type Context } from 'hono';
 import {
 	hashSync,
 	genSaltSync,
-	compare,
 } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 import {
 	user_match,
 	user_check,
 	check_password,
-	check_username,
-	check_email,
+	get_info_loc,
 } from '../utils/user.ts';
 import { getCookie, deleteCookie } from 'hono/cookie';
 import {
@@ -59,14 +57,12 @@ app.all('/chats', (c: Context) => {
 
 app.post('/password', async (c: Context) => {
 	const ret_check = await check_cookies(c);
-	const { old_password, password } = await c.req.json();
+	const { password } = await c.req.json();
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	const is_valid_pass = await compare(old_password, user.password);
-	if (!is_valid_pass) return c.json({ message: 'Wrong password' }, 401);
 	const [valid, ret_message] = check_password(password, user.username);
 	if (!valid) return c.json({ message: ret_message }, 401);
 	const saltRounds = genSaltSync(12);
@@ -198,8 +194,8 @@ app.post('/full_register', async (c: Context) => {
 	}
 	user.description = description;
 	user.interests = interests;
-	user.lat = location[0];
-	user.long = location[1];
+	user.lat = Number(location[0]);
+	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User need at least 1 post' }, 400);
 	user.complete_profile = true;
@@ -229,30 +225,22 @@ app.post('/register', async (c: Context) => {
 	if (error) return c.json({ err_password, err_username, err_email }, 401);
 
 	const hash_pass = hashSync(password, saltRounds);
-
 	const user_register = new User(username, hash_pass, email);
-
 	try {
 		await user_register.create();
 	} catch (_e) {
 		return c.json({ message: 'User creation failed !' }, 422);
 	}
+	const randomNumber: number = Math.floor(Math.random() * 2);
+	const name = 'avatar_' + randomNumber + '_default';
+	await Image.post(user_register.id, name, 'avatar');
+
+	const token = await Email_Verif.create_token(user_register.id);
+	const url = `${FRONTEND_URL}/verif?token=${token}&userid=${user_register.id}`;
 
 	try {
-		const randomNumber: number = Math.floor(Math.random() * 2);
-		const name = 'avatar_' + randomNumber + '_default';
-		await Image.post(user_register.id, name, 'avatar');
-	} catch (_e) {
-		await User.delete(user_register.id);
-		return c.json({ message: 'Failed to add avatar !' }, 422);
-	}
-
-	try {
-		const token = await Email_Verif.create_token(user_register.id);
-		const url = `${FRONTEND_URL}/verif?token=${token}&userid=${user_register.id}`;
 		sendVerificationEmail(user_register.email, url);
 	} catch (error) {
-		await User.delete(user_register.id);
 		return c.json({ message: error }, 422);
 	}
 
@@ -299,93 +287,27 @@ app.all('/verif', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
-app.post('/verif', async (c: Context) => {
-	const { token, userid } = await c.req.json();
-	let ret_token = undefined;
-	try {
-		ret_token = await Email_Verif.get_by_user_id(userid);
-		if (ret_token == undefined) throw new Error('Token not found !');
-		if (ret_token.expiration < Date.now())
-			throw new Error('Token expired !');
-		if (ret_token.token != token) throw new Error('Token not valid !');
-		const user = await User.get_by_id(userid);
-		if (user == undefined) throw new Error('User not found !');
-
-		if (user.email_verif) throw new Error('User already verified !');
-		user.email_verif = true;
-		await user.save();
-		await Email_Verif.delete_by_user_id(userid);
-		return c.json({ message: 'User verif !' }, 200);
-	} catch (error) {
-		console.log(error);
-		if (ret_token != undefined) {
-			await Email_Verif.delete_by_user_id(userid);
-		}
-		if (error instanceof Error) return c.json({ message: error }, 422);
-		else return c.json({ message: 'You need to register first !' }, 422);
-	}
-});
-
-app.all('/verif', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.put('/edit', async (c: Context) => {
-	const { username, email, description, location, interests, wanted } =
-		await c.req.json();
-
+app.put('/:id', async (c: Context) => {
+	const body = await c.req.json();
+	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	if (!user.complete_profile)
-		return c.json({ message: 'User not fully registered !' }, 401);
-	if (!user.email_verif)
-		return c.json({ message: 'User not verified !' }, 401);
+		return c.json({ message: 'Server cannot perform checks !' }, 400);
+	const { message, ret_val, user } = ret_check;
+	if (user == null || message != undefined)
+		return c.json({ message: message }, ret_val);
+	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
 
-	if (username != undefined) {
-		const [is_valid_username, err_username] = await check_username(
-			username
-		);
-		if (!is_valid_username) return c.json({ message: err_username }, 401);
-		user.username = username;
-	}
-	if (email != undefined) {
-		const [is_valid_email, err_email] = await check_email(email);
-		if (!is_valid_email) return c.json({ message: err_email }, 401);
-		user.email = email;
-	}
-	if (description != undefined) {
-		if (description.length > 280)
-			return c.json({ message: 'Description too long' }, 401);
-		user.description = description;
-	}
-	if (location != undefined) {
-		user.lat = location[0];
-		user.long = location[1];
-	}
-	if (interests != undefined) {
-		user.interests = interests;
-	}
-	if (wanted != undefined) {
-		user.wanted = wanted;
-	}
+	user.email = body.email;
 	try {
-		await user.save();
-		const serialized_user = await user.serialize_me();
+		user.save();
 		return c.json(
-			{ message: 'User updated !', user: serialized_user },
+			{ message: 'User updated!', user: await user.serialize_me() },
 			200
 		);
 	} catch (_e) {
 		return c.json({ message: 'User update failed !' }, 422);
 	}
-});
-
-app.all('/edit', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
 app.get('/avatar/:id', async (c: Context) => {
@@ -413,6 +335,7 @@ app.get('/avatar/:id', async (c: Context) => {
 app.post('/avatar', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	const body = await c.req.parseBody();
+	let image_serialized;
 
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
@@ -428,37 +351,19 @@ app.post('/avatar', async (c: Context) => {
 	let image;
 	try {
 		image = await Image.get_avatar_by_user(user.id);
-	} catch (_e) {
-		console.log(_e);
-		try {
-			await post_file(name, file);
-			image = await Image.post(user.id, name, 'avatar');
-			const image_serialized = await image.serialize();
-			return c.json(
-				{ message: 'Image saved !', image: image_serialized },
-				200
-			);
-		} catch (_e) {
-			console.log(_e);
-			return c.json({ message: 'Failed to save the image' }, 422);
-		}
-	}
-
-	try {
 		if (!image.filename.endsWith('_default'))
 			await delete_file(image.filename);
 		await Image.delete_by_id(image.id);
 		await post_file(name, file);
 		image = await Image.post(user.id, name, 'avatar');
-		const image_serialized = await image.serialize();
-		return c.json(
-			{ message: 'Image saved !', image: image_serialized },
-			200
-		);
-	} catch (_e) {
-		console.log(_e);
-		return c.json({ message: 'Failed to save the image' }, 422);
+		image_serialized = await image.serialize();
+	} catch (e) {
+		console.log(e);
+		if (e instanceof Error && e.message === 'Avatar not found')
+			image = await Image.post(user.id, name, 'avatar');
+		else return c.json({ message: 'Failed to save the image' }, 422);
 	}
+	return c.json({ message: 'Image saved !', image: image_serialized }, 200);
 });
 
 app.delete('/image/:id', async (c: Context) => {
@@ -680,6 +585,8 @@ app.post('/seen/:id', async (c: Context) => {
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
 	let user_param;
+	console.log(user.lat, user.long);
+	await get_info_loc(user.lat, user.long);
 	try {
 		user_param = await User.get_by_id(id);
 	} catch (_e) {

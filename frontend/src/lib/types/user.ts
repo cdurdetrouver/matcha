@@ -16,4 +16,5 @@ export type User = {
 	description?: string;
 	interests?: string[];
 	location: number[];
+	auth_provider: string;
 };

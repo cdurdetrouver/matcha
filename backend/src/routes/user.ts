@@ -2,12 +2,14 @@ import { Hono, type Context } from 'hono';
 import {
 	hashSync,
 	genSaltSync,
+	compare,
 } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 import {
 	user_match,
 	user_check,
+	check_username,
+	check_email,
 	check_password,
-	get_info_loc,
 } from '../utils/user.ts';
 import { getCookie, deleteCookie } from 'hono/cookie';
 import {
@@ -29,6 +31,8 @@ import { sendVerificationEmail } from '../utils/send_mail.ts';
 import { Seen_Users } from '../db_objects/seen_users.ts';
 import { Loved_Users } from '../db_objects/loved_users.ts';
 import { Friendly_Users } from '../db_objects/friendly_users.ts';
+import { get_userIntra_by_code } from '../utils/intra42.ts';
+import { get_userGoogle_by_code } from '../utils/googleauth.ts';
 
 const app = new Hono();
 
@@ -57,12 +61,16 @@ app.all('/chats', (c: Context) => {
 
 app.post('/password', async (c: Context) => {
 	const ret_check = await check_cookies(c);
-	const { password } = await c.req.json();
+	const { old_password, password } = await c.req.json();
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
+	if (user.auth_provider != 'email')
+		return c.json({ message: 'User not registered with email !' }, 401);
+	const is_valid_pass = await compare(old_password, user.password);
+	if (!is_valid_pass) return c.json({ message: 'Wrong password' }, 401);
 	const [valid, ret_message] = check_password(password, user.username);
 	if (!valid) return c.json({ message: ret_message }, 401);
 	const saltRounds = genSaltSync(12);
@@ -145,6 +153,8 @@ app.post('/login', async (c: Context) => {
 		return c.json({ err_password, err_email }, 401);
 
 	if (ret_user != undefined) {
+		if (ret_user.auth_provider != 'email')
+			return c.json({ message: 'User not registered with email !' }, 401);
 		if (!ret_user.email_verif)
 			return c.json({ message: 'User not verified !' }, 401);
 		const access_token = await get_access_token(ret_user);
@@ -251,6 +261,73 @@ app.all('/register', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.post('/login/google', async (c: Context) => {
+	const { code } = await c.req.json();
+	if (!code) return c.json({ message: 'Body not format correctly !' }, 400);
+	try {
+		const user = await get_userGoogle_by_code(code);
+		const access_token = await get_access_token(user);
+		const refresh_token = await get_refresh_token(user);
+		deleteCookie(c, `access_token`);
+		deleteCookie(c, `refresh_token`);
+
+		c.res.headers.append(
+			'Set-Cookie',
+			`access_token=${access_token}; HttpOnly; Path=/`
+		);
+		c.res.headers.append(
+			'Set-Cookie',
+			`refresh_token=${refresh_token}; HttpOnly; Path=/`
+		);
+		return c.json(
+			{ message: 'User logged in!', user: await user.serialize_me() },
+			200
+		);
+	} catch (error) {
+		if (error instanceof Error)
+			return c.json({ message: error.message }, 401);
+		return c.json({ message: 'User not found !' }, 404);
+	}
+});
+
+app.all('/login/google', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.post('/login/intra', async (c: Context) => {
+	const { code } = await c.req.json();
+	console.log('code', code);
+	if (!code) return c.json({ message: 'Body not format correctly !' }, 400);
+	try {
+		const user = await get_userIntra_by_code(code);
+		const access_token = await get_access_token(user);
+		const refresh_token = await get_refresh_token(user);
+		deleteCookie(c, `access_token`);
+		deleteCookie(c, `refresh_token`);
+
+		c.res.headers.append(
+			'Set-Cookie',
+			`access_token=${access_token}; HttpOnly; Path=/`
+		);
+		c.res.headers.append(
+			'Set-Cookie',
+			`refresh_token=${refresh_token}; HttpOnly; Path=/`
+		);
+		return c.json(
+			{ message: 'User logged in!', user: await user.serialize_me() },
+			200
+		);
+	} catch (error) {
+		if (error instanceof Error)
+			return c.json({ message: error.message }, 401);
+		return c.json({ message: 'User not found !' }, 404);
+	}
+});
+
+app.all('/login/intra', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.post('/verif', async (c: Context) => {
 	const { token, userid } = await c.req.json();
 	let ret_token:
@@ -285,6 +362,62 @@ app.post('/verif', async (c: Context) => {
 
 app.all('/verif', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.put('/edit', async (c: Context) => {
+	const { username, email, description, location, interests, wanted } =
+		await c.req.json();
+
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	if (!user.complete_profile)
+		return c.json({ message: 'User not fully registered !' }, 401);
+	if (!user.email_verif)
+		return c.json({ message: 'User not verified !' }, 401);
+
+	if (username != undefined) {
+		const [is_valid_username, err_username] = await check_username(
+			username
+		);
+		if (!is_valid_username) return c.json({ message: err_username }, 401);
+		user.username = username;
+	}
+	if (email != undefined) {
+		if (user.auth_provider != 'email')
+			return c.json({ message: 'User not registered with email !' }, 401);
+		const [is_valid_email, err_email] = await check_email(email);
+		if (!is_valid_email) return c.json({ message: err_email }, 401);
+		user.email = email;
+	}
+	if (description != undefined) {
+		if (description.length > 280)
+			return c.json({ message: 'Description too long' }, 401);
+		user.description = description;
+	}
+	if (location != undefined) {
+		user.lat = location[0];
+		user.long = location[1];
+	}
+	if (interests != undefined) {
+		user.interests = interests;
+	}
+	if (wanted != undefined) {
+		user.wanted = wanted;
+	}
+	try {
+		await user.save();
+		const serialized_user = await user.serialize_me();
+		return c.json(
+			{ message: 'User updated !', user: serialized_user },
+			200
+		);
+	} catch (_e) {
+		return c.json({ message: 'User update failed !' }, 422);
+	}
 });
 
 app.put('/:id', async (c: Context) => {
@@ -586,7 +719,6 @@ app.post('/seen/:id', async (c: Context) => {
 		return c.json({ message: message }, 401);
 	let user_param;
 	console.log(user.lat, user.long);
-	await get_info_loc(user.lat, user.long);
 	try {
 		user_param = await User.get_by_id(id);
 	} catch (_e) {

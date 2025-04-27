@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { PUBLIC_BACKEND_HOST } from '$env/static/public';
+	import {
+		PUBLIC_BACKEND_HOST,
+		PUBLIC_GOOGLE_ID,
+		PUBLIC_GOOGLE_REDIRECT_URL,
+		PUBLIC_INTRA_API_KEY,
+		PUBLIC_INTRA_API_REDIRECT_URL
+	} from '$env/static/public';
 	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
 	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
@@ -101,10 +107,14 @@
 	</form>
 	<hr />
 	<div class="flex flex-col gap-3 items-center">
-		<a href="test" class="btn bg-black text-white mx-20 flex gap-4"
+		<a
+			href="https://api.intra.42.fr/oauth/authorize?client_id={PUBLIC_INTRA_API_KEY}&redirect_uri={PUBLIC_INTRA_API_REDIRECT_URL}&response_type=code"
+			class="btn bg-black text-white mx-20 flex gap-4"
 			><img class="h-[1em]" src="logo/42Paris.svg" alt="42 paris logo" />Login with Intra</a
 		>
-		<a href="test" class="btn bg-white text-black mx-20 flex gap-4"
+		<a
+			href="https://accounts.google.com/o/oauth2/auth?client_id={PUBLIC_GOOGLE_ID}&redirect_uri={PUBLIC_GOOGLE_REDIRECT_URL}?source=google&response_type=code&scope=openid%20email%20profile"
+			class="btn bg-white text-black mx-20 flex gap-4"
 			><img class="h-[1em]" src="logo/Google.svg" alt="Google logo" />Login with Google</a
 		>
 	</div>

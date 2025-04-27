@@ -16,4 +16,21 @@ export type UserType = {
 	description?: string;
 	interests?: string[];
 	location: number[];
+	auth_provider: string;
+};
+
+export type UserTypeGoogle = {
+	name: string;
+	email: string;
+	picture: string;
+	verified_email: boolean;
+};
+
+export type UserTypeIntra = {
+	email: string;
+	login: string;
+	image: {
+		link: string;
+	};
+	location: string;
 };

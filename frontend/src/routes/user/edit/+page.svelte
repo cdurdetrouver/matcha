@@ -385,7 +385,7 @@
 					alt="User Avatar"
 					rounded="rounded-3xl"
 					shadow="shadow-xl"
-					class="h-full w-auto max-h-40 object-contain"
+					class="h-full w-auto object-contain"
 				/>
 
 				<!-- Online/Offline Status -->
@@ -418,6 +418,7 @@
 					class="input text-sm p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 					bind:value={email}
 					placeholder="Enter your email"
+					disabled={user?.auth_provider !== 'email'}
 				/>
 
 				<!-- Description -->
@@ -437,7 +438,7 @@
 				{/if}
 
 				<!-- Location -->
-				<div class="flex items-center gap-4">
+				<div class="flex items-center gap-2">
 					<Icon icon="mdi:map-marker" width="1.5em" />
 					<p class="text-sm">{city}</p>
 					<button class="btn variant-filled-primary px-4 py-2" on:click={requestLocation}>

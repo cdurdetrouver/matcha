@@ -99,7 +99,7 @@
 
 				<!-- Location -->
 				{#if city}
-					<div class="flex items-center gap-4">
+					<div class="flex items-center gap-2">
 						<Icon icon="mdi:map-marker" width="1.5em" />
 						<p class="text-sm text-gray-500">{city}</p>
 					</div>

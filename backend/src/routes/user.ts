@@ -183,7 +183,7 @@ app.post('/full_register', async (c: Context) => {
 		return c.json({ message: 'User already fully registered !' }, 401);
 	}
 	if ((await Image.get_post_by_user(user.id)).length < 1)
-		return c.json({ message: 'User need at least 1 post' }, 400);
+		return c.json({ message: 'User needs at least one post' }, 400);
 	const { wanted, interests, description, location } = body;
 	if (wanted == undefined || interests == undefined)
 		return c.json({ message: 'Body not correctly formatted.' }, 422);

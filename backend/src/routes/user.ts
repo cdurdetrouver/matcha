@@ -328,6 +328,10 @@ app.all('/login/intra', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.all('/username', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.post('/verif', async (c: Context) => {
 	const { token, userid } = await c.req.json();
 	let ret_token:

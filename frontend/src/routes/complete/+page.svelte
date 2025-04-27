@@ -63,18 +63,20 @@
 		placement: 'bottom'
 	};
 
-	let value: number = 1;
-	let inputGender = '';
-	let inputSexual = '';
+	let value: number = data.user?.wanted ?? 1;
+	let inputGender = data.user?.gender ?? '';
+	let inputSexual = data.user?.sexual_preferences ?? '';
 	let birthdate = '';
-	let description = '';
+	let description = data.user?.description ?? '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
 	let userLocation: { latitude: number | null; longitude: number | null; city: string } = {
 		latitude: null,
 		longitude: null,
 		city: ''
 	};
+
 	let locationError = '';
+	let locationSearch: boolean = false;
 	let mytags: string[] = [];
 	let tag: string;
 
@@ -132,6 +134,7 @@
 	}
 
 	function requestLocation() {
+		locationSearch = true;
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
 				async (position) => {
@@ -139,6 +142,7 @@
 					userLocation.longitude = position.coords.longitude;
 					locationError = '';
 					await getCurrentPosition(position.coords.latitude, position.coords.longitude);
+					locationSearch = false;
 				},
 				async (error) => {
 					switch (error.code) {
@@ -159,6 +163,7 @@
 					if (res) {
 						userLocation = res;
 						locationError = '';
+						locationSearch = false;
 					}
 				}
 			);
@@ -191,7 +196,7 @@
 	}
 
 	function isPhotoValid(Files: (FileList | undefined)[]) {
-		if (Files[0] === undefined) return false;
+		if (Files[0] === undefined && !data.user?.avatar) return false;
 
 		const allOtherFilesUndefined = Files.slice(1).every((file) => file === undefined);
 
@@ -203,38 +208,35 @@
 	async function complete() {
 		try {
 			let avatar = dropzoneFiles[0];
-			if (!avatar) {
-				throw new Error('Failed to upload avatar');
-			}
-			const avatarFormData = new FormData();
-			avatarFormData.append('avatar', avatar[0]);
-			const req = await request('/api/user/avatar', {
-				method: 'POST',
-				body: avatarFormData,
-				credentials: 'include'
-			});
-
-			if (!req.ok) {
-				throw new Error('Failed to upload avatar');
-			}
-			for (let i = 1; i < dropzoneFiles.length; i++) {
-				const file = dropzoneFiles[i];
-
-				if (!file) {
-					continue;
-				}
-
-				const fileFormData = new FormData();
-				fileFormData.append('file', file[0]);
-
-				const req = await request('/api/user/image', {
+			if (avatar) {
+				const avatarFormData = new FormData();
+				avatarFormData.append('avatar', avatar[0]);
+				const req = await request('/api/user/avatar', {
 					method: 'POST',
-					body: fileFormData,
+					body: avatarFormData,
 					credentials: 'include'
 				});
 
 				if (!req.ok) {
-					throw new Error('Failed to upload image');
+					throw new Error('Failed to upload avatar');
+				}
+			}
+			for (let i = 1; i < dropzoneFiles.length; i++) {
+				const file = dropzoneFiles[i];
+
+				if (file) {
+					const fileFormData = new FormData();
+					fileFormData.append('file', file[0]);
+
+					const req = await request('/api/user/image', {
+						method: 'POST',
+						body: fileFormData,
+						credentials: 'include'
+					});
+
+					if (!req.ok) {
+						throw new Error('Failed to upload image');
+					}
 				}
 			}
 
@@ -308,7 +310,12 @@
 			>
 				<svelte:fragment slot="header">We need your location</svelte:fragment>
 				<div class="size-full flex items-center justify-center gap-5">
-					<button type="button" class="btn variant-filled" on:click={requestLocation}>
+					<button
+						type="button"
+						class="btn variant-filled transition-transform duration-500 ease-in-out
+					{locationSearch ? 'animate-pulse' : ''}"
+						on:click={requestLocation}
+					>
 						Request Location
 					</button>
 
@@ -439,15 +446,23 @@
 				>
 				<div class="grid grid-cols-3 gap-4 w-full">
 					{#each Array(6) as _, index}
-						{#if dropzoneFiles[index]}
+						{#if dropzoneFiles[index] || (data.user?.avatar && index === 0)}
 							<div
 								class="relative rounded-2xl overflow-hidden flex items-center justify-center bg-black group size-full aspect-[0.75]"
 							>
-								<img
-									src={URL.createObjectURL(dropzoneFiles[index][0])}
-									alt="Preview"
-									class="size-full object-contain absolute top-0 left-0"
-								/>
+								{#if data.user?.avatar && index === 0}
+									<img
+										src={data.user.avatar.link}
+										alt="Preview"
+										class="size-full object-contain absolute top-0 left-0"
+									/>
+								{:else if dropzoneFiles[index]}
+									<img
+										src={URL.createObjectURL(dropzoneFiles[index][0])}
+										alt="Preview"
+										class="size-full object-contain absolute top-0 left-0"
+									/>
+								{/if}
 								<button
 									class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
 									on:click={() => deleteImage(index)}

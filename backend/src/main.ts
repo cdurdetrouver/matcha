@@ -10,7 +10,9 @@ import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
-import { connect } from 'https://deno.land/x/redis/mod.ts';
+import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
+import { User } from './db_objects/user.ts';
+import { createMatchRelation, getTopWeightedMatches } from './utils/redis.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -69,6 +71,22 @@ try {
 	await init_db();
 
 	console.log('Connected to the database');
+
+	createMatchRelation(1, 2, 10);
+	const topMatches = await getTopWeightedMatches(2);
+	if (Array.isArray(topMatches) && Array.isArray(topMatches[1])) {
+		const userList: [string, number][] = topMatches[1];
+		for (const user of userList) {
+			const userId = parseInt(user[0]);
+			const userDetails = await User.get_by_id(userId);
+			console.log(
+				'Relation of weight',
+				user[1],
+				'with',
+				userDetails.username
+			);
+		}
+	}
 
 	Deno.serve({ port: 8000 }, app.fetch);
 } catch (e) {

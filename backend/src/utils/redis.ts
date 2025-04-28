@@ -7,8 +7,8 @@ import { redis, redis_graph } from '../main.ts';
  * @param {number} weight - The weight of the relationship.
  */
 export async function createMatchRelation(
-	userId1: string,
-	userId2: string,
+	userId1: number,
+	userId2: number,
 	weight: number
 ) {
 	const query = `
@@ -18,7 +18,6 @@ export async function createMatchRelation(
 	`;
 
 	const result = await redis.sendCommand('GRAPH.QUERY', [redis_graph, query]);
-	console.log('Relationship created or updated:', result);
 	return result;
 }
 
@@ -26,7 +25,7 @@ export async function createMatchRelation(
  * Retrieves the top 10 users most strongly connected to the specified user.
  * @param userId - The ID of the user for whom to find the top connections.
  */
-export async function getTopWeightedMatches(userId: string) {
+export async function getTopWeightedMatches(userId: number) {
 	const query = `
 	  MATCH (u:User {id: '${userId}'})-[r:MATCH]->(other:User)
 	  RETURN other.id AS userId, r.weight AS weight
@@ -35,6 +34,5 @@ export async function getTopWeightedMatches(userId: string) {
 	`;
 
 	const result = await redis.sendCommand('GRAPH.QUERY', [redis_graph, query]);
-	console.log('Top matches:', result);
 	return result;
 }

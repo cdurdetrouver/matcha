@@ -1,7 +1,8 @@
 import { UserType } from '../types/user.ts';
-import { client } from '../main.ts';
+import { client, relation_graph } from '../main.ts';
 import { Image } from './images.ts';
 import { Tags_Users } from './tags_users.ts';
+import { createMatchRelation } from '../utils/redis.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -121,6 +122,9 @@ export class User {
 				this.id,
 			]
 		);
+		if (this.complete_profile) {
+			await this.udpate_relations();
+		}
 	}
 
 	static async init_table() {
@@ -201,34 +205,56 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	async get_all_by_loc(radius: number): Promise<User[]> {
+	static async get_all_by_loc(
+		radius: number,
+		long: number,
+		lat: number
+	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint(${this.long}
-				, ${this.lat}), 4326),
+				ST_SetSRID(ST_MakePoint(${long}
+				, ${lat}), 4326),
 				${radius * 1000});
 			`
 		);
 		return res.rows.map((row) => new User(row));
 	}
 
-	async get_posts_users_by_loc(radius: number): Promise<User[]> {
-		const res = await client.queryObject<User>(
-			`
-			SELECT ${USERFIELDS} FROM "${TABLE}" 
-			WHERE ST_DWithin(
-				location,
-				ST_SetSRID(ST_MakePoint(${this.long},
-				${this.lat}), 4326), ${radius * 1000})
-			AND id != ${this.id}
-			AND id NOT IN (
-				SELECT seen_id FROM seen_users
-				WHERE user_id = ${this.id}
-			);
-		`
+	async calculateCompatibility(otherUser: User): Promise<number> {
+		const maxDistance = 100;
+		const maxTags = 10;
+
+		const interests = await Tags_Users.get_tags(this.id);
+		const otherInterests = await Tags_Users.get_tags(otherUser.id);
+		const similarTags =
+			interests?.filter((tag) => otherInterests?.includes(tag)).length ??
+			0;
+		const normalizedTags = Math.min(similarTags / maxTags, 1);
+
+		const distance = Math.sqrt(
+			Math.pow(this.lat - otherUser.lat, 2) +
+				Math.pow(this.long - otherUser.long, 2)
 		);
-		return res.rows.map((row) => new User(row));
+		const normalizedDistance = Math.max(0, 1 - distance / maxDistance);
+
+		const wantedMatch = this.wanted === otherUser.wanted ? 1 : 0;
+
+		let sexualPreferencesMatch = 0;
+		if (
+			this.sexual_preferences &&
+			otherUser.sexual_preferences === this.sexual_preferences
+		) {
+			sexualPreferencesMatch = 1;
+		}
+
+		const compatibility =
+			normalizedTags * 50 +
+			normalizedDistance * 30 +
+			wantedMatch * 10 +
+			sexualPreferencesMatch * 10;
+
+		return Math.round(compatibility);
 	}
 
 	static async get_by_field(
@@ -251,6 +277,32 @@ export class User {
 			`
 		);
 		return res.rows.map((row) => new User(row));
+	}
+
+	async udpate_relations() {
+		const nearbyUsers = await User.get_all_by_loc(
+			1000000,
+			this.lat,
+			this.long
+		);
+
+		for (const otherUser of nearbyUsers) {
+			if (this.id !== otherUser.id) {
+				await this.update_relation(otherUser);
+			}
+		}
+		console.log(`Relation graph updated for user ${this.id}`);
+	}
+
+	async update_relation(otherUser: User) {
+		const weight = await this.calculateCompatibility(otherUser);
+		await createMatchRelation(
+			this.id,
+			otherUser.id,
+			weight,
+			relation_graph
+		);
+		console.log('update');
 	}
 
 	async serialize(): Promise<UserType> {

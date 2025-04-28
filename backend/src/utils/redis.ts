@@ -1,4 +1,4 @@
-import { redis, redis_graph } from '../main.ts';
+import { redis } from '../main.ts';
 
 /**
  * Ensures both user nodes exist and creates a 'MATCH' relationship between them with a specified weight.
@@ -9,15 +9,17 @@ import { redis, redis_graph } from '../main.ts';
 export async function createMatchRelation(
 	userId1: number,
 	userId2: number,
-	weight: number
+	weight: number,
+	graph: string
 ) {
 	const query = `
 	  MERGE (a:User {id: '${userId1}'})
 	  MERGE (b:User {id: '${userId2}'})
 	  MERGE (a)-[:MATCH {weight: ${weight}}]->(b)
+	  MERGE (b)-[:MATCH {weight: ${weight}}]->(a)
 	`;
 
-	const result = await redis.sendCommand('GRAPH.QUERY', [redis_graph, query]);
+	const result = await redis.sendCommand('GRAPH.QUERY', [graph, query]);
 	return result;
 }
 
@@ -25,7 +27,7 @@ export async function createMatchRelation(
  * Retrieves the top 10 users most strongly connected to the specified user.
  * @param userId - The ID of the user for whom to find the top connections.
  */
-export async function getTopWeightedMatches(userId: number) {
+export async function getTopWeightedMatches(userId: number, graph: string) {
 	const query = `
 	  MATCH (u:User {id: '${userId}'})-[r:MATCH]->(other:User)
 	  RETURN other.id AS userId, r.weight AS weight
@@ -33,6 +35,6 @@ export async function getTopWeightedMatches(userId: number) {
 	  LIMIT 10
 	`;
 
-	const result = await redis.sendCommand('GRAPH.QUERY', [redis_graph, query]);
+	const result = await redis.sendCommand('GRAPH.QUERY', [graph, query]);
 	return result;
 }

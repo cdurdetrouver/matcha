@@ -10,11 +10,7 @@ import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
-const allowedOrigin = [
-	'http://localhost:5173',
-	'ws://localhost:5173',
-	'bess-f2r4s19',
-];
+const allowedOrigin = ['http://localhost:5173', 'ws://localhost:5173'];
 
 app.use('*', (c, next) => {
 	if (c.req.header('upgrade')?.toLowerCase() === 'websocket') {

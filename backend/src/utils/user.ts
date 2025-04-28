@@ -116,3 +116,29 @@ export function check_password(
 		return [false, 'Username is forbidden in password'];
 	return [true, undefined];
 }
+
+export async function generate_username(username: string): Promise<string> {
+	while (true) {
+		const [is_valid_username, err_username] = await check_username(
+			username
+		);
+		if (is_valid_username) {
+			return username;
+		}
+		if (err_username !== 'Username already used.') {
+			throw new Error('Username not valid');
+		}
+
+		const existing_users = await User.get_by_field('username', username);
+		if (existing_users.length > 0) {
+			const match = username.match(/^(.*?)(\d+)$/);
+			if (match) {
+				const base = match[1];
+				const number = parseInt(match[2], 10) + 1;
+				username = `${base}${number}`;
+			} else {
+				username = `${username}1`;
+			}
+		}
+	}
+}

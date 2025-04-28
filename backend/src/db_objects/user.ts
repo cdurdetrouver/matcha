@@ -18,6 +18,7 @@ const USERFIELDS = `
 	interests,
 	ST_X(location::geometry) AS long,
 	ST_Y(location::geometry) AS lat,
+	auth_provider,
 	created_at,
 	connected_at
 `;
@@ -37,6 +38,7 @@ export class User {
 	long: number = 0;
 	description?: string;
 	id: number = 0;
+	auth_provider: string = 'email';
 	created_at: bigint = BigInt(Date.now());
 	connected_at: bigint = BigInt(Date.now());
 
@@ -64,6 +66,7 @@ export class User {
 			this.wanted = usernameOrOther.wanted ?? 0;
 			this.connected_at =
 				usernameOrOther.connected_at ?? BigInt(Date.now());
+			this.auth_provider = usernameOrOther.auth_provider ?? 'email';
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
@@ -88,8 +91,9 @@ export class User {
 					interests = $10,
 					location = ST_SetSRID(ST_MakePoint($11, $12), 4326),
 					connected_at = $13,
-					wanted = $14
-				WHERE id = $15;
+					wanted = $14,
+					auth_provider = $15
+				WHERE id = $16;
 			`,
 			[
 				this.username,
@@ -106,6 +110,7 @@ export class User {
 				this.lat,
 				this.connected_at,
 				this.wanted,
+				this.auth_provider,
 				this.id,
 			]
 		);
@@ -130,7 +135,8 @@ export class User {
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
 				location GEOGRAPHY(POINT, 4326),
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
+				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+				auth_provider VARCHAR(255) NOT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);
 		`);
@@ -139,11 +145,11 @@ export class User {
 	async create() {
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (username, password, email, online) 
+				INSERT INTO "${TABLE}" (username, password, email, auth_provider) 
 				VALUES ($1, $2, $3, $4)
 				RETURNING id
 	 		`,
-			[this.username, this.password, this.email, this.online]
+			[this.username, this.password, this.email, this.auth_provider]
 		);
 		this.id = res.rows[0].id;
 	}
@@ -185,7 +191,7 @@ export class User {
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
 				ST_SetSRID(ST_MakePoint(${this.long}
 				, ${this.lat}), 4326),
-        		${radius * 1000});
+				${radius * 1000});
 			`
 		);
 		return res.rows.map((row) => new User(row));
@@ -194,7 +200,6 @@ export class User {
 	async get_posts_users_by_loc(radius: number): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-
 			SELECT ${USERFIELDS} FROM "${TABLE}" 
 			WHERE ST_DWithin(
 				location,
@@ -249,6 +254,7 @@ export class User {
 			description: this.description,
 			interests: this.interests,
 			location: [Number(this.lat), Number(this.long)],
+			auth_provider: this.auth_provider,
 		};
 		return user;
 	}

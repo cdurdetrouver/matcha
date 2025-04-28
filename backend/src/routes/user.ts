@@ -203,7 +203,6 @@ app.post('/full_register', async (c: Context) => {
 		user.sexual_preferences = sexual_preferences;
 	}
 	user.description = description;
-	user.interests = interests;
 	user.lat = Number(location[0]);
 	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
@@ -369,7 +368,7 @@ app.all('/verif', (c: Context) => {
 });
 
 app.put('/edit', async (c: Context) => {
-	const { username, email, description, location, interests, wanted } =
+	const { username, email, description, location, wanted } =
 		await c.req.json();
 
 	const ret_check = await check_cookies(c);
@@ -405,9 +404,6 @@ app.put('/edit', async (c: Context) => {
 	if (location != undefined) {
 		user.lat = location[0];
 		user.long = location[1];
-	}
-	if (interests != undefined) {
-		user.interests = interests;
 	}
 	if (wanted != undefined) {
 		user.wanted = wanted;
@@ -760,6 +756,10 @@ app.delete('/seen/:id', async (c: Context) => {
 	);
 });
 
+app.all('/seen/:id', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.post('/loved/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
@@ -807,6 +807,10 @@ app.delete('/loved/:id', async (c: Context) => {
 	);
 });
 
+app.all('/loved/:id', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.post('/friend/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
@@ -852,6 +856,10 @@ app.delete('/friend/:id', async (c: Context) => {
 		{ message: 'User friend list updated, user successfully deleted' },
 		200
 	);
+});
+
+app.all('/friend/:id', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
 app.notFound((c: Context) => {

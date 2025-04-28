@@ -5,6 +5,7 @@ import user from './routes/user.ts';
 import post from './routes/post.ts';
 import chat from './routes/chat.ts';
 import notif from './routes/notif.ts';
+import tag from './routes/tag.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 
@@ -37,6 +38,7 @@ app.route('/api/user', user);
 app.route('/api/posts', post);
 app.route('/api/chat', chat);
 app.route('/api/notif', notif);
+app.route('/api/tag', tag);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);

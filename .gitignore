@@ -31,5 +31,6 @@ package-lock.json
 # DB
 pgadmin
 db
+redis_data
 pass.pgpass
 google.env.json

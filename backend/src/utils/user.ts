@@ -118,6 +118,7 @@ export function check_password(
 }
 
 export async function generate_username(username: string): Promise<string> {
+	username = username.replace(/[^a-zA-Z0-9_]/g, '').substring(0, 15);
 	while (true) {
 		const [is_valid_username, err_username] = await check_username(
 			username
@@ -126,6 +127,7 @@ export async function generate_username(username: string): Promise<string> {
 			return username;
 		}
 		if (err_username !== 'Username already used.') {
+			console.error(err_username, username);
 			throw new Error('Username not valid');
 		}
 

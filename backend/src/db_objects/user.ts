@@ -1,6 +1,7 @@
 import { UserType } from '../types/user.ts';
 import { client } from '../main.ts';
 import { Image } from './images.ts';
+import { Tags_Users } from "./tags_users.ts";
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -33,7 +34,6 @@ export class User {
 	wanted: number = 0;
 	gender?: string;
 	sexual_preferences?: string;
-	interests?: string[];
 	lat: number = 0;
 	long: number = 0;
 	description?: string;
@@ -57,7 +57,6 @@ export class User {
 			this.gender = usernameOrOther.gender ?? undefined;
 			this.sexual_preferences =
 				usernameOrOther.sexual_preferences ?? undefined;
-			this.interests = usernameOrOther.interests ?? undefined;
 			this.description = usernameOrOther.description ?? undefined;
 			this.id = usernameOrOther.id ?? 0;
 			this.created_at = usernameOrOther.created_at ?? BigInt(Date.now());
@@ -88,12 +87,11 @@ export class User {
 					gender = $7,
 					sexual_preferences = $8,
 					description = $9,
-					interests = $10,
-					location = ST_SetSRID(ST_MakePoint($11, $12), 4326),
-					connected_at = $13,
-					wanted = $14,
-					auth_provider = $15
-				WHERE id = $16;
+					location = ST_SetSRID(ST_MakePoint($10, $11), 4326),
+					connected_at = $12,
+					wanted = $13,
+					auth_provider = $14
+				WHERE id = $15;
 			`,
 			[
 				this.username,
@@ -105,7 +103,6 @@ export class User {
 				this.gender,
 				this.sexual_preferences,
 				this.description,
-				this.interests,
 				this.long,
 				this.lat,
 				this.connected_at,
@@ -131,7 +128,7 @@ export class User {
 				email_verif BOOLEAN DEFAULT FALSE,
 				gender VARCHAR(255) DEFAULT NULL,
 				sexual_preferences VARCHAR(255) DEFAULT NULL,
-				description VARCHAR(255) DEFAULT NULL,
+				description TEXT DEFAULT NULL,
 				interests VARCHAR(255) ARRAY DEFAULT NULL,
 				location GEOGRAPHY(POINT, 4326),
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
@@ -239,6 +236,7 @@ export class User {
 
 	async serialize(): Promise<UserType> {
 		const avatar = await Image.get_avatar_by_user(this.id);
+		const interests = await Tags_Users.get_tags(this.id);
 		const user: UserType = {
 			username: this.username,
 			id: this.id,
@@ -252,7 +250,7 @@ export class User {
 			gender: this.gender,
 			sexual_preferences: this.sexual_preferences,
 			description: this.description,
-			interests: this.interests,
+			interests: interests,
 			location: [Number(this.lat), Number(this.long)],
 			auth_provider: this.auth_provider,
 		};

@@ -7,23 +7,29 @@ const TABLE = 'Image';
 export class Image {
 	filename: string;
 	id: number = 0;
-	object_id: number = 0;
+	user_id: number = 0;
+	chat_id: number = 0;
 	type?: string;
 
 	constructor(
-		linkOrOther: string | Partial<Image>,
+		idOrOther: string | Partial<Image>,
 		filename?: string,
-		id?: number
+		object_id?: number,
+		type?: string
 	) {
-		if (typeof linkOrOther === 'object' && linkOrOther !== null) {
-			this.id = linkOrOther.id ?? 0;
-			this.filename = linkOrOther.filename!;
-			this.object_id = linkOrOther.object_id!;
-			this.type = linkOrOther.type!;
+		if (typeof idOrOther === 'object' && idOrOther !== null) {
+			this.id = idOrOther.id ?? 0;
+			this.filename = idOrOther.filename!;
+			this.user_id = idOrOther.user_id!;
+			this.chat_id = idOrOther.user_id!;
+			this.type = idOrOther.type!;
 		} else {
-			this.object_id = id!;
+			if (type === 'chat')
+				this.chat_id = object_id!;
+			else
+				this.user_id = object_id!;
 			this.filename = filename!;
-			this.id = id!;
+			this.id = Number(idOrOther)!;
 		}
 	}
 
@@ -31,7 +37,8 @@ export class Image {
 		await client.queryObject(`
 			CREATE TABLE IF NOT EXISTS "${TABLE}" (
 				id SERIAL PRIMARY KEY,
-				object_id INT REFERENCES Users(id) ON DELETE CASCADE,
+				user_id INT REFERENCES Users(id) ON DELETE CASCADE,
+				chat_id INT REFERENCES Chats(id) ON DELETE CASCADE,
 				filename VARCHAR(255),
 				type VARCHAR(255)
 			);
@@ -47,22 +54,25 @@ export class Image {
 		filename: string,
 		type: string
 	): Promise<Image> {
+		let field = 'user_id';
+		if (type === 'chat')
+			field = 'chat_id';
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (object_id, filename, type)
+				INSERT INTO "${TABLE}" (${field}, filename, type)
 				VALUES ($1, $2, $3) RETURNING id;
 			`,
 			[object_id, filename, type]
 		);
 		const id = res.rows[0].id;
-		return new Image({ id, filename, object_id, type });
+		return new Image({ id, filename, type });
 	}
 
 	static async get_post_by_user(user_id: number): Promise<Image[]> {
 		const res = await client.queryObject<string>(
 			`
 				SELECT * FROM "${TABLE}"
-				WHERE object_id = $1 AND type = 'post';
+				WHERE user_id = $1 AND type = 'post';
 			`,
 			[user_id]
 		);
@@ -73,7 +83,7 @@ export class Image {
 		const res = await client.queryObject<string>(
 			`
 				SELECT * FROM "${TABLE}"
-				WHERE object_id = $1 AND type = 'avatar';
+				WHERE user_id = $1 AND type = 'avatar';
 			`,
 			[user_id]
 		);
@@ -86,7 +96,7 @@ export class Image {
 		const res = await client.queryObject<string>(
 			`
 				SELECT * FROM "${TABLE}"
-				WHERE object_id = $1 AND type = 'chat';
+				WHERE chat_id = $1 AND type = 'chat';
 			`,
 			[chat_id]
 		);
@@ -122,7 +132,7 @@ export class Image {
 		await client.queryObject(
 			`
 				DELETE FROM "${TABLE}"
-				WHERE object_id = $1;
+				WHERE user_id = $1;
 			`,
 			[user_id]
 		);
@@ -130,10 +140,20 @@ export class Image {
 
 	async serialize(): Promise<ImageType> {
 		const link = await get_signed_url(this.filename, 86400);
+		let user_id, chat_id;
+		if (this.type === 'chat') {
+			user_id = undefined;
+			chat_id = this.chat_id;
+		}
+		else {
+			user_id = this .user_id;
+			chat_id = undefined;
+		}
 		return {
 			link: link,
 			filename: this.filename,
-			user_id: this.object_id,
+			user_id: user_id,
+			chat_id: chat_id,
 			id: this.id,
 		};
 	}

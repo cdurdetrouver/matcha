@@ -58,6 +58,7 @@ export class Chat {
 		const chat = res.rows[0];
 		if (chat == undefined) throw Error();
 		this.id = chat.id;
+		await Image.post(this.id, 'chat_0_default', 'chat');
 	}
 
 	static async delete(id: number) {

@@ -184,6 +184,31 @@ app.all('/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.get('/:id/info', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	let chat: Chat;
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 400);
+	const { message, ret_val, user } = ret_check;
+	if (user == null || message != undefined)
+		return c.json({ message: message }, ret_val);
+	if (id == undefined)
+		return c.json({ message: 'Chat id is undefined' }, 400);
+	try {
+		chat = await Chat.get_by_id(id);
+	} catch (_e) {
+		return c.json({ message: 'Chat not found' }, 404);
+	}
+	if (!(await Chats_Users.get_chats_by_user(user.id)).includes(chat.id))
+		return c.json({ message: 'User not in the chat' }, 403);
+	return c.json({message: 'Chat found', chat: await chat.serialize()});
+});
+
+app.all('/:id/info', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.notFound((c: Context) => {
 	return c.json({ message: 'Route not Found' }, 404);
 });

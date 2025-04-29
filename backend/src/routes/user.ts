@@ -510,7 +510,7 @@ app.delete('/image/:id', async (c: Context) => {
 
 	try {
 		const image = await Image.get_by_id(id);
-		if (image.object_id != user.id)
+		if (image.user_id != user.id)
 			return c.json({ message: 'Trying to do bad things' }, 401);
 		await delete_file(image.filename);
 		await Image.delete_by_id(id);

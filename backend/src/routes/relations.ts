@@ -64,7 +64,7 @@ app.post('/create', async (c: Context) => {
 		Chats_Users.add_user_chat(target_id, chat.id);
 		notif_redirect = '/chat/' + chat.id;
 		await post_notif(user.id, notif_mess, notif_redirect);
-		notif_mess = user.username + (relation === 2 ? ' loved you back' : ' liked you back' + ' start chat now');
+		notif_mess = user.username + (relation === 2 ? ' loved you back' : ' liked you back') + ' start chat now';
 	}
 	await post_notif(target_id, notif_mess, notif_redirect);
 	return c.json({ message: 'Relation created' }, 200);

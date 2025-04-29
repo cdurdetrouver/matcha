@@ -193,7 +193,7 @@ app.get('/:id/info', async (c: Context) => {
 	const { message, ret_val, user } = ret_check;
 	if (user == null || message != undefined)
 		return c.json({ message: message }, ret_val);
-	if (id == undefined)
+	if (isNaN(id))
 		return c.json({ message: 'Chat id is undefined' }, 400);
 	try {
 		chat = await Chat.get_by_id(id);

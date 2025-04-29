@@ -10,20 +10,17 @@ const TABLE = 'chats';
 
 export class Chat {
 	name?: string;
-	avatar?: string;
 	id: number = 0;
 	created_at: bigint = BigInt(Date.now());
 
 	[key: string]: unknown;
-	constructor(nameOrOther?: string | Partial<Chat>, avatar?: string) {
+	constructor(nameOrOther?: string | Partial<Chat>) {
 		if (typeof nameOrOther === 'object' && nameOrOther !== null) {
 			this.name = nameOrOther.name;
-			this.avatar = nameOrOther.avatar;
 			this.id = nameOrOther.id ?? 0;
 			this.created_at = nameOrOther.created_at ?? BigInt(Date.now());
 		} else {
 			this.name = nameOrOther;
-			this.avatar = avatar;
 		}
 	}
 
@@ -33,10 +30,9 @@ export class Chat {
 				UPDATE "${TABLE}"
 				SET
 					name = $1,
-					avatar = $2,
 				WHERE id = $3;
 			`,
-			[this.name, this.avatar, this.id]
+			[this.name, this.id]
 		);
 	}
 
@@ -53,11 +49,11 @@ export class Chat {
 	async create() {
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (name, avatar) 
-				VALUES ($1, $2)
+				INSERT INTO "${TABLE}" (name) 
+				VALUES ($1)
 				RETURNING id
 			`,
-			[this.name, this.avatar]
+			[this.name]
 		);
 		const chat = res.rows[0];
 		if (chat == undefined) throw Error();
@@ -120,7 +116,7 @@ export class Chat {
 		let avatar;
 		try {
 			avatar = await (
-				await Image.get_avatar_by_user(this.id)
+				await Image.get_avatar_by_chat(this.id)
 			).serialize();
 			last_message = await (
 				await Message.get_last_message(this.id)

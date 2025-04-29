@@ -1,21 +1,9 @@
-export type Post = {
-	id: string;
-	title: string;
-	content: string;
-	author: string;
-	createdAt: number;
-	updatedAt: number;
-	imageUrl: string;
-	likes: number;
-	comments: Comment[];
-	tags: string[];
-}
+import { Image } from './image.ts';
+import { User } from './user.ts';
 
-export type Comment = {
-	id: string;
-	postId: string;
-	author: string;
-	content: string;
-	createdAt: number;
-	updatedAt: number;
-}
+export type Post = {
+	user: User;
+	posts: Image[];
+	compatibility: number;
+};
+

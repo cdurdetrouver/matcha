@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { Avatar } from '@skeletonlabs/skeleton';
 	import Carousel from './utils/Carousel.svelte';
+	import type { Post } from '$lib/types/post';
 
-	export let feeds: { id: number; content: string }[];
+	export let feeds: Post[];
 
 	let Cards: NodeListOf<HTMLElement>;
 	let PlaceHolders: NodeListOf<HTMLElement>;
@@ -60,12 +61,8 @@
 			});
 
 			hammertime.on('swipe', async function (ev) {
-				console.log('delete post :', feed);
-
-				feeds = feeds.filter((f) => f.id !== feed.id);
+				feeds = feeds.filter((f) => f.user.id !== feed.user.id);
 				feeds = [...feeds];
-
-				console.log('feeds :', feeds);
 			});
 		});
 	}
@@ -90,16 +87,11 @@
 				class="tinder--card moving bg-black w-[95%] h-[90%] xl:w-[30%] md:w-[40%] overflow-hidden rounded-3xl shadow-2xl select-none relative"
 			>
 				<div class="size-full select-none pointer-events-none">
-					<Carousel
-						images={[
-							{ link: '/blast.jpg', filename: 'blast', id: 0, user_id: 1 },
-							{ link: '/outerwilds.jpg', filename: 'outerwilds', id: 1, user_id: 1 }
-						]}
-					/>
+					<Carousel images={feed.posts} />
 				</div>
-				<a href="/user/1" class="z-[10] absolute bottom-[5%] right-[5%]">
+				<a href="/user/{feed.user.id}" class="z-[10] absolute bottom-[5%] right-[5%]">
 					<Avatar
-						src="/blast.jpg"
+						src={feed.user.avatar?.link}
 						border="border-4 border-surface-300-600-token hover:!border-primary-500"
 						cursor="cursor-pointer"
 					/>

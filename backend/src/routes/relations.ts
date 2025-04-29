@@ -57,7 +57,8 @@ app.post('/create', async (c: Context) => {
 	let notif_redirect = '/user/' + user.id;
 	if (await Relations_Users.is_related(target_id, user.id)) {
 		notif_mess = target_user.username + (relation === 2 ? ' loved you too' : ' liked you too') + ' start chat now';
-		const chat = new Chat(name);
+		const chatName = `${user.username}-${target_user.username}`;
+		const chat = new Chat(chatName);
 		await chat.create();
 		Chats_Users.add_user_chat(user.id, chat.id);
 		Chats_Users.add_user_chat(target_id, chat.id);

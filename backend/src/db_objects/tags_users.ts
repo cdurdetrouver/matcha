@@ -22,6 +22,16 @@ export class Tags_Users {
 		);
 	}
 
+	static async add_tags(user_id: number, tags: string[]) {
+		const values = tags.map((tag) => `('${tag}', ${user_id})`).join(', ');
+		await client.queryObject(
+			`
+				INSERT INTO "${TABLE}" (tag, user_id)
+				VALUES ${values};
+			`
+		);
+	}
+
 	static async had_tag(user_id: number, tag: string): Promise<boolean> {
 		const res = await client.queryObject<{ tag: string }>(
 			`

@@ -330,10 +330,6 @@ app.all('/login/intra', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
-app.all('/username', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
 app.post('/verif', async (c: Context) => {
 	const { token, userid } = await c.req.json();
 	let ret_token:
@@ -514,7 +510,7 @@ app.delete('/image/:id', async (c: Context) => {
 
 	try {
 		const image = await Image.get_by_id(id);
-		if (image.user_id != user.id)
+		if (image.object_id != user.id)
 			return c.json({ message: 'Trying to do bad things' }, 401);
 		await delete_file(image.filename);
 		await Image.delete_by_id(id);

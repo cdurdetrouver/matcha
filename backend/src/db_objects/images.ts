@@ -7,7 +7,7 @@ const TABLE = 'Image';
 export class Image {
 	filename: string;
 	id: number = 0;
-	user_id: number = 0;
+	object_id: number = 0;
 	type?: string;
 
 	constructor(
@@ -18,10 +18,10 @@ export class Image {
 		if (typeof linkOrOther === 'object' && linkOrOther !== null) {
 			this.id = linkOrOther.id ?? 0;
 			this.filename = linkOrOther.filename!;
-			this.user_id = linkOrOther.user_id!;
+			this.object_id = linkOrOther.object_id!;
 			this.type = linkOrOther.type!;
 		} else {
-			this.user_id = id!;
+			this.object_id = id!;
 			this.filename = filename!;
 			this.id = id!;
 		}
@@ -31,38 +31,38 @@ export class Image {
 		await client.queryObject(`
 			CREATE TABLE IF NOT EXISTS "${TABLE}" (
 				id SERIAL PRIMARY KEY,
-				user_id INT REFERENCES Users(id) ON DELETE CASCADE,
+				object_id INT REFERENCES Users(id) ON DELETE CASCADE,
 				filename VARCHAR(255),
 				type VARCHAR(255)
 			);
 
 			CREATE UNIQUE INDEX IF NOT EXISTS unique_filename_non_default
 			ON "${TABLE}"(filename)
-			WHERE filename NOT LIKE 'avatar_default%';
+			WHERE filename NOT LIKE 'avatar_%_default';
 		`);
 	}
 
 	static async post(
-		user_id: number,
+		object_id: number,
 		filename: string,
 		type: string
 	): Promise<Image> {
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (user_id, filename, type)
+				INSERT INTO "${TABLE}" (object_id, filename, type)
 				VALUES ($1, $2, $3) RETURNING id;
 			`,
-			[user_id, filename, type]
+			[object_id, filename, type]
 		);
 		const id = res.rows[0].id;
-		return new Image({ id, filename, user_id, type });
+		return new Image({ id, filename, object_id, type });
 	}
 
 	static async get_post_by_user(user_id: number): Promise<Image[]> {
 		const res = await client.queryObject<string>(
 			`
 				SELECT * FROM "${TABLE}"
-				WHERE user_id = $1 AND type = 'post';
+				WHERE object_id = $1 AND type = 'post';
 			`,
 			[user_id]
 		);
@@ -73,13 +73,26 @@ export class Image {
 		const res = await client.queryObject<string>(
 			`
 				SELECT * FROM "${TABLE}"
-				WHERE user_id = $1 AND type = 'avatar';
+				WHERE object_id = $1 AND type = 'avatar';
 			`,
 			[user_id]
 		);
 		const user = res.rows[0];
-		if (user == undefined) throw Error('Avatar not found');
+		if (user == undefined) throw Error('User avatar not found');
 		return new Image(user);
+	}
+
+	static async get_avatar_by_chat(chat_id: number): Promise<Image> {
+		const res = await client.queryObject<string>(
+			`
+				SELECT * FROM "${TABLE}"
+				WHERE object_id = $1 AND type = 'chat';
+			`,
+			[chat_id]
+		);
+		const chat = res.rows[0];
+		if (chat == undefined) throw Error('Chat avatar not found');
+		return new Image(chat);
 	}
 
 	static async get_by_id(id: number): Promise<Image> {
@@ -109,7 +122,7 @@ export class Image {
 		await client.queryObject(
 			`
 				DELETE FROM "${TABLE}"
-				WHERE user_id = $1;
+				WHERE object_id = $1;
 			`,
 			[user_id]
 		);
@@ -120,7 +133,7 @@ export class Image {
 		return {
 			link: link,
 			filename: this.filename,
-			user_id: this.user_id,
+			user_id: this.object_id,
 			id: this.id,
 		};
 	}

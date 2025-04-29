@@ -14,7 +14,7 @@ app.get('/all', async (c: Context) => {
 		return c.json({ message: message }, 401);
 
 	const tags = await Tag.get_all_tags();
-	return c.json(tags);
+	return c.json({ message: 'Found all tags', tags: tags}, 200);
 });
 
 app.all('/all', (c: Context) => {

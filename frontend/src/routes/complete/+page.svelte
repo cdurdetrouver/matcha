@@ -12,22 +12,23 @@
 	import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { request } from '$lib/script/request';
-	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
-	import type { User } from '$lib/types/user';
+	import {
+		getToastStore,
+		getModalStore,
+		type ToastSettings,
+		type ModalSettings
+	} from '@skeletonlabs/skeleton';
 	import { SetCookie } from '$lib/script/cookies';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import type { User } from '$lib/types/user';
 
 	const toastStore = getToastStore();
+	const modalStore = getModalStore();
 
 	export let data;
 
-	let tags = ['basketball', 'soccer', 'tennis'];
-	const TagOptions: AutocompleteOption<string>[] = [
-		{ label: 'basketball', value: 'basketball' },
-		{ label: 'soccer', value: 'soccer' },
-		{ label: 'tennis', value: 'tennis' }
-	];
+	let TagOptions: AutocompleteOption<string>[] = [];
 
 	const GenderOptions: AutocompleteOption<string>[] = [
 		{ label: 'Male', value: 'male' },
@@ -80,9 +81,32 @@
 	let mytags: string[] = [];
 	let tag: string;
 
-	onMount(() => {
+	onMount(async () => {
 		if (data.user.complete_profile) {
 			goto('/user');
+		}
+
+		const res = await request('/api/tag/all', {
+			method: 'GET',
+			credentials: 'include'
+		});
+
+		if (!res.ok) {
+			const t: ToastSettings = {
+				message: 'Failed to fetch tags',
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			goto('/user');
+		}
+
+		const data_tags = await res.json();
+
+		if (data_tags) {
+			TagOptions = data_tags.map((tag: string) => ({
+				label: tag,
+				value: tag
+			}));
 		}
 	});
 
@@ -184,7 +208,54 @@
 		inputSexual = event.detail.label;
 	}
 
-	function onFlavorSelectionTag(event: CustomEvent<AutocompleteOption<string>>): void {
+	async function inputChipValidation(value: string): Promise<boolean> {
+		if (!TagOptions.some((option) => option.label === value)) {
+			const ret = await new Promise<boolean>(async (resolve) => {
+				const m: ModalSettings = {
+					type: 'confirm',
+					title: 'Create new tag',
+					body: `Do you want to create the tag <span class="badge variant-filled">${value}</span> ?`,
+					response: async (r: boolean) => {
+						if (r) {
+							const res = await request('/api/tag/create', {
+								method: 'POST',
+								body: JSON.stringify({ tag_name: value }),
+								credentials: 'include'
+							});
+
+							const data = await res.json();
+
+							if (!res.ok && data.message != 'Tag already exists') {
+								const t: ToastSettings = {
+									message: data.message,
+									background: 'variant-filled-error'
+								};
+								toastStore.trigger(t);
+								resolve(false);
+								return;
+							}
+
+							TagOptions = [...TagOptions, { label: value, value: value }];
+							resolve(true);
+						} else {
+							resolve(false);
+						}
+					}
+				};
+				modalStore.trigger(m);
+			});
+			if (!ret) {
+				tag = '';
+				mytags = mytags.filter((t) => t !== value);
+			}
+			return ret;
+		}
+		return true;
+	}
+
+	async function onFlavorSelectionTag(
+		event: CustomEvent<AutocompleteOption<string>>
+	): Promise<void> {
 		if (mytags.includes(event.detail.label) === false) {
 			mytags = [...mytags, event.detail.label];
 			tag = '';
@@ -412,7 +483,12 @@
 			</Step>
 			<Step>
 				<svelte:fragment slot="header">Choose your tags</svelte:fragment>
-				<InputChip bind:input={tag} bind:value={mytags} name="chips" whitelist={tags} />
+				<InputChip
+					bind:input={tag}
+					bind:value={mytags}
+					name="chips"
+					validation={inputChipValidation}
+				/>
 
 				<div class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto z-[100]" tabindex="-1">
 					<Autocomplete

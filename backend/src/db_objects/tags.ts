@@ -52,9 +52,8 @@ export class Tag {
 	}
 
 	static name_is_valid(tag_name: string): boolean {
-		const re_is_alpha = /^[A-Za-z_]+$/;
-		if (!re_is_alpha.test(tag_name))
-			return false;
+		const re_is_alpha = /^[A-Za-z_-]+$/;
+		if (!re_is_alpha.test(tag_name)) return false;
 		return true;
 	}
 }

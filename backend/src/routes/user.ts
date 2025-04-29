@@ -33,6 +33,7 @@ import { Loved_Users } from '../db_objects/loved_users.ts';
 import { Friendly_Users } from '../db_objects/friendly_users.ts';
 import { get_userIntra_by_code } from '../utils/intra42.ts';
 import { get_userGoogle_by_code } from '../utils/googleauth.ts';
+import { Tags_Users } from '../db_objects/tags_users.ts';
 
 const app = new Hono();
 
@@ -202,11 +203,13 @@ app.post('/full_register', async (c: Context) => {
 		user.gender = gender;
 		user.sexual_preferences = sexual_preferences;
 	}
+	user.wanted = wanted;
 	user.description = description;
 	user.lat = Number(location[0]);
 	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User need at least 1 post' }, 400);
+	await Tags_Users.add_tags(user.id, interests);
 	user.complete_profile = true;
 	await user.save();
 	return c.json(

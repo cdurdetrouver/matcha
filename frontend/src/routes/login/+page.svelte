@@ -3,7 +3,6 @@
 	import Login from '$lib/components/Login/Login.svelte';
 	import Register from '$lib/components/Login/Register.svelte';
 	import { onMount } from 'svelte';
-	import { request } from '$lib/script/request';
 	import { goto } from '$app/navigation';
 	import { PUBLIC_BACKEND_HOST } from '$env/static/public';
 	import { replaceState } from '$app/navigation';

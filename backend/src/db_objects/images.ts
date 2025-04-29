@@ -21,7 +21,7 @@ export class Image {
 			this.id = idOrOther.id ?? 0;
 			this.filename = idOrOther.filename!;
 			this.user_id = idOrOther.user_id!;
-			this.chat_id = idOrOther.user_id!;
+			this.chat_id = idOrOther.chat_id ?? 0;
 			this.type = idOrOther.type!;
 		} else {
 			if (type === 'chat')

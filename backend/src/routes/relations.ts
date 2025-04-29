@@ -95,6 +95,11 @@ app.delete('/delete', async (c: Context) => {
 	if (!await Relations_Users.is_related(user.id, target_id))
 		return c.json({ message: 'Relation does not exist' }, 400);
 	await Relations_Users.remove_relation(user.id, target_id);
+	const chat_id = await Chats_Users.get_mp(user.id, target_id);
+	if (chat_id) {
+		await Chat.delete(chat_id);
+		return c.json({ message: 'Relation and chat deleted' }, 200);
+	}
 	return c.json({ message: 'Relation deleted' }, 200);
 });
 

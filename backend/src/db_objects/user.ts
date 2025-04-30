@@ -207,9 +207,9 @@ export class User {
 			[ids]
 		);
 		return res.rows.map((row) => new User(row));
-	}
+	} 
 
-	static async get_all_by_loc(
+	async get_all_by_loc(
 		radius: number,
 		long: number,
 		lat: number
@@ -217,11 +217,10 @@ export class User {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint($1
-				, $2), 4326),
-				$3);
+				ST_SetSRID(ST_MakePoint($1, $2), 4326),
+				$3) AND id != $4;
 			`,
-			[long, lat, radius * 1000]
+			[long, lat, radius * 1000, this.id]
 		);
 		return res.rows.map((row) => new User(row));
 	}

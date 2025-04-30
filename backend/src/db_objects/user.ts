@@ -205,7 +205,7 @@ export class User {
 			[ids]
 		);
 		return res.rows.map((row) => new User(row));
-	}
+	} 
 
 	static async get_all_by_loc(
 		radius: number,
@@ -216,7 +216,7 @@ export class User {
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
 				ST_SetSRID(ST_MakePoint($1, $2), 4326),
-				$3);
+				$3) AND id != $4;
 			`,
 			[long, lat, radius * 1000]
 		);

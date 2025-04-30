@@ -11,6 +11,7 @@ import relation from './routes/relations.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
+import research from "./routes/research.ts";
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -44,6 +45,7 @@ app.route('/api/notif', notif);
 app.route('/api/tag', tag);
 app.route('/api/relations', relation);
 app.route('/api/seen', seen);
+app.route('/api/research', research);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);

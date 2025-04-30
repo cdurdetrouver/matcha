@@ -330,10 +330,6 @@ app.all('/login/intra', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
-app.all('/username', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
 app.post('/verif', async (c: Context) => {
 	const { token, userid } = await c.req.json();
 	let ret_token:
@@ -760,108 +756,6 @@ app.delete('/seen/:id', async (c: Context) => {
 });
 
 app.all('/seen/:id', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.post('/loved/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	let user_param;
-	try {
-		user_param = await User.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'User not found' }, 404);
-	}
-	if (await Loved_Users.is_user_loved_by(user.id, user_param.id))
-		return c.json({ message: 'User already loved' }, 401);
-	//adding a chat between the two users maybe auto check if the db can auto create it just send a notif
-	await Loved_Users.love_user(user.id, user_param.id);
-	return c.json(
-		{ message: 'User loved list updated, user successfully added' },
-		200
-	);
-});
-
-app.delete('/loved/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	let user_param;
-	try {
-		user_param = await User.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'User not found' }, 404);
-	}
-	if (!(await Loved_Users.is_user_loved_by(user.id, user_param.id)))
-		return c.json({ message: 'No user matches' }, 401);
-	await Loved_Users.delete_love(user.id, user_param.id);
-	return c.json(
-		{ message: 'User loved list updated, user successfully deleted' },
-		200
-	);
-});
-
-app.all('/loved/:id', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.post('/friend/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	let user_param;
-	try {
-		user_param = await User.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'User not found' }, 404);
-	}
-	if (await Friendly_Users.is_my_friend(user.id, user_param.id))
-		return c.json({ message: 'User already liked' }, 401);
-	//adding a chat between the two users maybe auto check if the db can auto create it just send a notif
-	await Friendly_Users.make_a_friend(user.id, user_param.id);
-	return c.json(
-		{ message: 'User friend list updated, user successfully added' },
-		200
-	);
-});
-
-app.delete('/friend/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	let user_param;
-	try {
-		user_param = await User.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'User not found' }, 404);
-	}
-	if (!(await Friendly_Users.is_my_friend(user.id, user_param.id)))
-		return c.json({ message: 'No user matches' }, 401);
-	await Friendly_Users.delete_friend(user.id, user_param.id);
-	return c.json(
-		{ message: 'User friend list updated, user successfully deleted' },
-		200
-	);
-});
-
-app.all('/friend/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

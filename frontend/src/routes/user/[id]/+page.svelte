@@ -70,8 +70,29 @@
 		});
 	}
 
-	function sendRequest(arg0: string): any {
-		throw new Error('Function not implemented.');
+	async function sendRequest(arg0: string) {
+		const relation = arg0 === 'friend' ? 0 : 2;
+		const res = await request('/api/relations/create', {
+			method: 'POST',
+			credentials: 'include',
+			body: JSON.stringify({
+				target_id: user.id,
+				relation: relation
+			})
+		});
+		if (res.status === 200) {
+			const t: ToastSettings = {
+				message: 'Request sent',
+				background: 'variant-filled-success'
+			};
+			toastStore.trigger(t);
+		} else {
+			const t: ToastSettings = {
+				message: 'Failed to send request: ' + (await res.json()).message,
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
 	}
 </script>
 

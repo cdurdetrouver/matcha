@@ -1,26 +1,26 @@
 import { client } from '../main.ts';
 import { RelationType } from '../types/relation.ts';
-import { User } from "./user.ts";
+import { User } from './user.ts';
 
 const TABLE = 'relations_users';
 
 export class Relations_Users {
 	target_id: number;
 	user_id: number;
-	relations: number;
+	relation: number;
 	constructor(
 		target_idOrOther: number | Partial<Relations_Users>,
 		user_id?: number,
-		relations?: number
+		relation?: number
 	) {
 		if (typeof target_idOrOther === 'object' && target_idOrOther !== null) {
 			this.target_id = target_idOrOther.target_id!;
 			this.user_id = target_idOrOther.user_id!;
-			this.relations = target_idOrOther.relations!;
+			this.relation = target_idOrOther.relation!;
 		} else {
 			this.target_id = target_idOrOther;
 			this.user_id = user_id!;
-			this.relations = relations!;
+			this.relation = relation!;
 		}
 	}
 
@@ -35,7 +35,11 @@ export class Relations_Users {
 		`);
 	}
 
-	static async add_relation(user_id: number, target_id: number, relation: number) {
+	static async add_relation(
+		user_id: number,
+		target_id: number,
+		relation: number
+	) {
 		await client.queryObject(
 			`
 				INSERT INTO "${TABLE}" (user_id, target_id, relation)
@@ -59,7 +63,7 @@ export class Relations_Users {
 		const res = await client.queryObject<{
 			target_id: number;
 			user_id: number;
-			relations: number;
+			relation: number;
 		}>(
 			`
 				SELECT target_id, user_id, relation FROM "${TABLE}"
@@ -67,14 +71,37 @@ export class Relations_Users {
 			`,
 			[user_id]
 		);
-		return res.rows.map(row => new Relations_Users(row));
+		return res.rows.map((row) => new Relations_Users(row));
 	}
 
-	static async is_related(user_id: number, target_id: number): Promise<boolean> {
+	static async get_relation(
+		user_id: number,
+		target_id: number
+	): Promise<Relations_Users | null> {
 		const res = await client.queryObject<{
 			target_id: number;
 			user_id: number;
-			relations: number;
+			relation: number;
+		}>(
+			`
+				SELECT target_id, user_id, relation FROM "${TABLE}"
+				WHERE user_id = $1 AND target_id = $2;
+			`,
+			[user_id, target_id]
+		);
+		if (res.rows[0] == undefined) return null;
+		console.log(res.rows[0]);
+		return new Relations_Users(res.rows[0]);
+	}
+
+	static async is_related(
+		user_id: number,
+		target_id: number
+	): Promise<boolean> {
+		const res = await client.queryObject<{
+			target_id: number;
+			user_id: number;
+			relation: number;
 		}>(
 			`
 				SELECT target_id, user_id, relation FROM "${TABLE}"
@@ -87,10 +114,10 @@ export class Relations_Users {
 	}
 
 	async serialize(): Promise<RelationType> {
-		const user = await (await User.get_by_id(this.target_id)).serialize(); 
+		const user = await (await User.get_by_id(this.target_id)).serialize();
 		const relation_s: RelationType = {
 			user_target: user,
-			relation: this.relations,
+			relation: this.relation,
 		};
 		return relation_s;
 	}

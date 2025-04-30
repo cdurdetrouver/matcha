@@ -34,6 +34,26 @@ app.all('/all', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.get('/:id', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+
+	const id = Number(c.req.param('id'));
+	if (id == undefined) return c.json({ message: 'ID is required' }, 400);
+	if (id === user.id)
+		return c.json({ message: 'You cannot relate to yourself' }, 400);
+	try {
+		const rel = await Relations_Users.get_relation(id, user.id);
+		return c.json({ relation: await rel?.serialize() }, 200);
+	} catch (_e) {
+		return c.json({ message: 'Relation does not exist' }, 400);
+	}
+});
+
 app.post('/create', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)

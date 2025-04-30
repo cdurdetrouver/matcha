@@ -29,8 +29,6 @@ import { Email_Verif } from '../db_objects/email_verif.ts';
 import { FRONTEND_URL } from '../secret.ts';
 import { sendVerificationEmail } from '../utils/send_mail.ts';
 import { Seen_Users } from '../db_objects/seen_users.ts';
-import { Loved_Users } from '../db_objects/loved_users.ts';
-import { Friendly_Users } from '../db_objects/friendly_users.ts';
 import { get_userIntra_by_code } from '../utils/intra42.ts';
 import { get_userGoogle_by_code } from '../utils/googleauth.ts';
 import { Tags_Users } from '../db_objects/tags_users.ts';

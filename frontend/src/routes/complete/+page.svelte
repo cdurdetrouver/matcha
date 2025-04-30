@@ -24,10 +24,10 @@
 	import type { User } from '$lib/types/user';
 
 	const toastStore = getToastStore();
-	const modalStore = getModalStore();
 
 	export let data;
 
+	let tags: string[] = [];
 	let TagOptions: AutocompleteOption<string>[] = [];
 
 	const GenderOptions: AutocompleteOption<string>[] = [
@@ -208,57 +208,40 @@
 		inputSexual = event.detail.label;
 	}
 
-	async function inputChipValidation(value: string): Promise<boolean> {
-		if (!TagOptions.some((option) => option.label === value)) {
-			const ret = await new Promise<boolean>(async (resolve) => {
-				const m: ModalSettings = {
-					type: 'confirm',
-					title: 'Create new tag',
-					body: `Do you want to create the tag <span class="badge variant-filled">${value}</span> ?`,
-					response: async (r: boolean) => {
-						if (r) {
-							const res = await request('/api/tag/create', {
-								method: 'POST',
-								body: JSON.stringify({ tag_name: value }),
-								credentials: 'include'
-							});
-
-							const data = await res.json();
-
-							if (!res.ok && data.message != 'Tag already exists') {
-								const t: ToastSettings = {
-									message: data.message,
-									background: 'variant-filled-error'
-								};
-								toastStore.trigger(t);
-								resolve(false);
-								return;
-							}
-
-							TagOptions = [...TagOptions, { label: value, value: value }];
-							resolve(true);
-						} else {
-							resolve(false);
-						}
-					}
-				};
-				modalStore.trigger(m);
-			});
-			if (!ret) {
-				tag = '';
-				mytags = mytags.filter((t) => t !== value);
-			}
-			return ret;
+	function inputChipValidation(value: string): boolean {
+		if (!tags.includes(value)) {
+			return false;
 		}
 		return true;
 	}
 
-	async function onFlavorSelectionTag(
-		event: CustomEvent<AutocompleteOption<string>>
-	): Promise<void> {
+	function onFlavorSelectionTag(event: CustomEvent<AutocompleteOption<string>>): void {
 		if (mytags.includes(event.detail.label) === false) {
 			mytags = [...mytags, event.detail.label];
 			tag = '';
+		}
+	}
+
+	async function createTag(): Promise<void> {
+		if (tag && !mytags.includes(tag)) {
+			const res = await request('/api/tag/create', {
+				method: 'POST',
+				body: JSON.stringify({ tag_name: tag }),
+				credentials: 'include'
+			});
+			if (!res.ok) {
+				const t: ToastSettings = {
+					message: 'Failed to create tag',
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+				return;
+			}
+			const data = await res.json();
+			mytags = [...mytags, tag];
+			TagOptions = [...TagOptions, { label: tag, value: tag }];
+			tag = '';
+			tags = [...tags, data.tag_name];
 		}
 	}
 
@@ -483,12 +466,21 @@
 			</Step>
 			<Step>
 				<svelte:fragment slot="header">Choose your tags</svelte:fragment>
-				<InputChip
-					bind:input={tag}
-					bind:value={mytags}
-					name="chips"
-					validation={inputChipValidation}
-				/>
+				<div class="flex items-center">
+					<InputChip
+						bind:input={tag}
+						bind:value={mytags}
+						name="chips"
+						validation={inputChipValidation}
+					/>
+					<button
+						class="variant-filled-secondary btn h-fit"
+						disabled={tags.includes(tag) || tag === ''}
+						on:click={createTag}
+					>
+						Create tag
+					</button>
+				</div>
 
 				<div class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto z-[100]" tabindex="-1">
 					<Autocomplete

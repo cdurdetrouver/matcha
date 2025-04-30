@@ -33,7 +33,7 @@ export class Message {
 			this.user_id = user_id;
 		}
 	}
-
+		
 	async save() {
 		await client.queryObject(
 			`

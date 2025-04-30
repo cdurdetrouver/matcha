@@ -5,9 +5,11 @@
 	import Icon from '@iconify/svelte';
 	import type { User } from '$lib/types/user';
 	import type { Notif } from '$lib/types/notif';
+	import type { WebSocketManager } from '$lib/script/request';
 
 	export let user: User | null = null;
 	export let notifs: Notif[] = [];
+	export let socket: WebSocketManager;
 </script>
 
 <AppBar shadow="shadow-2xl" slotTrail="!space-x-2">
@@ -30,7 +32,7 @@
 		</div>
 
 		<section class="hidden sm:inline-flex space-x-{user == null ? '1' : '4'}">
-			<NotifComponent {notifs} />
+			<NotifComponent {notifs} {socket} />
 			{#if user == null}
 				<a class="btn-icon hover:variant-soft-primary" href="/login" rel="noreferrer">
 					<Icon icon="mdi:account" width="24" height="24" />

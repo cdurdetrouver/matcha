@@ -18,12 +18,14 @@
 	function getLinks(message: string) {
 		let stringArray: string[] = message.split(/(\s+)/);
 		let newstring = new Array();
-		for (var i = 0; i < stringArray.length; i++) {
-			if (stringArray[i].match(regex))
+		for (let i = 0; i < stringArray.length; i++) {
+			if (stringArray[i].match(regex)) {
 				newstring.push(
 					`<a class="anchor" target="_blank" alt='website' href="${stringArray[i]}">${stringArray[i]}</a>`
 				);
-			else newstring.push(stringArray[i]);
+			} else {
+				newstring.push(stringArray[i].replace(/\n/g, '<br>'));
+			}
 		}
 		return newstring.join('');
 	}

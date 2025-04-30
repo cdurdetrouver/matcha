@@ -23,7 +23,8 @@
 		]
 	};
 
-	let chatContainer: HTMLElement | null = null;
+	let chatContainer: HTMLElement;
+	let textarea: HTMLElement;
 	let chat: ChatType | undefined;
 	let messages: Message[] = [];
 	let currentMessage = '';
@@ -34,29 +35,60 @@
 		socket = new WebSocketManager(`/api/chat/${data.chatid}`);
 
 		socket.setOnMessageHook(async (data) => {
-			console.log(data);
 			if (data.type === 'init') messages = data.messages;
 			else if (data.type === 'message') messages = [...messages, data.message];
 			else if (data.type === 'history') messages = [...data.messages, ...messages];
 
-			await scrollToBottom();
+			if (data.type !== 'history') await scrollToBottom();
 		});
 
 		await scrollToBottom();
 	});
 
 	async function sendMessage() {
-		if (socket && currentMessage != '') socket.send(JSON.stringify(currentMessage));
+		const newMessage: Message = {
+			content: currentMessage,
+			type: 'chat',
+			id: 0,
+			created_at: Date.now()
+		};
+		if (socket && currentMessage != '') socket.send(newMessage);
 		currentMessage = '';
 	}
 
 	async function scrollToBottom() {
-		if (chatContainer) {
-			console.log(chatContainer.scrollTop, chatContainer.scrollHeight);
-			await tick(); // Wait for DOM updates
-			chatContainer.scrollTop = chatContainer.scrollHeight;
-			console.log(chatContainer.scrollTop, chatContainer.scrollHeight);
+		await tick();
+		chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+	}
+
+	function handleScroll() {
+		// const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+		// if (scrollHeight <= clientHeight || scrollTop <= scrollHeight / 2) {
+		// 	if (messages.length > 0) {
+		// 		console.log(messages[0].id);
+		// 		socket.send({
+		// 			type: 'history',
+		// 			chat_id: messages[0].id
+		// 		});
+		// 	}
+		// }
+	}
+
+	function onPromptKeydown(event: KeyboardEvent): void {
+		if (event.code === 'Enter' && event.shiftKey) {
+			event.preventDefault();
+			currentMessage += '\n';
+		} else if (event.code === 'Enter') {
+			event.preventDefault();
+			sendMessage();
+			textarea.style.height = 'fit-content';
 		}
+	}
+
+	function resizeTextarea() {
+		textarea.style.height = 'fit-content';
+		const maxHeight = 6 * parseFloat(getComputedStyle(textarea).lineHeight || '20');
+		textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
 	}
 </script>
 
@@ -69,7 +101,7 @@
 			<h2 class="h2">{chat.name}</h2>
 		{/if}
 	</header>
-	<section class="h-full overflow-scroll" bind:this={chatContainer}>
+	<section class="h-full overflow-y-auto" bind:this={chatContainer} on:scroll={handleScroll}>
 		<ul class="size-full p-10 flex flex-col gap-2.5">
 			{#each messages as message}
 				{#if message.type == 'announce'}
@@ -91,11 +123,14 @@
 			<button class="input-group-shim">+</button>
 			<textarea
 				bind:value={currentMessage}
-				class="resize-none bg-transparent border-0 p-2 ring-0 field-sizing-content"
+				class="bg-transparent border-0 ring-0 p-2 h-fit"
 				name="prompt"
 				id="prompt"
 				placeholder="Write a message..."
 				rows="1"
+				on:keydown={onPromptKeydown}
+				on:input={resizeTextarea}
+				bind:this={textarea}
 			/>
 			<button class="variant-filled-primary" type="submit">Send</button>
 		</form>

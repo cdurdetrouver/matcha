@@ -45,7 +45,8 @@ export class Image {
 
 			CREATE UNIQUE INDEX IF NOT EXISTS unique_filename_non_default
 			ON "${TABLE}"(filename)
-			WHERE filename NOT LIKE 'avatar_%_default';
+			WHERE filename NOT LIKE 'avatar_%_default' 
+			AND filename NOT LIKE 'chat_%_default';
 		`);
 	}
 

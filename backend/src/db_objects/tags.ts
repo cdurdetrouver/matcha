@@ -1,4 +1,5 @@
 import { client } from '../main.ts';
+import { User } from "./user.ts";
 
 const TABLE = 'tags';
 
@@ -57,7 +58,7 @@ export class Tag {
 		return true;
 	}
 
-	static async get_user_by_tags(tag_list: string[], user_id: number): Promise<number[]> {
+	static async get_user_by_tags(tag_list: string[], user_id: number): Promise<User[]> {
 		const res = await client.queryObject<{ user_id: number }>(
 			`
 				SELECT user_id FROM tags_users
@@ -67,6 +68,6 @@ export class Tag {
 			`,
 			[`{${tag_list.join(',')}}`, user_id, tag_list.length]
 		);
-		return res.rows.map((row) => row.user_id);
+		return await Promise.all(res.rows.map((row) => User.get_by_id(row.user_id)));
 	}
 }

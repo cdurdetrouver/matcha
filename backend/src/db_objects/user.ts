@@ -1,7 +1,10 @@
 import { UserType } from '../types/user.ts';
-import { client } from '../main.ts';
+import { client, relation_graph, similarity_graph } from '../main.ts';
 import { Image } from './images.ts';
 import { Tags_Users } from './tags_users.ts';
+import { createMatchRelation } from '../utils/redis.ts';
+import { matchingScore } from '../utils/matching.ts';
+import { similarityScore } from '../utils/similarity.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -121,6 +124,9 @@ export class User {
 				this.id,
 			]
 		);
+		if (this.complete_profile) {
+			await this.udpate_relations();
+		}
 	}
 
 	static async init_table() {
@@ -164,7 +170,7 @@ export class User {
 				this.email,
 				this.auth_provider,
 				this.birthdate,
-				this.mbti, // Insert mbti
+				this.mbti,
 			]
 		);
 		this.id = res.rows[0].id;
@@ -201,32 +207,18 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	async get_all_by_loc(radius: number): Promise<User[]> {
+	static async get_all_by_loc(
+		radius: number,
+		long: number,
+		lat: number
+	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint(${this.long}
-				, ${this.lat}), 4326),
+				ST_SetSRID(ST_MakePoint(${long}
+				, ${lat}), 4326),
 				${radius * 1000});
 			`
-		);
-		return res.rows.map((row) => new User(row));
-	}
-
-	async get_posts_users_by_loc(radius: number): Promise<User[]> {
-		const res = await client.queryObject<User>(
-			`
-			SELECT ${USERFIELDS} FROM "${TABLE}" 
-			WHERE ST_DWithin(
-				location,
-				ST_SetSRID(ST_MakePoint(${this.long},
-				${this.lat}), 4326), ${radius * 1000})
-			AND id != ${this.id}
-			AND id NOT IN (
-				SELECT seen_id FROM seen_users
-				WHERE user_id = ${this.id}
-			);
-		`
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -251,6 +243,66 @@ export class User {
 			`
 		);
 		return res.rows.map((row) => new User(row));
+	}
+
+	async udpate_relations() {
+		const nearbyUsers = await User.get_all_by_loc(
+			1000000,
+			this.lat,
+			this.long
+		);
+
+		const similar_user: User[] = [];
+
+		for (const otherUser of nearbyUsers) {
+			if (this.id !== otherUser.id) {
+				const weight = await this.update_similarity(otherUser);
+				if (weight > 0.5) similar_user.push(otherUser);
+			}
+		}
+
+		for (const otherUser of nearbyUsers) {
+			if (this.id !== otherUser.id) {
+				await this.update_relation(otherUser, similar_user);
+			}
+		}
+		console.log(`Relation graph updated for user ${this.id}`);
+	}
+
+	async update_similarity(otherUser: User): Promise<number> {
+		const weight = similarityScore(this, otherUser, [], []);
+		await createMatchRelation(
+			this.id,
+			otherUser.id,
+			weight,
+			similarity_graph
+		);
+		return weight;
+	}
+
+	async update_relation(otherUser: User, similar_user: User[]) {
+		const userA_tags = await Tags_Users.get_tags(this.id);
+		const userB_tags = await Tags_Users.get_tags(otherUser.id);
+		const weight = await matchingScore(
+			this,
+			otherUser,
+			userA_tags,
+			userB_tags,
+			{
+				profileViewTimeAtoB: 0,
+				profileViewTimeBtoA: 0,
+				timeToLikeAtoB: 0,
+				timeToLikeBtoA: 0,
+				hasLikedEachOther: false,
+			},
+			similar_user
+		);
+		await createMatchRelation(
+			this.id,
+			otherUser.id,
+			weight,
+			relation_graph
+		);
 	}
 
 	async serialize(): Promise<UserType> {

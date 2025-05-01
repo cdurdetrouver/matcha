@@ -127,7 +127,6 @@ export async function generate_username(username: string): Promise<string> {
 			return username;
 		}
 		if (err_username !== 'Username already used.') {
-			console.error(err_username, username);
 			throw new Error('Username not valid');
 		}
 

@@ -10,6 +10,7 @@ import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
+import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -55,6 +56,15 @@ export const client = new Client({
 	user: 'postgresuser',
 	password: 'postgrespassword',
 });
+
+export const redis = await connect({
+	hostname: 'redisgraph',
+	port: 6379,
+});
+//https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/deprecated-features/graph/commands/
+
+export const relation_graph = 'relation_graph';
+export const similarity_graph = 'similarity_graph';
 
 try {
 	await client.connect();

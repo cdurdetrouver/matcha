@@ -1,6 +1,6 @@
 import { Relations_Users } from '../db_objects/relations_users.ts';
+import { User } from '../db_objects/user.ts';
 import { MatchContextType } from '../types/matchcontext.ts';
-import { UserType } from '../types/user.ts';
 import { similarityScore } from './similarity.ts';
 
 export async function has_liked(userA: number, userB: number): Promise<number> {
@@ -17,12 +17,12 @@ export async function has_liked(userA: number, userB: number): Promise<number> {
 }
 
 export async function matchingScore(
-	userA: UserType,
-	userB: UserType,
+	userA: User,
+	userB: User,
 	userA_tags: string[],
 	userB_tags: string[],
 	context: MatchContextType,
-	mostSimilarUserstoA: UserType[]
+	mostSimilarUserstoA: User[]
 ): Promise<number> {
 	const score = similarityScore(userA, userB, userA_tags, userB_tags);
 	let boost = 0;
@@ -51,8 +51,10 @@ export async function matchingScore(
 
 	maxBoost += 2;
 	const now = new Date().getTime();
-	const activeA = (now - new Date(userA.connected_at).getTime()) / 1000;
-	const activeB = (now - new Date(userB.connected_at).getTime()) / 1000;
+	const activeA =
+		(now - new Date(Number(userA.connected_at)).getTime()) / 1000;
+	const activeB =
+		(now - new Date(Number(userB.connected_at)).getTime()) / 1000;
 	if (activeA < 3600) boost += 1;
 	if (activeB < 3600) boost += 1;
 

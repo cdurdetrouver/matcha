@@ -1,4 +1,4 @@
-import type { UserType } from '../types/user.ts';
+import { User } from '../db_objects/user.ts';
 
 function calculateAge(birthdate?: string): number | null {
 	if (!birthdate) return null;
@@ -39,8 +39,8 @@ function mbtiCompatibility(typeA?: string, typeB?: string): number {
 }
 
 export function similarityScore(
-	userA: UserType,
-	userB: UserType,
+	userA: User,
+	userB: User,
 	userA_tags: string[],
 	userB_tags: string[]
 ): number {
@@ -73,10 +73,10 @@ export function similarityScore(
 
 	maxScore += 5;
 	const distance = haversineDistance(
-		userA.location[0],
-		userA.location[1],
-		userB.location[0],
-		userB.location[1]
+		userA.lat,
+		userA.long,
+		userB.lat,
+		userB.long
 	);
 	const locationScore = Math.max(0, 1 - distance / 100) * 5;
 	score += locationScore;

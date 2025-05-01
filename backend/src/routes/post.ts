@@ -13,7 +13,7 @@ app.get('/', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	const users_list: User[] = await User.getall();
+	const users_list: User[] = await user.get_best_matches();
 	const posts_list: PostType[] = [];
 	for (let i = 0; i < users_list.length; i++) {
 		if (users_list[i].id == user.id) continue;

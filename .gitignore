@@ -32,6 +32,6 @@ package-lock.json
 pgadmin
 db
 redis_data
-redisinsight
+redis-insight
 pass.pgpass
 google.env.json

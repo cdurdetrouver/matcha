@@ -2,7 +2,7 @@ import { UserType } from '../types/user.ts';
 import { client, relation_graph, similarity_graph } from '../main.ts';
 import { Image } from './images.ts';
 import { Tags_Users } from './tags_users.ts';
-import { createMatchRelation } from '../utils/redis.ts';
+import { createMatchRelation, getTopWeightedMatches } from '../utils/redis.ts';
 import { matchingScore } from '../utils/matching.ts';
 import { similarityScore } from '../utils/similarity.ts';
 
@@ -266,7 +266,6 @@ export class User {
 				await this.update_relation(otherUser, similar_user);
 			}
 		}
-		console.log(`Relation graph updated for user ${this.id}`);
 	}
 
 	async update_similarity(otherUser: User): Promise<number> {
@@ -303,6 +302,16 @@ export class User {
 			weight,
 			relation_graph
 		);
+	}
+
+	async get_best_matches(): Promise<User[]> {
+		const ids: number[] = await getTopWeightedMatches(
+			this.id,
+			relation_graph,
+			100
+		);
+		const users = await User.get_all_by_ids(ids);
+		return users;
 	}
 
 	async serialize(): Promise<UserType> {

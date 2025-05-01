@@ -297,7 +297,6 @@ app.all('/login/google', (c: Context) => {
 
 app.post('/login/intra', async (c: Context) => {
 	const { code } = await c.req.json();
-	console.log('code', code);
 	if (!code) return c.json({ message: 'Body not format correctly !' }, 400);
 	try {
 		const user = await get_userIntra_by_code(code);

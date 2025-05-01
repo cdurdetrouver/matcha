@@ -11,6 +11,7 @@ import relation from './routes/relations.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
+import { getTopWeightedMatches } from './utils/redis.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 

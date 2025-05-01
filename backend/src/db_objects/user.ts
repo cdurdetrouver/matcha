@@ -5,6 +5,7 @@ import { Tags_Users } from './tags_users.ts';
 import { createMatchRelation, getTopWeightedMatches } from '../utils/redis.ts';
 import { matchingScore } from '../utils/matching.ts';
 import { similarityScore } from '../utils/similarity.ts';
+import { filter } from '../utils/filter.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -83,6 +84,7 @@ export class User {
 	}
 
 	async save() {
+		this.description = filter.clean(this.description ?? '');
 		await client.queryObject(
 			`
 				UPDATE "${TABLE}"
@@ -215,10 +217,11 @@ export class User {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint(${long}
-				, ${lat}), 4326),
-				${radius * 1000});
-			`
+				ST_SetSRID(ST_MakePoint($1
+				, $2), 4326),
+				$3);
+			`,
+			[long, lat, radius * 1000]
 		);
 		return res.rows.map((row) => new User(row));
 	}

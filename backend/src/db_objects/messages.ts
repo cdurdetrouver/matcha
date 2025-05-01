@@ -1,6 +1,7 @@
 import { client } from '../main.ts';
 import { MessageType } from '../types/message.ts';
 import { User } from './user.ts';
+import { filter } from '../utils/filter.ts';
 
 const TABLE = 'messages';
 
@@ -33,8 +34,9 @@ export class Message {
 			this.user_id = user_id;
 		}
 	}
-		
+
 	async save() {
+		this.content = filter.clean(this.content);
 		await client.queryObject(
 			`
 				UPDATE "${TABLE}"

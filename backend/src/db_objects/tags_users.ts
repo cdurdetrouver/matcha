@@ -23,12 +23,18 @@ export class Tags_Users {
 	}
 
 	static async add_tags(user_id: number, tags: string[]) {
-		const values = tags.map((tag) => `('${tag}', ${user_id})`).join(', ');
+		const values = tags.flatMap((tag) => [tag, user_id]);
+
+		const placeholders = tags
+			.map((_, index) => `($${index * 2 + 1}, $${index * 2 + 2})`)
+			.join(', ');
+
 		await client.queryObject(
 			`
 				INSERT INTO "${TABLE}" (tag, user_id)
-				VALUES ${values};
-			`
+				VALUES ${placeholders};
+			`,
+			values
 		);
 	}
 

@@ -27,14 +27,24 @@ export async function createMatchRelation(
  * Retrieves the top 10 users most strongly connected to the specified user.
  * @param userId - The ID of the user for whom to find the top connections.
  */
-export async function getTopWeightedMatches(userId: number, graph: string) {
+export async function getTopWeightedMatches(
+	userId: number,
+	graph: string,
+	limit: number
+): Promise<number[]> {
 	const query = `
 	  MATCH (u:User {id: '${userId}'})-[r:MATCH]->(other:User)
 	  RETURN other.id AS userId, r.weight AS weight
 	  ORDER BY r.weight DESC
-	  LIMIT 10
+	  LIMIT ${limit}
 	`;
 
 	const result = await redis.sendCommand('GRAPH.QUERY', [graph, query]);
-	return result;
+
+	if (Array.isArray(result) && Array.isArray(result[1])) {
+		// deno-lint-ignore no-explicit-any
+		const userIds = result[1].map((elem: any) => Number(elem[0]));
+		return userIds;
+	}
+	return [];
 }

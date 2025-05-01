@@ -1,8 +1,10 @@
 import { UserType } from '../types/user.ts';
-import { client, relation_graph } from '../main.ts';
+import { client, relation_graph, similarity_graph } from '../main.ts';
 import { Image } from './images.ts';
 import { Tags_Users } from './tags_users.ts';
 import { createMatchRelation } from '../utils/redis.ts';
+import { matchingScore } from '../utils/matching.ts';
+import { similarityScore } from '../utils/similarity.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -168,7 +170,7 @@ export class User {
 				this.email,
 				this.auth_provider,
 				this.birthdate,
-				this.mbti, // Insert mbti
+				this.mbti,
 			]
 		);
 		this.id = res.rows[0].id;
@@ -221,42 +223,6 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	async calculateCompatibility(otherUser: User): Promise<number> {
-		const maxDistance = 100;
-		const maxTags = 10;
-
-		const interests = await Tags_Users.get_tags(this.id);
-		const otherInterests = await Tags_Users.get_tags(otherUser.id);
-		const similarTags =
-			interests?.filter((tag) => otherInterests?.includes(tag)).length ??
-			0;
-		const normalizedTags = Math.min(similarTags / maxTags, 1);
-
-		const distance = Math.sqrt(
-			Math.pow(this.lat - otherUser.lat, 2) +
-				Math.pow(this.long - otherUser.long, 2)
-		);
-		const normalizedDistance = Math.max(0, 1 - distance / maxDistance);
-
-		const wantedMatch = this.wanted === otherUser.wanted ? 1 : 0;
-
-		let sexualPreferencesMatch = 0;
-		if (
-			this.sexual_preferences &&
-			otherUser.sexual_preferences === this.sexual_preferences
-		) {
-			sexualPreferencesMatch = 1;
-		}
-
-		const compatibility =
-			normalizedTags * 50 +
-			normalizedDistance * 30 +
-			wantedMatch * 10 +
-			sexualPreferencesMatch * 10;
-
-		return Math.round(compatibility);
-	}
-
 	static async get_by_field(
 		field_name: string,
 		field_value: string
@@ -286,23 +252,57 @@ export class User {
 			this.long
 		);
 
+		const similar_user: User[] = [];
+
 		for (const otherUser of nearbyUsers) {
 			if (this.id !== otherUser.id) {
-				await this.update_relation(otherUser);
+				const weight = await this.update_similarity(otherUser);
+				if (weight > 0.5) similar_user.push(otherUser);
+			}
+		}
+
+		for (const otherUser of nearbyUsers) {
+			if (this.id !== otherUser.id) {
+				await this.update_relation(otherUser, similar_user);
 			}
 		}
 		console.log(`Relation graph updated for user ${this.id}`);
 	}
 
-	async update_relation(otherUser: User) {
-		const weight = await this.calculateCompatibility(otherUser);
+	async update_similarity(otherUser: User): Promise<number> {
+		const weight = similarityScore(this, otherUser, [], []);
+		await createMatchRelation(
+			this.id,
+			otherUser.id,
+			weight,
+			similarity_graph
+		);
+		return weight;
+	}
+
+	async update_relation(otherUser: User, similar_user: User[]) {
+		const userA_tags = await Tags_Users.get_tags(this.id);
+		const userB_tags = await Tags_Users.get_tags(otherUser.id);
+		const weight = await matchingScore(
+			this,
+			otherUser,
+			userA_tags,
+			userB_tags,
+			{
+				profileViewTimeAtoB: 0,
+				profileViewTimeBtoA: 0,
+				timeToLikeAtoB: 0,
+				timeToLikeBtoA: 0,
+				hasLikedEachOther: false,
+			},
+			similar_user
+		);
 		await createMatchRelation(
 			this.id,
 			otherUser.id,
 			weight,
 			relation_graph
 		);
-		console.log('update');
 	}
 
 	async serialize(): Promise<UserType> {

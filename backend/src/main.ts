@@ -11,7 +11,8 @@ import relation from './routes/relations.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
-import { getTopWeightedMatches } from './utils/redis.ts';
+import { Tags_Users } from './db_objects/tags_users.ts';
+import { Tag } from './db_objects/tags.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -70,6 +71,14 @@ export const similarity_graph = 'similarity_graph';
 try {
 	await client.connect();
 	await init_db();
+
+	try {
+		await Tag.create('test2');
+		await Tag.create('test');
+	} catch (e) {
+		console.log('Tags already created');
+	}
+	await Tags_Users.add_tags(1, ['test', 'test2']);
 
 	console.log('Connected to the database');
 

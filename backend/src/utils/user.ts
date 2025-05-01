@@ -1,5 +1,7 @@
 import { compare } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 import { User } from '../db_objects/user.ts';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 export async function user_match(
 	email: string,
@@ -76,6 +78,16 @@ export async function check_email(
 	return [true, undefined];
 }
 
+let commonWords: string[] = [];
+if (import.meta.dirname) {
+	const filePath = resolve(import.meta.dirname, '../../input/20k.txt');
+	commonWords = readFileSync(filePath, 'utf-8')
+		.split('\n')
+		.map((w) => w.trim().toLowerCase());
+}
+
+export const commonWordsSet = new Set(commonWords);
+
 export function check_password(
 	password: string,
 	username: string
@@ -114,6 +126,14 @@ export function check_password(
 		];
 	if (password.includes(username))
 		return [false, 'Username is forbidden in password'];
+
+	const words = password.split(/[^a-zA-Z]/).filter(Boolean);
+	for (const word of words) {
+		if (commonWordsSet.has(word.toLowerCase())) {
+			return [false, `Password contains a common word: "${word}".`];
+		}
+	}
+
 	return [true, undefined];
 }
 

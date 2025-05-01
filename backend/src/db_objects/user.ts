@@ -215,10 +215,11 @@ export class User {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint(${long}
-				, ${lat}), 4326),
-				${radius * 1000});
-			`
+				ST_SetSRID(ST_MakePoint($1
+				, $2), 4326),
+				$3);
+			`,
+			[long, lat, radius * 1000]
 		);
 		return res.rows.map((row) => new User(row));
 	}

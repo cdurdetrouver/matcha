@@ -143,28 +143,55 @@ app.get(
 					ws.send(JSON.stringify({ error: 'bad message format' }));
 					return;
 				}
-				const message: Message = new Message(
-					JSON.parse(event.data),
-					chat.id,
-					'chat',
-					user_chat.id
-				);
-				try {
-					await message.create();
-				} catch (e) {
-					console.log(e);
-					ws.send(
-						JSON.stringify({ error: 'Failed to store message' })
+
+				const mes = JSON.parse(event.data);
+				if (mes.type == 'history') {
+					const messages = await Message.get_10_mess_by_id(
+						mes.chat_id
 					);
-					return;
-				}
-				try {
-					const full_message = await Message.get_by_id(message.id);
-					await broadcastToGroup(chat.id, full_message, chan_layer);
-				} catch (e) {
-					console.log(e);
-					ws.send('Server failed to retrieve message');
-					return;
+					const messages_serialized: MessageType[] =
+						await Promise.all(
+							messages.map(
+								async (message: Message) =>
+									await message.serialize()
+							)
+						);
+					ws.send(
+						JSON.stringify({
+							type: 'history',
+							messages: messages_serialized,
+						})
+					);
+				} else {
+					const message: Message = new Message(
+						mes.content,
+						chat.id,
+						mes.type,
+						user_chat.id
+					);
+					try {
+						await message.create();
+					} catch (e) {
+						console.log(e);
+						ws.send(
+							JSON.stringify({ error: 'Failed to store message' })
+						);
+						return;
+					}
+					try {
+						const full_message = await Message.get_by_id(
+							message.id
+						);
+						await broadcastToGroup(
+							chat.id,
+							full_message,
+							chan_layer
+						);
+					} catch (e) {
+						console.log(e);
+						ws.send('Server failed to retrieve message');
+						return;
+					}
 				}
 			},
 
@@ -193,8 +220,7 @@ app.get('/:id/info', async (c: Context) => {
 	const { message, ret_val, user } = ret_check;
 	if (user == null || message != undefined)
 		return c.json({ message: message }, ret_val);
-	if (isNaN(id))
-		return c.json({ message: 'Chat id is undefined' }, 400);
+	if (isNaN(id)) return c.json({ message: 'Chat id is undefined' }, 400);
 	try {
 		chat = await Chat.get_by_id(id);
 	} catch (_e) {
@@ -202,7 +228,7 @@ app.get('/:id/info', async (c: Context) => {
 	}
 	if (!(await Chats_Users.get_chats_by_user(user.id)).includes(chat.id))
 		return c.json({ message: 'User not in the chat' }, 403);
-	return c.json({message: 'Chat found', chat: await chat.serialize()});
+	return c.json({ message: 'Chat found', chat: await chat.serialize() });
 });
 
 app.all('/:id/info', (c: Context) => {

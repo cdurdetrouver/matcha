@@ -28,9 +28,6 @@ import { delete_file, post_file } from '../utils/google_file.ts';
 import { Email_Verif } from '../db_objects/email_verif.ts';
 import { FRONTEND_URL } from '../secret.ts';
 import { sendVerificationEmail } from '../utils/send_mail.ts';
-import { Seen_Users } from '../db_objects/seen_users.ts';
-import { Loved_Users } from '../db_objects/loved_users.ts';
-import { Friendly_Users } from '../db_objects/friendly_users.ts';
 import { get_userIntra_by_code } from '../utils/intra42.ts';
 import { get_userGoogle_by_code } from '../utils/googleauth.ts';
 import { Tags_Users } from '../db_objects/tags_users.ts';
@@ -195,7 +192,7 @@ app.post('/full_register', async (c: Context) => {
 	}
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User needs at least one post' }, 400);
-	const { wanted, interests, description, location } = body;
+	const { wanted, interests, description, location, birthdate, mbti } = body;
 	if (wanted == undefined || interests == undefined)
 		return c.json({ message: 'Body not correctly formatted.' }, 422);
 	if (wanted >= 1) {
@@ -203,6 +200,8 @@ app.post('/full_register', async (c: Context) => {
 		user.gender = gender;
 		user.sexual_preferences = sexual_preferences;
 	}
+	user.mbti = mbti;
+	user.birthdate = birthdate;
 	user.wanted = wanted;
 	user.description = description;
 	user.lat = Number(location[0]);
@@ -705,57 +704,6 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 });
 
 app.all('/unblock_user/:id', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.post('/seen/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	let user_param;
-	console.log(user.lat, user.long);
-	try {
-		user_param = await User.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'User not found' }, 404);
-	}
-	if (await Seen_Users.is_user_seen_by(user.id, user_param.id))
-		return c.json({ message: 'User already seen' }, 401);
-	await Seen_Users.see_user(user.id, user_param.id);
-	return c.json(
-		{ message: 'User seen list updated, user successfully added' },
-		200
-	);
-});
-
-app.delete('/seen/:id', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-	let user_param;
-	try {
-		user_param = await User.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'User not found' }, 404);
-	}
-	if (!(await Seen_Users.is_user_seen_by(user.id, user_param.id)))
-		return c.json({ message: 'No user matches' }, 401);
-	await Seen_Users.delete_saw(user.id, user_param.id);
-	return c.json(
-		{ message: 'User seen list updated, user successfully deleted' },
-		200
-	);
-});
-
-app.all('/seen/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

@@ -15,7 +15,7 @@
 
 	export let data;
 
-	let socket;
+	let socket: WebSocketManager;
 	let notifs: Notif[] = [];
 
 	onMount(() => {
@@ -44,7 +44,7 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<MainAppBar user={data.user} {notifs} />
+		<MainAppBar user={data.user} {notifs} {socket} />
 	</svelte:fragment>
 	<slot />
 </AppShell>

@@ -12,22 +12,17 @@
 	import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { request } from '$lib/script/request';
-	import {
-		getToastStore,
-		getModalStore,
-		type ToastSettings,
-		type ModalSettings
-	} from '@skeletonlabs/skeleton';
+	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
 	import { SetCookie } from '$lib/script/cookies';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import type { User } from '$lib/types/user';
 
 	const toastStore = getToastStore();
-	const modalStore = getModalStore();
 
 	export let data;
 
+	let tags: string[] = [];
 	let TagOptions: AutocompleteOption<string>[] = [];
 
 	const GenderOptions: AutocompleteOption<string>[] = [
@@ -67,7 +62,8 @@
 	let value: number = data.user?.wanted ?? 1;
 	let inputGender = data.user?.gender ?? '';
 	let inputSexual = data.user?.sexual_preferences ?? '';
-	let birthdate = '';
+	let birthdate = data.user?.birthdate ?? '';
+	let mbti = data.user?.mbti ?? '';
 	let description = data.user?.description ?? '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
 	let userLocation: { latitude: number | null; longitude: number | null; city: string } = {
@@ -208,57 +204,40 @@
 		inputSexual = event.detail.label;
 	}
 
-	async function inputChipValidation(value: string): Promise<boolean> {
-		if (!TagOptions.some((option) => option.label === value)) {
-			const ret = await new Promise<boolean>(async (resolve) => {
-				const m: ModalSettings = {
-					type: 'confirm',
-					title: 'Create new tag',
-					body: `Do you want to create the tag <span class="badge variant-filled">${value}</span> ?`,
-					response: async (r: boolean) => {
-						if (r) {
-							const res = await request('/api/tag/create', {
-								method: 'POST',
-								body: JSON.stringify({ tag_name: value }),
-								credentials: 'include'
-							});
-
-							const data = await res.json();
-
-							if (!res.ok && data.message != 'Tag already exists') {
-								const t: ToastSettings = {
-									message: data.message,
-									background: 'variant-filled-error'
-								};
-								toastStore.trigger(t);
-								resolve(false);
-								return;
-							}
-
-							TagOptions = [...TagOptions, { label: value, value: value }];
-							resolve(true);
-						} else {
-							resolve(false);
-						}
-					}
-				};
-				modalStore.trigger(m);
-			});
-			if (!ret) {
-				tag = '';
-				mytags = mytags.filter((t) => t !== value);
-			}
-			return ret;
+	function inputChipValidation(value: string): boolean {
+		if (!tags.includes(value)) {
+			return false;
 		}
 		return true;
 	}
 
-	async function onFlavorSelectionTag(
-		event: CustomEvent<AutocompleteOption<string>>
-	): Promise<void> {
+	function onFlavorSelectionTag(event: CustomEvent<AutocompleteOption<string>>): void {
 		if (mytags.includes(event.detail.label) === false) {
 			mytags = [...mytags, event.detail.label];
 			tag = '';
+		}
+	}
+
+	async function createTag(): Promise<void> {
+		if (tag && !mytags.includes(tag)) {
+			const res = await request('/api/tag/create', {
+				method: 'POST',
+				body: JSON.stringify({ tag_name: tag }),
+				credentials: 'include'
+			});
+			if (!res.ok) {
+				const t: ToastSettings = {
+					message: 'Failed to create tag',
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+				return;
+			}
+			const data = await res.json();
+			mytags = [...mytags, tag];
+			TagOptions = [...TagOptions, { label: tag, value: tag }];
+			tag = '';
+			tags = [...tags, data.tag_name];
 		}
 	}
 
@@ -319,7 +298,9 @@
 					sexual: inputSexual,
 					location: [userLocation.latitude, userLocation.longitude],
 					wanted: value,
-					interests: mytags
+					interests: mytags,
+					birthdate,
+					mbti: mbti.toUpperCase()
 				}),
 				credentials: 'include'
 			});
@@ -348,6 +329,11 @@
 			};
 			toastStore.trigger(t);
 		}
+	}
+
+	function checkMBTI(mbti: string): boolean {
+		const regex = /^[IE][NS][TF][JP]$/;
+		return regex.test(mbti.trim().toUpperCase());
 	}
 </script>
 
@@ -483,12 +469,21 @@
 			</Step>
 			<Step>
 				<svelte:fragment slot="header">Choose your tags</svelte:fragment>
-				<InputChip
-					bind:input={tag}
-					bind:value={mytags}
-					name="chips"
-					validation={inputChipValidation}
-				/>
+				<div class="flex items-center">
+					<InputChip
+						bind:input={tag}
+						bind:value={mytags}
+						name="chips"
+						validation={inputChipValidation}
+					/>
+					<button
+						class="variant-filled-secondary btn h-fit"
+						disabled={tags.includes(tag) || tag === ''}
+						on:click={createTag}
+					>
+						Create tag
+					</button>
+				</div>
 
 				<div class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto z-[100]" tabindex="-1">
 					<Autocomplete
@@ -498,6 +493,30 @@
 						denylist={mytags}
 					/>
 				</div>
+			</Step>
+			<Step locked={checkMBTI(mbti) === false}>
+				<svelte:fragment slot="header">What is your MBTI ?</svelte:fragment>
+				<input
+					class="input p-2"
+					type="text"
+					name="demo"
+					bind:value={mbti}
+					placeholder="Enter your MBTI..."
+					maxlength="4"
+					autocomplete="off"
+				/>
+				<div class="flex gap-2 items-center">
+					<Icon icon="material-symbols:info-outline" />
+					<p class="code">
+						You can find your MBTI on <a
+							href="https://www.16personalities.com/free-personality-test"
+							target="_blank"
+						>
+							16personalities.com
+						</a>
+					</p>
+				</div>
+				<p>MBTI should be 4 letters</p>
 			</Step>
 			<Step locked={description === '' || description.length > 280}>
 				<svelte:fragment slot="header">Enter the description of your profile</svelte:fragment>

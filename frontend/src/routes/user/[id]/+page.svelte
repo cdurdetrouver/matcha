@@ -2,8 +2,8 @@
 	import type { User } from '$lib/types/user';
 	import type { Image } from '$lib/types/image';
 	import { goto } from '$app/navigation';
-	import { request } from '$lib/script/request';
-	import { onMount } from 'svelte';
+	import { request, WebSocketManager } from '$lib/script/request';
+	import { onDestroy, onMount } from 'svelte';
 	import { Avatar, getToastStore, type ToastSettings, getModalStore } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { getCurrentPosition } from '$lib/script/location';
@@ -14,8 +14,11 @@
 	export let data;
 
 	let user: User;
+	let related: number | null = null;
 	let city = '';
 	let images: Image[] = [];
+
+	let socket: WebSocketManager;
 
 	onMount(async () => {
 		const req = await request('/api/user/' + data.userid, {
@@ -58,6 +61,25 @@
 		}
 		const imageData = await res.json();
 		images = imageData.images;
+
+		const res_relation = await request('/api/relations/' + user.id, {
+			method: 'GET',
+			credentials: 'include'
+		});
+		if (res_relation.status === 200) {
+			const relationData = await res_relation.json();
+			related = relationData.relation?.relation;
+		}
+
+		socket = new WebSocketManager(`/api/seen/ws?target_user_id=${user.id}`);
+
+		// console.log(socket);
+	});
+
+	onDestroy(() => {
+		if (socket) {
+			socket.close();
+		}
 	});
 
 	function openModal() {
@@ -161,11 +183,23 @@
 					{/if}
 				</div>
 
+				<!-- Relation Status -->
+				<div class="flex items-center gap-2">
+					{#if related === 0}
+						<p>Asked you to be friend</p>
+						<Icon icon="mdi:fire" class="text-[#1e90ff] h-auto w-[1.5rem]" />
+					{:else if related === 2}
+						<p>Asked you to be lovers</p>
+						<Icon icon="mdi:fire" class="text-[#e32636] h-auto w-[1.5rem]" />
+					{/if}
+				</div>
+
 				<!-- Request Buttons -->
 				<div class="flex gap-4 mt-4">
 					{#if user.wanted <= 1 && data.user.wanted <= 1}
 						<button
-							class="px-4 py-2 bg-[#1e90ff] text-white rounded-lg hover:bg-green-600 transition"
+							type="button"
+							class="btn btn-hover px-4 py-2 bg-[#1e90ff] text-white rounded-lg"
 							on:click={() => sendRequest('friend')}
 						>
 							Request Friend
@@ -173,7 +207,8 @@
 					{/if}
 					{#if user.wanted >= 1 && data.user.wanted >= 1}
 						<button
-							class="px-4 py-2 bg-[#e32636] text-white rounded-lg hover:bg-red-600 transition"
+							type="button"
+							class="btn btn-hover px-4 py-2 bg-[#e32636] text-white rounded-lg"
 							on:click={() => sendRequest('love')}
 						>
 							Request Love

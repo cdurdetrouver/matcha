@@ -6,6 +6,7 @@ import post from './routes/post.ts';
 import chat from './routes/chat.ts';
 import notif from './routes/notif.ts';
 import tag from './routes/tag.ts';
+import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
@@ -41,6 +42,7 @@ app.route('/api/chat', chat);
 app.route('/api/notif', notif);
 app.route('/api/tag', tag);
 app.route('/api/relations', relation);
+app.route('/api/seen', seen);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);
@@ -57,6 +59,7 @@ export const client = new Client({
 try {
 	await client.connect();
 	await init_db();
+
 	console.log('Connected to the database');
 
 	Deno.serve({ port: 8000 }, app.fetch);

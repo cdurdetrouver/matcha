@@ -17,6 +17,8 @@ export type UserType = {
 	interests?: string[];
 	location: number[];
 	auth_provider: string;
+	birthdate?: string;
+	mbti?: string;
 };
 
 export type UserTypeGoogle = {

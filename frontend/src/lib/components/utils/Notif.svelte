@@ -2,11 +2,17 @@
 	import { type Notif } from '$lib/types/notif';
 	import { popup } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
+	import type { WebSocketManager } from '$lib/script/request';
 
 	export let notifs: Notif[];
+	export let socket: WebSocketManager;
 
 	function deleteNotif(notif_id: number) {
 		notifs = notifs.filter((notif) => notif.id !== notif_id);
+		socket.send({
+			type: 'delete',
+			id: notif_id
+		});
 	}
 
 	function timeDifference(current: number, previous: number) {

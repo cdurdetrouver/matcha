@@ -64,7 +64,10 @@ export class Chats_Users {
 		);
 	}
 
-	static async get_mp(user1_id: number, user2_id: number): Promise<number | undefined> {
+	static async get_mp(
+		user1_id: number,
+		user2_id: number
+	): Promise<number | undefined> {
 		const res = await client.queryObject<{ chat_id: number }>(
 			`
 				SELECT chat_id FROM "${TABLE}"

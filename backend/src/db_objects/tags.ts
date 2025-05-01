@@ -66,7 +66,7 @@ export class Tag {
 				GROUP BY user_id
 				HAVING COUNT(DISTINCT tag) = $3;
 			`,
-			[`{${tag_list.join(',')}}`, user_id, tag_list.length]
+			[tag_list, user_id, tag_list.length]
 		);
 		return await Promise.all(res.rows.map((row) => User.get_by_id(row.user_id)));
 	}

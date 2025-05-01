@@ -5,6 +5,7 @@ import { Tags_Users } from './tags_users.ts';
 import { createMatchRelation, getTopWeightedMatches } from '../utils/redis.ts';
 import { matchingScore } from '../utils/matching.ts';
 import { similarityScore } from '../utils/similarity.ts';
+import { filter } from '../utils/filter.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -83,6 +84,7 @@ export class User {
 	}
 
 	async save() {
+		this.description = filter.clean(this.description ?? '');
 		await client.queryObject(
 			`
 				UPDATE "${TABLE}"

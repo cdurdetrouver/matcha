@@ -58,6 +58,7 @@ export class WebSocketManager {
 	private url: string;
 	private reconnectAttempts = 0;
 	private maxReconnectAttempts = 5;
+	private noRetry = false;
 
 	private onOpenHook: (() => void) | null = null;
 	private onCloseHook: (() => void) | null = null;
@@ -87,6 +88,8 @@ export class WebSocketManager {
 
 		this.socket.onclose = async (event) => {
 			console.warn('WebSocket connection closed:', event);
+
+			if (this.noRetry) return;
 
 			if (this.reconnectAttempts < this.maxReconnectAttempts) {
 				this.reconnectAttempts++;
@@ -122,6 +125,7 @@ export class WebSocketManager {
 	public close() {
 		if (this.socket) {
 			this.socket.close();
+			this.noRetry = true;
 		}
 	}
 

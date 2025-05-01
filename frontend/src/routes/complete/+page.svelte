@@ -12,12 +12,7 @@
 	import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { request } from '$lib/script/request';
-	import {
-		getToastStore,
-		getModalStore,
-		type ToastSettings,
-		type ModalSettings
-	} from '@skeletonlabs/skeleton';
+	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
 	import { SetCookie } from '$lib/script/cookies';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -67,7 +62,8 @@
 	let value: number = data.user?.wanted ?? 1;
 	let inputGender = data.user?.gender ?? '';
 	let inputSexual = data.user?.sexual_preferences ?? '';
-	let birthdate = '';
+	let birthdate = data.user?.birthdate ?? '';
+	let mbti = data.user?.mbti ?? '';
 	let description = data.user?.description ?? '';
 	let dropzoneFiles: (FileList | undefined)[] = Array(6).fill(undefined);
 	let userLocation: { latitude: number | null; longitude: number | null; city: string } = {
@@ -302,7 +298,9 @@
 					sexual: inputSexual,
 					location: [userLocation.latitude, userLocation.longitude],
 					wanted: value,
-					interests: mytags
+					interests: mytags,
+					birthdate,
+					mbti: mbti.toUpperCase()
 				}),
 				credentials: 'include'
 			});
@@ -331,6 +329,11 @@
 			};
 			toastStore.trigger(t);
 		}
+	}
+
+	function checkMBTI(mbti: string): boolean {
+		const regex = /^[IE][NS][TF][JP]$/;
+		return regex.test(mbti.trim().toUpperCase());
 	}
 </script>
 
@@ -490,6 +493,30 @@
 						denylist={mytags}
 					/>
 				</div>
+			</Step>
+			<Step locked={checkMBTI(mbti) === false}>
+				<svelte:fragment slot="header">What is your MBTI ?</svelte:fragment>
+				<input
+					class="input p-2"
+					type="text"
+					name="demo"
+					bind:value={mbti}
+					placeholder="Enter your MBTI..."
+					maxlength="4"
+					autocomplete="off"
+				/>
+				<div class="flex gap-2 items-center">
+					<Icon icon="material-symbols:info-outline" />
+					<p class="code">
+						You can find your MBTI on <a
+							href="https://www.16personalities.com/free-personality-test"
+							target="_blank"
+						>
+							16personalities.com
+						</a>
+					</p>
+				</div>
+				<p>MBTI should be 4 letters</p>
 			</Step>
 			<Step locked={description === '' || description.length > 280}>
 				<svelte:fragment slot="header">Enter the description of your profile</svelte:fragment>

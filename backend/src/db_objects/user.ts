@@ -1,7 +1,7 @@
 import { UserType } from '../types/user.ts';
 import { client } from '../main.ts';
 import { Image } from './images.ts';
-import { Tags_Users } from "./tags_users.ts";
+import { Tags_Users } from './tags_users.ts';
 
 const TABLE = 'users';
 const USERFIELDS = `
@@ -21,7 +21,9 @@ const USERFIELDS = `
 	ST_Y(location::geometry) AS lat,
 	auth_provider,
 	created_at,
-	connected_at
+	connected_at,
+	birthdate,
+	mbti
 `;
 
 export class User {
@@ -41,6 +43,8 @@ export class User {
 	auth_provider: string = 'email';
 	created_at: bigint = BigInt(Date.now());
 	connected_at: bigint = BigInt(Date.now());
+	birthdate?: string;
+	mbti?: string; // Added mbti field
 
 	constructor(
 		usernameOrOther: string | Partial<User>,
@@ -66,6 +70,8 @@ export class User {
 			this.connected_at =
 				usernameOrOther.connected_at ?? BigInt(Date.now());
 			this.auth_provider = usernameOrOther.auth_provider ?? 'email';
+			this.birthdate = usernameOrOther.birthdate ?? undefined;
+			this.mbti = usernameOrOther.mbti ?? undefined;
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
@@ -90,8 +96,10 @@ export class User {
 					location = ST_SetSRID(ST_MakePoint($10, $11), 4326),
 					connected_at = $12,
 					wanted = $13,
-					auth_provider = $14
-				WHERE id = $15;
+					auth_provider = $14,
+					birthdate = $15,
+					mbti = $16
+				WHERE id = $17;
 			`,
 			[
 				this.username,
@@ -108,6 +116,8 @@ export class User {
 				this.connected_at,
 				this.wanted,
 				this.auth_provider,
+				this.birthdate,
+				this.mbti, // Save mbti
 				this.id,
 			]
 		);
@@ -133,7 +143,9 @@ export class User {
 				location GEOGRAPHY(POINT, 4326),
 				created_at BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-				auth_provider VARCHAR(255) NOT NULL
+				auth_provider VARCHAR(255) NOT NULL,
+				birthdate DATE DEFAULT NULL,
+				mbti VARCHAR(255) DEFAULT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);
 		`);
@@ -142,11 +154,18 @@ export class User {
 	async create() {
 		const res = await client.queryObject<{ id: number }>(
 			`
-				INSERT INTO "${TABLE}" (username, password, email, auth_provider) 
-				VALUES ($1, $2, $3, $4)
+				INSERT INTO "${TABLE}" (username, password, email, auth_provider, birthdate, mbti) 
+				VALUES ($1, $2, $3, $4, $5, $6)
 				RETURNING id
 	 		`,
-			[this.username, this.password, this.email, this.auth_provider]
+			[
+				this.username,
+				this.password,
+				this.email,
+				this.auth_provider,
+				this.birthdate,
+				this.mbti, // Insert mbti
+			]
 		);
 		this.id = res.rows[0].id;
 	}
@@ -253,6 +272,8 @@ export class User {
 			interests: interests,
 			location: [Number(this.lat), Number(this.long)],
 			auth_provider: this.auth_provider,
+			birthdate: this.birthdate,
+			mbti: this.mbti,
 		};
 		return user;
 	}

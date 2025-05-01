@@ -5,6 +5,7 @@ import { User } from '../db_objects/user.ts';
 import { post_notif } from './notif.ts';
 import { Chat } from '../db_objects/chats.ts';
 import { Chats_Users } from '../db_objects/chats_users.ts';
+import { Seen_Users } from '../db_objects/seen_users.ts';
 
 const app = new Hono();
 
@@ -93,7 +94,16 @@ app.post('/create', async (c: Context) => {
 			},
 			400
 		);
-	await Relations_Users.add_relation(user.id, target_id, relation);
+	const time_to_match = await Seen_Users.is_user_seen_by(
+		target_user.id,
+		user.id
+	);
+	await Relations_Users.add_relation(
+		user.id,
+		target_id,
+		relation,
+		time_to_match
+	);
 	let notif_mess =
 		user.username + (relation === 2 ? ' loved you' : ' liked you');
 	let notif_redirect = '/user/' + user.id;
@@ -120,34 +130,6 @@ app.post('/create', async (c: Context) => {
 
 app.all('/create', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.delete('/delete', async (c: Context) => {
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-
-	let { target_id } = await c.req.json();
-	try {
-		target_id = Number(target_id);
-		await User.get_by_id(target_id);
-	} catch (_e) {
-		return c.json({ message: 'Target user does not exist' }, 400);
-	}
-	if (target_id === user.id)
-		return c.json({ message: 'You cannot relate to yourself' }, 400);
-	if (!(await Relations_Users.is_related(user.id, target_id)))
-		return c.json({ message: 'Relation does not exist' }, 400);
-	await Relations_Users.remove_relation(user.id, target_id);
-	const chat_id = await Chats_Users.get_mp(user.id, target_id);
-	if (chat_id) {
-		await Chat.delete(chat_id);
-		return c.json({ message: 'Relation and chat deleted' }, 200);
-	}
-	return c.json({ message: 'Relation deleted' }, 200);
 });
 
 app.notFound((c: Context) => {

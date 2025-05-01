@@ -2,8 +2,8 @@
 	import type { User } from '$lib/types/user';
 	import type { Image } from '$lib/types/image';
 	import { goto } from '$app/navigation';
-	import { request } from '$lib/script/request';
-	import { onMount } from 'svelte';
+	import { request, WebSocketManager } from '$lib/script/request';
+	import { onDestroy, onMount } from 'svelte';
 	import { Avatar, getToastStore, type ToastSettings, getModalStore } from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { getCurrentPosition } from '$lib/script/location';
@@ -17,6 +17,8 @@
 	let related: number | null = null;
 	let city = '';
 	let images: Image[] = [];
+
+	let socket: WebSocketManager;
 
 	onMount(async () => {
 		const req = await request('/api/user/' + data.userid, {
@@ -66,7 +68,17 @@
 		});
 		if (res_relation.status === 200) {
 			const relationData = await res_relation.json();
-			related = relationData.relation.relation;
+			related = relationData.relation?.relation;
+		}
+
+		socket = new WebSocketManager(`/api/seen/ws?target_user_id=${user.id}`);
+
+		// console.log(socket);
+	});
+
+	onDestroy(() => {
+		if (socket) {
+			socket.close();
 		}
 	});
 

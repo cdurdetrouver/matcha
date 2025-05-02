@@ -31,7 +31,7 @@ import { sendVerificationEmail } from '../utils/send_mail.ts';
 import { get_userIntra_by_code } from '../utils/intra42.ts';
 import { get_userGoogle_by_code } from '../utils/googleauth.ts';
 import { Tags_Users } from '../db_objects/tags_users.ts';
-import { Tag } from "../db_objects/tags.ts";
+import { Tag } from '../db_objects/tags.ts';
 
 const app = new Hono();
 
@@ -215,8 +215,7 @@ app.post('/full_register', async (c: Context) => {
 		if (await Tags_Users.had_tag(user.id, tag))
 			return c.json({ message: 'User already has this tag' }, 400);
 	}
-	if (interests.length > 0)
-		await Tags_Users.add_tags(user.id, interests);
+	if (interests.length > 0) await Tags_Users.add_tags(user.id, interests);
 	user.complete_profile = true;
 	await user.save();
 	return c.json(
@@ -643,12 +642,13 @@ app.post('/block_user/:id', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
+	if (user.id == id) return c.json({ message: 'Not authorized' }, 401);
 
 	try {
 		await User.get_by_id(id);
 		await Block_Users.block_user(user.id, id);
 	} catch (e) {
+		console.log(e);
 		if (e instanceof Error && e.message === 'User not found')
 			return c.json(
 				{ message: 'The user you try to blocked does not exists !' },

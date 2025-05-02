@@ -6,11 +6,12 @@ import { Notif } from '../db_objects/notif.ts';
 import { Email_Verif } from '../db_objects/email_verif.ts';
 import { Image } from '../db_objects/images.ts';
 import { Seen_Users } from '../db_objects/seen_users.ts';
-import { Tag } from "../db_objects/tags.ts";
-import { Tags_Users } from "../db_objects/tags_users.ts";
-import { Relations_Users } from "../db_objects/relations_users.ts";
-import { Report_Users } from "../db_objects/report_users.ts";
-import { Ban_Users } from "../db_objects/ban_users.ts";
+import { Tag } from '../db_objects/tags.ts';
+import { Tags_Users } from '../db_objects/tags_users.ts';
+import { Relations_Users } from '../db_objects/relations_users.ts';
+import { Report_Users } from '../db_objects/report_users.ts';
+import { Ban_Users } from '../db_objects/ban_users.ts';
+import { Block_Users } from '../db_objects/block_users.ts';
 
 export async function init_db() {
 	await User.init_table();
@@ -26,4 +27,5 @@ export async function init_db() {
 	await Notif.init_table();
 	await Image.init_table();
 	await Email_Verif.init_table();
+	await Block_Users.init_table();
 }

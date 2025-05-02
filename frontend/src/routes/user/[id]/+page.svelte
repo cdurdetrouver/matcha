@@ -4,7 +4,15 @@
 	import { goto } from '$app/navigation';
 	import { request, WebSocketManager } from '$lib/script/request';
 	import { onDestroy, onMount } from 'svelte';
-	import { Avatar, getToastStore, type ToastSettings, getModalStore } from '@skeletonlabs/skeleton';
+	import {
+		Avatar,
+		getToastStore,
+		type ToastSettings,
+		getModalStore,
+		type ModalSettings,
+		type PopupSettings,
+		popup
+	} from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { getCurrentPosition } from '$lib/script/location';
 
@@ -116,6 +124,82 @@
 			toastStore.trigger(t);
 		}
 	}
+
+	const Reasonlist = ['Inappropriate content', 'Spam', 'fake account'];
+
+	const reportClick: PopupSettings = {
+		event: 'click',
+		target: 'reportClick',
+		placement: 'bottom'
+	};
+
+	function Report(reason: string) {
+		const modal: ModalSettings = {
+			type: 'confirm',
+			title: 'Please Confirm',
+			body: `Are you sure you want to report <alert class="code">${data.user.username}</alert> for <alert class="code">${reason}</alert>`,
+			response: async (r: boolean) => {
+				if (r) {
+					const res = await request('/api/report/user', {
+						method: 'POST',
+						body: JSON.stringify({
+							target_id: user.id,
+							reason
+						})
+					});
+
+					if (!res.ok) {
+						const t: ToastSettings = {
+							message: 'Failed to report user: ' + (await res.json()).message,
+							background: 'variant-filled-error'
+						};
+						toastStore.trigger(t);
+						return;
+					}
+
+					const t: ToastSettings = {
+						message: 'User report successfully',
+						background: 'variant-filled-success'
+					};
+					toastStore.trigger(t);
+					return;
+				}
+			}
+		};
+		modalStore.trigger(modal);
+	}
+
+	function Block() {
+		const modal: ModalSettings = {
+			type: 'confirm',
+			title: 'Please Confirm',
+			body: `Are you sure you want to block <alert class="code">${data.user.username}</alert> ?`,
+			response: async (r: boolean) => {
+				if (r) {
+					const res = await request('/api/user/block_user/' + user.id, {
+						method: 'POST'
+					});
+
+					if (!res.ok) {
+						const t: ToastSettings = {
+							message: 'Failed to block user: ' + (await res.json()).message,
+							background: 'variant-filled-error'
+						};
+						toastStore.trigger(t);
+						return;
+					}
+
+					const t: ToastSettings = {
+						message: 'User block successfully',
+						background: 'variant-filled-success'
+					};
+					toastStore.trigger(t);
+					goto('/user');
+				}
+			}
+		};
+		modalStore.trigger(modal);
+	}
 </script>
 
 {#if user}
@@ -215,6 +299,26 @@
 						</button>
 					{/if}
 				</div>
+			</div>
+
+			<div class="flex flex-col md:flex-row gap-2 md:ml-auto">
+				<button class="btn variant-filled-primary px-6 py-2" type="button" use:popup={reportClick}>
+					Report
+				</button>
+				<div class="card p-4 max-w-sm" data-popup="reportClick">
+					<div class="grid grid-cols-1 gap-2">
+						{#each Reasonlist as reason}
+							<button
+								class="btn variant-filled-primary"
+								type="button"
+								on:click={() => Report(reason)}>{reason}</button
+							>
+						{/each}
+					</div>
+				</div>
+				<button class="btn variant-filled-primary px-6 py-2" type="button" on:click={Block}>
+					Block
+				</button>
 			</div>
 		</div>
 

@@ -162,6 +162,7 @@ export class User {
 				mbti VARCHAR(255) DEFAULT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);
+			CONSTRAINT email_not_ban CHECK (email NOT IN (SELECT email FROM "Ban_Users"))
 		`);
 	}
 
@@ -170,7 +171,9 @@ export class User {
 			`
 				INSERT INTO "${TABLE}" (username, password, email, auth_provider, birthdate, mbti) 
 				VALUES ($1, $2, $3, $4, $5, $6)
-				RETURNING id
+				ON CONFLICT (email)
+				DO NOTHING
+				RETURNING id;
 	 		`,
 			[
 				this.username,
@@ -181,7 +184,8 @@ export class User {
 				this.mbti,
 			]
 		);
-		this.id = res.rows[0].id;
+		if (res.rows.length > 0)
+			this.id = res.rows[0].id;
 	}
 
 	static async delete(id: number) {

@@ -10,6 +10,7 @@ import { Tag } from "../db_objects/tags.ts";
 import { Tags_Users } from "../db_objects/tags_users.ts";
 import { Relations_Users } from "../db_objects/relations_users.ts";
 import { Report_Users } from "../db_objects/report_users.ts";
+import { Ban_Users } from "../db_objects/ban_users.ts";
 
 export async function init_db() {
 	await User.init_table();
@@ -18,6 +19,7 @@ export async function init_db() {
 	await Tags_Users.init_table();
 	await Chats_Users.init_table();
 	await Relations_Users.init_table();
+	await Ban_Users.init_table();
 	await Seen_Users.init_table();
 	await Report_Users.init_table();
 	await Message.init_table();

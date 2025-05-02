@@ -2,6 +2,7 @@ import { compare } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 import { User } from '../db_objects/user.ts';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Ban_Users } from "../db_objects/ban_users.ts";
 
 export async function user_match(
 	email: string,
@@ -75,6 +76,8 @@ export async function check_email(
 
 	const list = await User.get_by_field('email', email);
 	if (list.length > 0) return [false, 'Email already used.'];
+	if (await Ban_Users.is_banned(email))
+		return [false, 'Email is banned.'];
 	return [true, undefined];
 }
 

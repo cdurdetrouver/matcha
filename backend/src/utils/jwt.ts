@@ -6,7 +6,9 @@ import { type Context } from 'hono';
 import { JWTPayload } from 'hono/utils/jwt/types';
 import { ContentfulStatusCode } from 'hono/utils/http-status';
 
-export async function check_cookies(c: Context): Promise<{
+const ALLOWED_URLS = ['/full_register', '/me', '/notifs', '/tag', '/image'];
+
+export async function check_cookies(c: Context, url?: string): Promise<{
 	message?: string;
 	ret_val?: ContentfulStatusCode;
 	user: User | null;
@@ -32,6 +34,18 @@ export async function check_cookies(c: Context): Promise<{
 		};
 	try {
 		const user_info = await User.get_by_id(Number(id_ret));
+		if (user_info.email_verif == false)
+			return {
+				message: 'Email not verified',
+				ret_val: 401,
+				user: null,
+			};
+		if (user_info.complete_profile == false && !ALLOWED_URLS.includes(url ||  ''))
+			return {
+				message: 'Profile not complete',
+				ret_val: 401,
+				user: null,
+			};
 		return { user: user_info };
 	} catch (_error) {
 		return { message: 'User not found !', ret_val: 404, user: null };

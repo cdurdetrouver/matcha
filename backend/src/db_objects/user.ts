@@ -162,7 +162,16 @@ export class User {
 				mbti VARCHAR(255) DEFAULT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);
-			CONSTRAINT email_not_ban CHECK (email NOT IN (SELECT email FROM "Ban_Users"))
+			CREATE OR REPLACE FUNCTION check_email_not_banned()
+			RETURNS TRIGGER AS $$
+			BEGIN
+				-- Check if the email exists in the Ban_Users table
+				IF EXISTS (SELECT 1 FROM "Ban_Users" WHERE email = NEW.email) THEN
+					RAISE EXCEPTION 'Email is banned and cannot be used.';
+				END IF;
+				RETURN NEW;
+			END;
+			$$ LANGUAGE plpgsql;
 		`);
 	}
 

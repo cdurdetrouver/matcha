@@ -6,7 +6,7 @@ import { Tags_Users } from '../db_objects/tags_users.ts';
 const app = new Hono();
 
 app.get('/all', async (c: Context) => {
-	const ret_check = await check_cookies(c);
+	const ret_check = await check_cookies(c, '/tag');
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
@@ -22,7 +22,7 @@ app.all('/all', (c: Context) => {
 });
 
 app.post('/create', async (c: Context) => {
-	const ret_check = await check_cookies(c);
+	const ret_check = await check_cookies(c, '/tag');
 	let { tag_name } = await c.req.json();
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);

@@ -76,13 +76,13 @@ try {
 	await client.connect();
 	await init_db();
 
-	try {
-		await Tag.create('test2');
-		await Tag.create('test');
-	} catch (_e) {
-		console.log('Tags already created');
-	}
-	await Tags_Users.add_tags(1, ['test', 'test2']);
+	//try {
+	//	await Tag.create('test2');
+	//	await Tag.create('test');
+	//} catch (_e) {
+	//	console.log('Tags already created');
+	//}
+	//await Tags_Users.add_tags(1, ['test', 'test2']);
 
 	console.log('Connected to the database');
 

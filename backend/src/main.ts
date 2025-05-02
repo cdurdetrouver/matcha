@@ -8,13 +8,11 @@ import notif from './routes/notif.ts';
 import tag from './routes/tag.ts';
 import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
-import research from "./routes/research.ts";
-import report from "./routes/report.ts";
+import research from './routes/research.ts';
+import report from './routes/report.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
-import { Tags_Users } from './db_objects/tags_users.ts';
-import { Tag } from './db_objects/tags.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 

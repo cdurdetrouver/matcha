@@ -17,10 +17,11 @@ export async function report_user(user: User, target_user: User, reason: string)
 		const seen_user = await Seen_Users.get_who_seen(target_user.id);
 		if (seen_user.length >= 30) {
 			let i = 0;
-			reports.every(report => {
-				i++;
-				return seen_user.some(
-				user => user.id === report.id)})
+			reports.forEach(report => {
+				if (seen_user.some(user => user.id === report.id)) {
+					i++;
+				}
+			});
 			if (i >= 3) {
 				await sendDeleteAccountEmail(target_user.email, reason);
 				await Ban_Users.add_ban(target_user.email);

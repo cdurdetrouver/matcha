@@ -26,3 +26,28 @@ export async function sendVerificationEmail(to: string, url: string) {
 		throw new Error('Failed to send verification email');
 	}
 }
+
+export async function sendDeleteAccountEmail(to: string, reason: string) {
+	const transporter = nodemailer.createTransport({
+		service: 'Gmail',
+		auth: {
+			user: GMAIL_EMAIL,
+			pass: GMAIL_PASS,
+		},
+	});
+	const mailOptions = {
+		from: GMAIL_EMAIL,
+		to,
+		subject: 'Account Deletion Information',
+		html: `<p>Your account has been deleted for the following reason:</p>
+			 <p>${reason}</p>`,
+	};
+	try {
+		await transporter.sendMail(mailOptions);
+		console.log('Account deletion email sent successfully!');
+	}
+	catch (error) {
+		console.error('Error sending account deletion email:', error);
+		throw new Error('Failed to send account deletion email');
+	}
+}

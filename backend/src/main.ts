@@ -8,12 +8,13 @@ import notif from './routes/notif.ts';
 import tag from './routes/tag.ts';
 import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
+import research from "./routes/research.ts";
+import report from "./routes/report.ts";
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
 import { Tags_Users } from './db_objects/tags_users.ts';
 import { Tag } from './db_objects/tags.ts';
-import research from "./routes/research.ts";
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -48,6 +49,7 @@ app.route('/api/tag', tag);
 app.route('/api/relations', relation);
 app.route('/api/seen', seen);
 app.route('/api/research', research);
+app.route('/api/report', report);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);

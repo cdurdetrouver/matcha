@@ -373,7 +373,7 @@ export class User {
 		};
 		return user;
 	}
-
+	
 	async serialize_me(): Promise<UserType> {
 		const user: UserType = await this.serialize();
 		user.email = this.email;

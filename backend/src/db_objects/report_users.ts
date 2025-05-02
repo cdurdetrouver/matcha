@@ -49,11 +49,14 @@ export class Report_Users {
 		`, [user_id, target_id, reason]);
 	}
 
-	static async get_reports_by_target(target_id: number, reason: string): Promise<User[]> {
-		const res = await client.queryObject<User>(`
-			SELECT * FROM "${TABLE}"
+	static async get_reports_by_target(target_id: number, reason: string): Promise<Report[]> {
+		const res = await client.queryObject<{
+			user_id: number;
+		}>(`
+			SELECT user_id FROM "${TABLE}"
 			WHERE target_id = $1 AND reason = $2;
 		`, [target_id, reason]);
-		return res.rows.map((row) => new User(row));
+		return await Promise.all(res.rows.map(async (row) => 
+			await User.get_by_id(row.user_id)));
 	}
 }

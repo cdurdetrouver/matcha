@@ -67,7 +67,6 @@ export const redis = await connect({
 	hostname: 'redisgraph',
 	port: 6379,
 });
-//https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/deprecated-features/graph/commands/
 
 export const relation_graph = 'relation_graph';
 export const similarity_graph = 'similarity_graph';
@@ -75,14 +74,6 @@ export const similarity_graph = 'similarity_graph';
 try {
 	await client.connect();
 	await init_db();
-
-	//try {
-	//	await Tag.create('test2');
-	//	await Tag.create('test');
-	//} catch (_e) {
-	//	console.log('Tags already created');
-	//}
-	//await Tags_Users.add_tags(1, ['test', 'test2']);
 
 	console.log('Connected to the database');
 

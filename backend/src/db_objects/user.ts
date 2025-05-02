@@ -226,7 +226,7 @@ export class User {
 			[ids]
 		);
 		return res.rows.map((row) => new User(row));
-	} 
+	}
 
 	static async get_all_by_famerate(
 		fame_rate_min: number,
@@ -257,8 +257,7 @@ export class User {
 	async get_all_by_loc(
 		radius: number,
 		long: number,
-		lat: number,
-
+		lat: number
 	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
@@ -284,6 +283,17 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
+	static async get_by_username_contains(substring: string): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT ${USERFIELDS} FROM "${TABLE}" 
+				WHERE username ILIKE $1;
+			`,
+			[`%${substring}%`]
+		);
+		return res.rows.map((row) => new User(row));
+	}
+
 	static async getall(): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
@@ -297,7 +307,7 @@ export class User {
 		const nearbyUsers = await this.get_all_by_loc(
 			1000000,
 			this.long,
-			this.lat,
+			this.lat
 		);
 
 		const similar_user: User[] = [];

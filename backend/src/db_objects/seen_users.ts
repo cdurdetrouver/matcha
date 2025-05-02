@@ -1,4 +1,5 @@
 import { client } from '../main.ts';
+import { User } from "./user.ts";
 
 const TABLE = 'seen_users';
 
@@ -51,5 +52,19 @@ export class Seen_Users {
             `,
 			[seen_id, user_id]
 		);
+	}
+
+	static async get_who_seen(user_id: number): Promise<User[]> {
+		const res = await client.queryObject<{
+			seen_id: number;
+		}>(
+			`
+				SELECT seen_id FROM "${TABLE}"
+				WHERE user_id = $1 AND time_ms > 14;
+			`,
+			[user_id]
+		);
+		return await Promise.all(res.rows.map(
+			async (row) => await User.get_by_id(row.seen_id)));
 	}
 }

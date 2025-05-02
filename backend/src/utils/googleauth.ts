@@ -3,6 +3,7 @@ import { UserTypeGoogle } from '../types/user.ts';
 import { GOOGLE_ID, GOOGLE_SECRET, GOOGLE_REDIRECT_URI } from '../secret.ts';
 import { post_file_from_url } from './google_file.ts';
 import { generate_username } from './user.ts';
+import { Ban_Users } from "../db_objects/ban_users.ts";
 
 async function get_access_token(code: string) {
 	const data = {
@@ -65,6 +66,8 @@ export async function get_userGoogle_by_code(code: string): Promise<User> {
 			auth_provider: 'google',
 			email_verif: user_google.verified_email,
 		});
+		if (await Ban_Users.is_banned(user.email))
+			throw new Error('Email is banned');
 		await user.create();
 		await user.save();
 		try {

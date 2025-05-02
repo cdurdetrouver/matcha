@@ -162,6 +162,16 @@ export class User {
 				mbti VARCHAR(255) DEFAULT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);
+			CREATE OR REPLACE FUNCTION check_email_not_banned()
+			RETURNS TRIGGER AS $$
+			BEGIN
+				-- Check if the email exists in the Ban_Users table
+				IF EXISTS (SELECT 1 FROM "Ban_Users" WHERE email = NEW.email) THEN
+					RAISE EXCEPTION 'Email is banned and cannot be used.';
+				END IF;
+				RETURN NEW;
+			END;
+			$$ LANGUAGE plpgsql;
 		`);
 	}
 
@@ -170,7 +180,9 @@ export class User {
 			`
 				INSERT INTO "${TABLE}" (username, password, email, auth_provider, birthdate, mbti) 
 				VALUES ($1, $2, $3, $4, $5, $6)
-				RETURNING id
+				ON CONFLICT (email)
+				DO NOTHING
+				RETURNING id;
 	 		`,
 			[
 				this.username,
@@ -181,7 +193,8 @@ export class User {
 				this.mbti,
 			]
 		);
-		this.id = res.rows[0].id;
+		if (res.rows.length > 0)
+			this.id = res.rows[0].id;
 	}
 
 	static async delete(id: number) {
@@ -373,7 +386,7 @@ export class User {
 		};
 		return user;
 	}
-
+	
 	async serialize_me(): Promise<UserType> {
 		const user: UserType = await this.serialize();
 		user.email = this.email;

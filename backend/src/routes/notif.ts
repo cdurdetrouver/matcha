@@ -15,7 +15,7 @@ const connectedUsers = new Map<number, WSContext<WebSocket>>();
 app.get(
 	'/ws',
 	upgradeWebSocket((c) => {
-		return check_cookies(c).then((ret_check) => ({
+		return check_cookies(c, '/notifs').then((ret_check) => ({
 			onOpen: (_event, ws) => {
 				const { user } = ret_check;
 				if (user == null) {

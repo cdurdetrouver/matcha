@@ -182,7 +182,7 @@ app.all('/login', (c: Context) => {
 
 app.post('/full_register', async (c: Context) => {
 	const body = await c.req.json();
-	const ret_check = await check_cookies(c);
+	const ret_check = await check_cookies(c, '/full_register');
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
 	const { message, user } = ret_check;
@@ -425,29 +425,6 @@ app.put('/edit', async (c: Context) => {
 	}
 });
 
-app.put('/:id', async (c: Context) => {
-	const body = await c.req.json();
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 400);
-	const { message, ret_val, user } = ret_check;
-	if (user == null || message != undefined)
-		return c.json({ message: message }, ret_val);
-	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
-
-	user.email = body.email;
-	try {
-		user.save();
-		return c.json(
-			{ message: 'User updated!', user: await user.serialize_me() },
-			200
-		);
-	} catch (_e) {
-		return c.json({ message: 'User update failed !' }, 422);
-	}
-});
-
 app.get('/avatar/:id', async (c: Context) => {
 	const id = Number(c.req.param('id'));
 	const ret_check = await check_cookies(c);
@@ -552,7 +529,7 @@ app.get('/image/:id', async (c: Context) => {
 });
 
 app.post('/image', async (c: Context) => {
-	const ret_check = await check_cookies(c);
+	const ret_check = await check_cookies(c, '/image');
 	const body = await c.req.parseBody();
 	const index = [0, 1, 2, 3, 4];
 
@@ -598,7 +575,7 @@ app.all('/image', (c: Context) => {
 });
 
 app.get('/me', async (c: Context) => {
-	const ret_check = await check_cookies(c);
+	const ret_check = await check_cookies(c, '/me');
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 400);
 	const { message, ret_val, user } = ret_check;

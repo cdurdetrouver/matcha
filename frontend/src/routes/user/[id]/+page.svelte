@@ -278,6 +278,15 @@
 					{/if}
 				</div>
 
+				<!-- Last Connection -->
+				{#if user.online == false}
+					<div class="flex items-center gap-4">
+						<p class="text-sm text-gray-500">
+							last connection : {new Date(user.connected_at)}
+						</p>
+					</div>
+				{/if}
+
 				<!-- Request Buttons -->
 				<div class="flex gap-4 mt-4">
 					{#if user.wanted <= 1 && data.user.wanted <= 1}

@@ -1,5 +1,5 @@
 import { client } from '../main.ts';
-import { User } from "./user.ts";
+import { User } from './user.ts';
 
 const TABLE = 'seen_users';
 
@@ -41,7 +41,7 @@ export class Seen_Users {
 			[user_id, seen_id]
 		);
 		if (res.rows.length === 0) return undefined;
-		return res.rows[0].time_ms;
+		return Number(res.rows[0].time_ms);
 	}
 
 	static async delete_saw(seen_id: number, user_id: number) {
@@ -64,7 +64,8 @@ export class Seen_Users {
 			`,
 			[user_id]
 		);
-		return await Promise.all(res.rows.map(
-			async (row) => await User.get_by_id(row.seen_id)));
+		return await Promise.all(
+			res.rows.map(async (row) => await User.get_by_id(row.seen_id))
+		);
 	}
 }

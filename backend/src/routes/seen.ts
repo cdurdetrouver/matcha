@@ -4,12 +4,14 @@ import { check_cookies } from '../utils/jwt.ts';
 import { WSContext } from 'hono/ws';
 import { User } from '../db_objects/user.ts';
 import { Seen_Users } from '../db_objects/seen_users.ts';
+import { post_notif } from './notif.ts';
 
 const app = new Hono();
 interface ExtendedWebSocket extends WSContext<WebSocket> {
 	user: User;
 	target_user: User;
 	startTime: number;
+	prevtimeseen: number;
 }
 
 app.get(
@@ -46,6 +48,12 @@ app.get(
 					const target_user = await User.get_by_id(targetUserId);
 					(ws as ExtendedWebSocket).target_user = target_user;
 
+					(ws as ExtendedWebSocket).prevtimeseen =
+						(await Seen_Users.is_user_seen_by(
+							user.id,
+							target_user.id
+						)) ?? 0;
+
 					(ws as ExtendedWebSocket).startTime = Date.now();
 				} catch (e) {
 					console.error(e);
@@ -77,6 +85,16 @@ app.get(
 						target_user.id,
 						elapsedTime
 					);
+
+					if (
+						extendedWs.prevtimeseen < 15000 &&
+						extendedWs.prevtimeseen + elapsedTime >= 15000
+					)
+						await post_notif(
+							extendedWs.target_user.id,
+							`${user.username} has seen your profile`,
+							`/user/${user.id}`
+						);
 				} catch (e) {
 					console.error('Error updating seen_users:', e);
 				}

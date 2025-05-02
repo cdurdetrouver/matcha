@@ -648,7 +648,6 @@ app.post('/block_user/:id', async (c: Context) => {
 		await User.get_by_id(id);
 		await Block_Users.block_user(user.id, id);
 	} catch (e) {
-		console.log(e);
 		if (e instanceof Error && e.message === 'User not found')
 			return c.json(
 				{ message: 'The user you try to blocked does not exists !' },

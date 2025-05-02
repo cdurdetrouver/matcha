@@ -18,7 +18,8 @@
 	import ModalDropzone from '$lib/components/user/ModalDropzone.svelte';
 	import ModalInterests from '$lib/components/user/ModalInterests.svelte';
 	import ModalPassword from '$lib/components/user/ModalPassword.svelte';
-	import { fetchLocationByIP, getCurrentPosition } from '$lib/script/location';
+	import ModalLocation from '$lib/components/user/ModalLocation.svelte';
+	import { getCurrentPosition } from '$lib/script/location';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -118,41 +119,26 @@
 	}
 
 	function requestLocation() {
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				async (position) => {
-					location[0] = position.coords.latitude;
-					location[1] = position.coords.longitude;
+		const c: ModalComponent = { ref: ModalLocation };
+		const modal: ModalSettings = {
+			type: 'component',
+			component: c,
+			title: 'Change lcoation',
+			body: 'Choose your location',
+			meta: {
+				user_lat: location[0] != 0 ? location[0] : undefined,
+				user_long: location[1] != 0 ? location[1] : undefined
+			},
+			response: async (r) => {
+				if (r) {
+					location[0] = r.lat;
+					location[1] = r.long;
 					locationError = '';
-					city = await getCurrentPosition(position.coords.latitude, position.coords.longitude);
-				},
-				async (error) => {
-					switch (error.code) {
-						case error.PERMISSION_DENIED:
-							locationError = 'User denied the request for Geolocation.';
-							break;
-						case error.POSITION_UNAVAILABLE:
-							locationError = 'Location information is unavailable.';
-							break;
-						case error.TIMEOUT:
-							locationError = 'The request to get user location timed out.';
-							break;
-						default:
-							locationError = 'An unknown error occurred.';
-							break;
-					}
-					const res = await fetchLocationByIP();
-					if (res) {
-						location[0] = res.latitude;
-						location[1] = res.longitude;
-						city = res.city;
-						locationError = '';
-					}
+					city = await getCurrentPosition(r.lat, r.long);
 				}
-			);
-		} else {
-			locationError = 'Geolocation is not supported by this browser.';
-		}
+			}
+		};
+		modalStore.trigger(modal);
 	}
 
 	function openUploadModal() {

@@ -34,6 +34,7 @@ app.get(
 					connectedUsers.set(user.id, ws);
 
 					user.online = true;
+					user.connected_at = BigInt(Date.now());
 					user.save().then(async () => {
 						const notifs = await Notif.get_all_by_user_id(user.id);
 						const notifs_serialize = notifs.map((notif: Notif) => {
@@ -45,7 +46,6 @@ app.get(
 								notifs: notifs_serialize,
 							})
 						);
-						// await post_notif(user.id, 'Welcome to Matcha!', '/');
 					});
 				} catch (e) {
 					console.error(e);
@@ -89,9 +89,13 @@ app.get(
 					return;
 				}
 				if (user) {
-					user.online = false;
-					await user.save();
-
+					setTimeout(async () => {
+						if (!connectedUsers.has(user.id)) {
+							user.connected_at = BigInt(Date.now());
+							user.online = false;
+							await user.save();
+						}
+					}, 6000);
 					connectedUsers.delete(user.id);
 				}
 			},

@@ -27,7 +27,8 @@ const USERFIELDS = `
 	created_at,
 	connected_at,
 	birthdate,
-	mbti
+	mbti,
+	fame_rate
 `;
 
 export class User {
@@ -48,6 +49,7 @@ export class User {
 	created_at: bigint = BigInt(Date.now());
 	connected_at: bigint = BigInt(Date.now());
 	birthdate?: string;
+	fame_rate?: number;
 	mbti?: string; // Added mbti field
 
 	constructor(
@@ -76,6 +78,7 @@ export class User {
 			this.auth_provider = usernameOrOther.auth_provider ?? 'email';
 			this.birthdate = usernameOrOther.birthdate ?? undefined;
 			this.mbti = usernameOrOther.mbti ?? undefined;
+			this.fame_rate = usernameOrOther.fame_rate ?? 0;
 		} else {
 			this.username = usernameOrOther;
 			this.password = password!;
@@ -103,8 +106,9 @@ export class User {
 					wanted = $13,
 					auth_provider = $14,
 					birthdate = $15,
-					mbti = $16
-				WHERE id = $17;
+					mbti = $16,
+					fame_rate = $17
+				WHERE id = $18;
 			`,
 			[
 				this.username,
@@ -122,7 +126,8 @@ export class User {
 				this.wanted,
 				this.auth_provider,
 				this.birthdate,
-				this.mbti, // Save mbti
+				this.mbti,
+				this.fame_rate,
 				this.id,
 			]
 		);
@@ -153,6 +158,7 @@ export class User {
 				connected_At BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 				auth_provider VARCHAR(255) NOT NULL,
 				birthdate DATE DEFAULT NULL,
+				fame_rate FLOAT DEFAULT 0,
 				mbti VARCHAR(255) DEFAULT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);
@@ -207,21 +213,47 @@ export class User {
 			[ids]
 		);
 		return res.rows.map((row) => new User(row));
+	} 
+
+	static async get_all_by_famerate(
+		fame_rate_min: number,
+		fame_rate_max: number
+	): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE fame_rate BETWEEN $1 AND $2;
+			`,
+			[fame_rate_min, fame_rate_max]
+		);
+		return res.rows.map((row) => new User(row));
 	}
 
-	static async get_all_by_loc(
+	static async get_all_by_age(
+		minAge: number,
+		maxAge: number
+	): Promise<User[]> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE EXTRACT(YEAR FROM age(birthdate)) BETWEEN $1 AND $2;
+			`,
+			[minAge, maxAge]
+		);
+		return res.rows.map((row) => new User(row));
+	}
+
+	async get_all_by_loc(
 		radius: number,
 		long: number,
-		lat: number
+		lat: number,
+
 	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint($1
-				, $2), 4326),
-				$3);
+				ST_SetSRID(ST_MakePoint($1, $2), 4326),
+				$3) AND id != $4;
 			`,
-			[long, lat, radius * 1000]
+			[long, lat, radius * 1000, this.id]
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -249,10 +281,10 @@ export class User {
 	}
 
 	async udpate_relations() {
-		const nearbyUsers = await User.get_all_by_loc(
+		const nearbyUsers = await this.get_all_by_loc(
 			1000000,
+			this.long,
 			this.lat,
-			this.long
 		);
 
 		const similar_user: User[] = [];

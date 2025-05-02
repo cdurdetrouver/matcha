@@ -1,4 +1,5 @@
 import { client } from '../main.ts';
+import { User } from "./user.ts";
 
 const TABLE = 'tags';
 
@@ -55,5 +56,18 @@ export class Tag {
 		const re_is_alpha = /^[a-z_-]+$/;
 		if (!re_is_alpha.test(tag_name)) return false;
 		return true;
+	}
+
+	static async get_user_by_tags(tag_list: string[], user_id: number): Promise<User[]> {
+		const res = await client.queryObject<{ user_id: number }>(
+			`
+				SELECT user_id FROM tags_users
+				WHERE tag = ANY($1::text[]) AND user_id != $2
+				GROUP BY user_id
+				HAVING COUNT(DISTINCT tag) = $3;
+			`,
+			[tag_list, user_id, tag_list.length]
+		);
+		return await Promise.all(res.rows.map((row) => User.get_by_id(row.user_id)));
 	}
 }

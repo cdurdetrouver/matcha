@@ -31,6 +31,7 @@ import { sendVerificationEmail } from '../utils/send_mail.ts';
 import { get_userIntra_by_code } from '../utils/intra42.ts';
 import { get_userGoogle_by_code } from '../utils/googleauth.ts';
 import { Tags_Users } from '../db_objects/tags_users.ts';
+import { Tag } from "../db_objects/tags.ts";
 
 const app = new Hono();
 
@@ -208,7 +209,14 @@ app.post('/full_register', async (c: Context) => {
 	user.long = Number(location[1]);
 	if ((await Image.get_post_by_user(user.id)).length < 1)
 		return c.json({ message: 'User need at least 1 post' }, 400);
-	await Tags_Users.add_tags(user.id, interests);
+	for (const tag of interests) {
+		if (!(await Tag.tag_exists(tag)))
+			return c.json({ message: 'Tag does not exist' }, 400);
+		if (await Tags_Users.had_tag(user.id, tag))
+			return c.json({ message: 'User already has this tag' }, 400);
+	}
+	if (interests.length > 0)
+		await Tags_Users.add_tags(user.id, interests);
 	user.complete_profile = true;
 	await user.save();
 	return c.json(

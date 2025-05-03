@@ -8,8 +8,9 @@ import notif from './routes/notif.ts';
 import tag from './routes/tag.ts';
 import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
-import research from './routes/research.ts';
-import report from './routes/report.ts';
+import research from "./routes/research.ts";
+import report from "./routes/report.ts";
+import date from "./routes/date.ts";
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
@@ -18,7 +19,7 @@ const app = new Hono<{ Variables: JwtVariables }>();
 
 const allowedOrigin = ['http://localhost:5173', 'ws://localhost:5173'];
 
-app.use('*', (c, next) => {
+app.use('*', (c: Context, next) => {
 	if (c.req.header('upgrade')?.toLowerCase() === 'websocket') {
 		return next();
 	}
@@ -48,6 +49,7 @@ app.route('/api/relations', relation);
 app.route('/api/seen', seen);
 app.route('/api/research', research);
 app.route('/api/report', report);
+app.route('/api/date', date);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);

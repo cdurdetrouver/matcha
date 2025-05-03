@@ -19,4 +19,5 @@ export type User = {
 	auth_provider: string;
 	birthdate?: string;
 	mbti?: string;
+	fame_rate: number;
 };

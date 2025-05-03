@@ -15,8 +15,9 @@ export async function createMatchRelation(
 	const query = `
 	  MERGE (a:User {id: '${userId1}'})
 	  MERGE (b:User {id: '${userId2}'})
-	  MERGE (a)-[:MATCH {weight: ${weight}}]->(b)
-	  MERGE (b)-[:MATCH {weight: ${weight}}]->(a)
+	  MERGE (a)-[r:MATCH]->(b)
+	  ON CREATE SET r.weight = ${weight}
+	  ON MATCH SET r.weight = ${weight}
 	`;
 
 	const result = await redis.sendCommand('GRAPH.QUERY', [graph, query]);

@@ -7,7 +7,8 @@ export class Tags_Users {
 		await client.queryObject(`
 			CREATE TABLE IF NOT EXISTS "${TABLE}" (
 				user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-				tag TEXT REFERENCES tags(name) ON DELETE CASCADE
+				tag TEXT REFERENCES tags(name) ON DELETE CASCADE,
+				PRIMARY KEY (user_id, tag)
 			);
 		`);
 	}

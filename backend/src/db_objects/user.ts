@@ -49,9 +49,8 @@ export class User {
 	created_at: bigint = BigInt(Date.now());
 	connected_at: bigint = BigInt(Date.now());
 	birthdate?: string;
-	fame_rate: number = 0;
-	mbti?: string; // Added mbti field
-
+	fame_rate?: number;
+	mbti?: string;
 	constructor(
 		usernameOrOther: string | Partial<User>,
 		password?: string,
@@ -165,7 +164,6 @@ export class User {
 			CREATE OR REPLACE FUNCTION check_email_not_banned()
 			RETURNS TRIGGER AS $$
 			BEGIN
-				-- Check if the email exists in the Ban_Users table
 				IF EXISTS (SELECT 1 FROM "Ban_Users" WHERE email = NEW.email) THEN
 					RAISE EXCEPTION 'Email is banned and cannot be used.';
 				END IF;

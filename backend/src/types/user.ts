@@ -19,7 +19,7 @@ export type UserType = {
 	auth_provider: string;
 	birthdate?: string;
 	mbti?: string;
-	fame_rate: number;
+	fame_rate?: number;
 };
 
 export type UserTypeGoogle = {

@@ -63,7 +63,6 @@ app.post('/accept', async (c: Context) => {
 	const Dates = (await Date_Users.get_user_dates(user.id)).filter(
 		(date) => date.accepted == true || date.user_id == user.id);
 	let refused:boolean = false;
-	console.log("Dates", Dates);
 	if ((Dates.some((d) =>  d.date - BigInt(1800000) <= date.date && d.date + BigInt(1800000) >= date.date)))
 		refused = true;
 	if (accept == true && refused == false) {

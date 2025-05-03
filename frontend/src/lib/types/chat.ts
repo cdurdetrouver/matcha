@@ -1,5 +1,5 @@
-import type { User } from './user.ts';
-import type { Image } from './image.ts';
+import type { User } from './user';
+import type { Image } from './image';
 
 export type Message = {
 	id: number;

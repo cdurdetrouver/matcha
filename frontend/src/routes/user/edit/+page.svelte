@@ -291,6 +291,7 @@
 	}
 
 	function editInfo(confirm: boolean = false) {
+		console.log('Edit');
 		request('/api/user/edit', {
 			method: 'PUT',
 			body: JSON.stringify({
@@ -305,6 +306,7 @@
 			credentials: 'include'
 		})
 			.then(async (res) => {
+				console.log('Response:', res);
 				if (res.ok) {
 					toastStore.trigger({
 						message: 'Profile updated successfully',
@@ -373,6 +375,13 @@
 					shadow="shadow-xl"
 					class="h-full w-auto object-contain"
 				/>
+
+				<!-- Fame_rate -->
+				<div class="absolute top-0 left-0 w-fit h-auto rounded-full border-2 border-white bg-black">
+					<p class="p-1">
+						{(Math.round(user.fame_rate * 10) / 10).toFixed(1)}
+					</p>
+				</div>
 
 				<!-- Online/Offline Status -->
 				<div

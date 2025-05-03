@@ -49,7 +49,7 @@ export class User {
 	created_at: bigint = BigInt(Date.now());
 	connected_at: bigint = BigInt(Date.now());
 	birthdate?: string;
-	fame_rate?: number;
+	fame_rate: number = 0;
 	mbti?: string; // Added mbti field
 
 	constructor(
@@ -88,6 +88,9 @@ export class User {
 
 	async save() {
 		this.description = filter.clean(this.description ?? '');
+		if (this.complete_profile) {
+			await User.update_all();
+		}
 		await client.queryObject(
 			`
 				UPDATE "${TABLE}"
@@ -131,9 +134,6 @@ export class User {
 				this.id,
 			]
 		);
-		if (this.complete_profile) {
-			await this.udpate_relations();
-		}
 	}
 
 	static async init_table() {
@@ -193,8 +193,7 @@ export class User {
 				this.mbti,
 			]
 		);
-		if (res.rows.length > 0)
-			this.id = res.rows[0].id;
+		if (res.rows.length > 0) this.id = res.rows[0].id;
 	}
 
 	static async delete(id: number) {
@@ -303,6 +302,13 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
+	static async update_all() {
+		const users = await User.getall();
+		for (const user of users) {
+			await user.udpate_relations();
+		}
+	}
+
 	async udpate_relations() {
 		const nearbyUsers = await this.get_all_by_loc(
 			1000000,
@@ -319,11 +325,18 @@ export class User {
 			}
 		}
 
+		let tot = 0;
 		for (const otherUser of nearbyUsers) {
 			if (this.id !== otherUser.id) {
-				await this.update_relation(otherUser, similar_user);
+				const weight = await this.update_relation(
+					otherUser,
+					similar_user
+				);
+				tot += weight;
 			}
 		}
+
+		this.fame_rate = tot / nearbyUsers.length;
 	}
 
 	async update_similarity(otherUser: User): Promise<number> {
@@ -360,6 +373,7 @@ export class User {
 			weight,
 			relation_graph
 		);
+		return weight;
 	}
 
 	async get_best_matches(): Promise<User[]> {
@@ -393,10 +407,11 @@ export class User {
 			auth_provider: this.auth_provider,
 			birthdate: this.birthdate,
 			mbti: this.mbti,
+			fame_rate: this.fame_rate,
 		};
 		return user;
 	}
-	
+
 	async serialize_me(): Promise<UserType> {
 		const user: UserType = await this.serialize();
 		user.email = this.email;

@@ -83,6 +83,13 @@
 					class="h-full w-auto max-h-40 object-contain"
 				/>
 
+				<!-- Fame_rate -->
+				<div class="absolute top-0 left-0 w-fit h-auto rounded-full border-2 border-white bg-black">
+					<p class="p-1">
+						{(Math.round(user.fame_rate * 10) / 10).toFixed(1)}
+					</p>
+				</div>
+
 				<!-- Online/Offline Status -->
 				<div
 					class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white bg-green-500"

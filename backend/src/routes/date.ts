@@ -33,7 +33,7 @@ app.post('/set', async (c: Context) => {
 	const date = new Date_Users(user.id, other_user_id, description, time);
 	await date.create();
 	await post_notif(other_user_id, user.username + " wants to meet you !", '/user');
-	return c.json({message: "Date succesfully created", date: await date.serialize()});
+	return c.json({message: "Date successfully created", date: await date.serialize()});
 });
 
 app.all('/set', (c: Context) => {

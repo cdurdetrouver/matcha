@@ -291,7 +291,6 @@
 	}
 
 	function editInfo(confirm: boolean = false) {
-		console.log('Edit');
 		request('/api/user/edit', {
 			method: 'PUT',
 			body: JSON.stringify({
@@ -306,7 +305,6 @@
 			credentials: 'include'
 		})
 			.then(async (res) => {
-				console.log('Response:', res);
 				if (res.ok) {
 					toastStore.trigger({
 						message: 'Profile updated successfully',

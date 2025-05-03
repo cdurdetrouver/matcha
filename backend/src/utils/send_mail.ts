@@ -39,7 +39,7 @@ export async function sendChangePasswordEmail(to: string, url: string) {
 	const mailOptions = {
 		from: GMAIL_EMAIL,
 		to,
-		subject: 'Email Verification',
+		subject: 'Reset Your Password',
 		html: `<p>Please click the link below to change password:</p>
 			 <a href="${url}">Verify</a>`,
 	};

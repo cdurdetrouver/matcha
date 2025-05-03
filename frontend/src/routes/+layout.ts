@@ -5,7 +5,7 @@ import { GetCookie, SetCookie } from '$lib/script/cookies';
 import type { LayoutLoad } from './$types';
 import { request } from '$lib/script/request';
 
-const publicPaths = ['/', '/login', '/verif'];
+const publicPaths = ['/', '/login', '/verif', '/reset_pass'];
 const publicCompletePaths = [...publicPaths, '/complete', '/user'];
 
 function isPathAllowed(path: string, paths = publicPaths): boolean {

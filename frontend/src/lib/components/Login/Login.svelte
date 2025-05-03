@@ -10,13 +10,14 @@
 	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
 	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+	import { request } from '$lib/script/request';
 
 	const toastStore = getToastStore();
 
 	let form: {
 		missing_email?: boolean;
 		missing_password?: boolean;
-		incorrect_email?: boolean;
+		incorrect_email?: string;
 		incorrect_password?: boolean;
 		email?: string;
 	} = {};
@@ -58,7 +59,7 @@
 			}
 			form = {
 				incorrect_email: data_res.err_email,
-				incorrect_password: data_res.err_password
+				incorrect_password: data_res.err_password ?? 'Password is incorrect !'
 			};
 			return;
 		}
@@ -75,6 +76,42 @@
 
 		goto('/user');
 	}
+
+	async function sendResetEmail(e: Event) {
+		e.preventDefault();
+		if (!email) {
+			form = {
+				incorrect_email: 'You should put your email for send the email reset password'
+			};
+			return;
+		}
+
+		const res = await fetch(`${PUBLIC_BACKEND_HOST}/api/user/reset_password`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				email: email
+			}),
+			credentials: 'include'
+		});
+		const data_res = await res.json();
+		if (res.status !== 200) {
+			const t: ToastSettings = {
+				message: data_res.message,
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
+
+		const t: ToastSettings = {
+			message: 'Email sent !',
+			background: 'variant-filled-success'
+		};
+		toastStore.trigger(t);
+	}
 </script>
 
 <main class="flex flex-col gap-4">
@@ -89,7 +126,7 @@
 				bind:value={email}
 			/>
 			{#if form?.missing_email}<p class="text-red-600">The email field is required</p>{/if}
-			{#if form?.incorrect_email}<p class="text-red-600">The email field is incorrect</p>{/if}
+			{#if form?.incorrect_email}<p class="text-red-600">{form?.incorrect_email}</p>{/if}
 		</div>
 		<div class="w-full">
 			<h2>Password:</h2>
@@ -105,6 +142,10 @@
 		</div>
 		<button class="btn variant-filled-primary mx-10 px-10" type="submit">Login</button>
 	</form>
+	<hr />
+	<div class="flex flex-col gap-3 items-center">
+		<button class="underline" on:click={sendResetEmail}>Forgot password ?</button>
+	</div>
 	<hr />
 	<div class="flex flex-col gap-3 items-center">
 		<a

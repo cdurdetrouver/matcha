@@ -27,6 +27,32 @@ export async function sendVerificationEmail(to: string, url: string) {
 	}
 }
 
+export async function sendChangePasswordEmail(to: string, url: string) {
+	const transporter = nodemailer.createTransport({
+		service: 'Gmail',
+		auth: {
+			user: GMAIL_EMAIL,
+			pass: GMAIL_PASS,
+		},
+	});
+
+	const mailOptions = {
+		from: GMAIL_EMAIL,
+		to,
+		subject: 'Email Verification',
+		html: `<p>Please click the link below to change password:</p>
+			 <a href="${url}">Verify</a>`,
+	};
+
+	try {
+		await transporter.sendMail(mailOptions);
+		console.log('Password email sent successfully!');
+	} catch (error) {
+		console.error('Error sending password email:', error);
+		throw new Error('Failed to send password email');
+	}
+}
+
 export async function sendDeleteAccountEmail(to: string, reason: string) {
 	const transporter = nodemailer.createTransport({
 		service: 'Gmail',
@@ -45,8 +71,7 @@ export async function sendDeleteAccountEmail(to: string, reason: string) {
 	try {
 		await transporter.sendMail(mailOptions);
 		console.log('Account deletion email sent successfully!');
-	}
-	catch (error) {
+	} catch (error) {
 		console.error('Error sending account deletion email:', error);
 		throw new Error('Failed to send account deletion email');
 	}

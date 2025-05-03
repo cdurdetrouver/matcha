@@ -8,7 +8,10 @@ import { ContentfulStatusCode } from 'hono/utils/http-status';
 
 const ALLOWED_URLS = ['/full_register', '/me', '/notifs', '/tag', '/image'];
 
-export async function check_cookies(c: Context, url?: string): Promise<{
+export async function check_cookies(
+	c: Context,
+	url?: string
+): Promise<{
 	message?: string;
 	ret_val?: ContentfulStatusCode;
 	user: User | null;
@@ -40,7 +43,10 @@ export async function check_cookies(c: Context, url?: string): Promise<{
 				ret_val: 401,
 				user: null,
 			};
-		if (user_info.complete_profile == false && !ALLOWED_URLS.includes(url ||  ''))
+		if (
+			user_info.complete_profile == false &&
+			!ALLOWED_URLS.includes(url || '')
+		)
 			return {
 				message: 'Profile not complete',
 				ret_val: 401,
@@ -84,6 +90,14 @@ export async function get_refresh_token(user: User) {
 export async function get_access_token(user: User) {
 	const token = await sign(
 		get_payload(user.id, user.username, 5, 'acces'),
+		JWT_SECRET
+	);
+	return token;
+}
+
+export async function get_reset_token(user: User) {
+	const token = await sign(
+		get_payload(user.id, user.username, 180, 'reset'),
 		JWT_SECRET
 	);
 	return token;

@@ -107,8 +107,8 @@
 			title: 'Choose your filters',
 			body: 'Complete the form to filter users',
 			meta: {
-				user_lat: data.user?.location[0],
-				user_long: data.user?.location[1],
+				user_lat: data.user.lat,
+				user_long: data.user.long,
 				settings
 			},
 			response: async (r) => {

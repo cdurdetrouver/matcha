@@ -375,7 +375,7 @@ app.all('/verif', (c: Context) => {
 });
 
 app.put('/edit', async (c: Context) => {
-	const { username, email, description, location, wanted } =
+	const { username, email, description, latitude, longitude, wanted } =
 		await c.req.json();
 
 	const ret_check = await check_cookies(c);
@@ -408,9 +408,9 @@ app.put('/edit', async (c: Context) => {
 			return c.json({ message: 'Description too long' }, 401);
 		user.description = description;
 	}
-	if (location != undefined) {
-		user.lat = location[0];
-		user.long = location[1];
+	if (latitude != undefined && longitude != undefined) {
+		user.lat = latitude;
+		user.long = longitude;
 	}
 	if (wanted != undefined) {
 		user.wanted = wanted;
@@ -589,6 +589,28 @@ app.get('/me', async (c: Context) => {
 });
 
 app.all('/me', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.post('/coordinates', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 400);
+	const { message, ret_val, user } = ret_check;
+	if (user == null || message != undefined)
+		return c.json({ message: message }, ret_val);
+	const { lat, long, radius } = await c.req.json();
+	if (lat == undefined || long == undefined || radius == undefined)
+		return c.json({ message: 'Body not formatted correctly' }, 422);
+	const users = await user.get_all_by_loc(radius, long, lat);
+	if (users == undefined) return c.json({ message: 'No users found' }, 404);
+	const users_serialized = await Promise.all(
+		users.map(async (user: User) => await user.serialize())
+	);
+	return c.json({ message: 'Users found !', users: users_serialized }, 200);
+});
+
+app.all('/coordinates', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

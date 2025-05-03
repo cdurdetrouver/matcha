@@ -20,8 +20,6 @@
 		const L = await import('leaflet');
 		let { user_lat, user_long } = $modalStore[0].meta;
 
-		console.log($modalStore[0].meta);
-
 		if (!user_lat && !user_long)
 			if ($modalStore[0].meta.lat && $modalStore[0].meta.long) {
 				user_lat = $modalStore[0].meta.lat;

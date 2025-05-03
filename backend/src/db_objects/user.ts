@@ -258,11 +258,14 @@ export class User {
 	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE ST_DWithin(location,
-				ST_SetSRID(ST_MakePoint($1, $2), 4326),
-				$3) AND id != $4;
+				SELECT ${USERFIELDS} FROM "${TABLE}" 
+				WHERE ST_DWithin(
+					location::geography,
+					ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+					$3
+				) AND id != $4;
 			`,
-			[long, lat, radius * 1000, this.id]
+			[long, lat, radius, this.id]
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -309,7 +312,7 @@ export class User {
 
 	async udpate_relations() {
 		const nearbyUsers = await this.get_all_by_loc(
-			1000000,
+			20000,
 			this.long,
 			this.lat
 		);
@@ -401,7 +404,8 @@ export class User {
 			sexual_preferences: this.sexual_preferences,
 			description: this.description,
 			interests: interests,
-			location: [Number(this.lat), Number(this.long)],
+			lat: this.lat,
+			long: this.long,
 			auth_provider: this.auth_provider,
 			birthdate: this.birthdate,
 			mbti: this.mbti,

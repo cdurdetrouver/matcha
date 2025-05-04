@@ -1,6 +1,7 @@
 import { PUBLIC_BACKEND_HOST } from '$env/static/public';
 import { PUBLIC_WEBSOCKET_HOST } from '$env/static/public';
-import { DeleteCookie } from './cookies';
+import type { User } from '$lib/types/user';
+import { DeleteCookie, SetCookie } from './cookies';
 
 export async function logoutUser() {
 	await fetch(`${PUBLIC_BACKEND_HOST}/api/user/logout`, {
@@ -51,6 +52,30 @@ export async function request(
 		console.error('Error in request:', error);
 		return new Response(null, { status: 500, statusText: 'Internal Server Error' });
 	}
+}
+
+export async function update_user(user?: User) {
+	DeleteCookie('user');
+	if (!user) {
+		const res = await request(
+			'/api/user/me',
+			{
+				method: 'GET',
+				credentials: 'include'
+			},
+			true
+		);
+
+		if (!res.ok) {
+			console.warn('Failed to update user data');
+		}
+
+		const data = await res.json();
+		user = data.user as User;
+	}
+	SetCookie('user', JSON.stringify(user), 5);
+	await refreshToken();
+	return user;
 }
 
 export class WebSocketManager {

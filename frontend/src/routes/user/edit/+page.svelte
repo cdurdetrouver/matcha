@@ -2,7 +2,7 @@
 	import type { User } from '$lib/types/user';
 	import type { Image } from '$lib/types/image';
 	import { goto } from '$app/navigation';
-	import { logoutUser, request } from '$lib/script/request';
+	import { logoutUser, request, update_user } from '$lib/script/request';
 	import { onMount } from 'svelte';
 	import {
 		Avatar,
@@ -16,6 +16,7 @@
 	} from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import ModalDropzone from '$lib/components/user/ModalDropzone.svelte';
+	import ModalDropzoneAvatar from '$lib/components/user/ModalDropzoneAvatar.svelte';
 	import ModalInterests from '$lib/components/user/ModalInterests.svelte';
 	import ModalPassword from '$lib/components/user/ModalPassword.svelte';
 	import ModalLocation from '$lib/components/user/ModalLocation.svelte';
@@ -150,6 +151,9 @@
 			component: c,
 			title: 'Add a new Image',
 			body: 'Choose a file and then press submit.',
+			meta: {
+				type: 'post'
+			},
 			response: (r) => {
 				if (r) {
 					const formData = new FormData();
@@ -188,17 +192,30 @@
 		modalStore.trigger(modal);
 	}
 
+	async function get_by_social(source: string, username: string) {
+		if (!source || !username || !['github', 'x'].includes(source)) {
+			return;
+		}
+
+		console.log(source, username);
+
+		// sould put this after the request ok
+		// const data_res = await res.json();
+		// user.avatar = data_res.image;
+		// await update_user(user);
+	}
+
 	function openAvatarModal() {
-		const c: ModalComponent = { ref: ModalDropzone };
+		const c: ModalComponent = { ref: ModalDropzoneAvatar };
 		const modal: ModalSettings = {
 			type: 'component',
 			component: c,
 			title: 'Choose your avatar',
 			body: 'Choose your file and then press submit.',
-			response: (r) => {
-				if (r) {
+			response: async (r) => {
+				if (r && r.source === 'file') {
 					const formData = new FormData();
-					formData.append('avatar', r[0]);
+					formData.append('avatar', r.files[0]);
 
 					request('/api/user/avatar', {
 						method: 'POST',
@@ -213,6 +230,7 @@
 								});
 								const data_res = await res.json();
 								user.avatar = data_res.image;
+								await update_user(user);
 							} else {
 								toastStore.trigger({
 									message: 'Failed to upload avatar',
@@ -227,6 +245,8 @@
 								background: 'variant-filled-error'
 							});
 						});
+				} else if (r) {
+					await get_by_social(r.source, r.username);
 				}
 			}
 		};
@@ -327,6 +347,7 @@
 						description = user.description ?? '';
 						interests = user.interests ?? [];
 						wanted = user.wanted;
+						await update_user(user);
 					}
 				} else {
 					toastStore.trigger({

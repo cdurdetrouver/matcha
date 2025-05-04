@@ -13,10 +13,10 @@
 	import Icon from '@iconify/svelte';
 	import { request } from '$lib/script/request';
 	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
-	import { SetCookie } from '$lib/script/cookies';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import type { User } from '$lib/types/user';
+	import { update_user } from '$lib/script/request';
 
 	const toastStore = getToastStore();
 
@@ -313,7 +313,7 @@
 
 			const user = data_res.user as User;
 
-			SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+			await update_user(user);
 
 			const t: ToastSettings = {
 				message: 'You have successfully completed your profile 🎉',

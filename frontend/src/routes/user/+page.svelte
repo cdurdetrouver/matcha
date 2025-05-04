@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { User } from '$lib/types/user';
 	import type { Image } from '$lib/types/image';
+	import type { Date } from '$lib/types/date';
 	import { goto } from '$app/navigation';
 	import { logoutUser, request } from '$lib/script/request';
 	import { onMount } from 'svelte';
@@ -22,6 +23,7 @@
 	let city = '';
 	let images: Image[] = [];
 	let dates: Date[] = [];
+	let lendate = 0;
 
 	onMount(async () => {
 		const req = await request('/api/user/me', {
@@ -59,6 +61,27 @@
 		}
 		const imageData = await res.json();
 		images = imageData.images;
+
+		const res2 = await request('/api/date/all', {
+			method: 'GET',
+			credentials: 'include'
+		});
+
+		if (!res2.ok) {
+			const t: ToastSettings = {
+				message: 'Failed to load dates',
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
+
+		const data_res = await res2.json();
+		dates = data_res.dates as Date[];
+
+		lendate = dates.filter(
+			(date) => date.accepted === false && date.user_to_meet.id === user.id
+		).length;
 	});
 
 	async function logout() {
@@ -82,7 +105,33 @@
 			type: 'component',
 			component: c,
 			title: 'Calendar',
-			body: 'Manage your dates'
+			body: 'Manage your dates',
+			meta: {
+				dates,
+				user
+			},
+			response: async (data: any) => {
+				const res2 = await request('/api/date/all', {
+					method: 'GET',
+					credentials: 'include'
+				});
+
+				if (!res2.ok) {
+					const t: ToastSettings = {
+						message: 'Failed to load dates',
+						background: 'variant-filled-error'
+					};
+					toastStore.trigger(t);
+					return;
+				}
+
+				const data_res = await res2.json();
+				dates = data_res.dates as Date[];
+
+				lendate = dates.filter(
+					(date) => date.accepted === false && date.user_to_meet.id === user.id
+				).length;
+			}
 		};
 		modalStore.trigger(modal);
 	}
@@ -177,7 +226,7 @@
 						Calendar
 					</button>
 
-					{#if dates.length > 0}
+					{#if lendate > 0}
 						<span class="badge-icon variant-filled absolute -top-0 -right-0 z-10"
 							>{dates.length}</span
 						>

@@ -75,43 +75,32 @@ app.post('/accept', async (c: Context) => {
 	if (!date_id || accept == undefined)
 		return c.json({ message: 'Missing parameters' }, 400);
 	let date: Date_Users;
-	let other_user;
 	try {
 		date = await Date_Users.get_by_id(Number(date_id));
-		other_user = await User.get_by_id(date.user_to_meet_id);
 	} catch (_e) {
 		return c.json({ message: 'Date not found !' }, 404);
 	}
-	const Dates = (await Date_Users.get_user_dates(user.id)).filter(
-		(date) => date.accepted == true || date.user_id == user.id
-	);
-	let refused: boolean = false;
-	if (
-		Dates.some(
-			(d) =>
-				d.date - BigInt(1800000) <= date.date &&
-				d.date + BigInt(1800000) >= date.date
-		)
-	)
-		refused = true;
-	if (accept == true && refused == false) {
-		date.accepted = accept;
+	if (user.id != date.user_id && user.id != date.user_to_meet_id)
+		return c.json(
+			{ message: 'You are not allowed to accept this date !' },
+			401
+		);
+
+	if (date.user_to_meet_id != user.id) {
+		return c.json({ message: `You can't accept your own date !` }, 401);
+	}
+
+	if (accept == true) {
+		console.log('accepting date');
+		date.accepted = true;
 		await date.save();
-		let notif_mess = other_user.username + ' accepted your date !';
-		await post_notif(other_user.id, notif_mess, '/user');
-		notif_mess =
-			'Your date with ' + other_user.username + ' is scheduled !';
-		await post_notif(user.id, notif_mess, '/user');
+		let notif_mess = user.username + ' accepted your date !';
+		await post_notif(date.user_id, notif_mess, '/user');
 		return c.json({ message: 'Date succesfully accepted' }, 200);
 	} else {
 		await date.delete();
-		const notif_mess = other_user.username + ' refused your date !';
-		await post_notif(other_user.id, notif_mess, '/user');
-		if (refused == true)
-			return c.json(
-				{ message: 'You already have a date at this time !' },
-				400
-			);
+		const notif_mess = user.username + ' refused your date !';
+		await post_notif(date.user_id, notif_mess, '/user');
 		return c.json({ message: 'Date succesfully refused' }, 200);
 	}
 });
@@ -130,7 +119,13 @@ app.get('/all', async (c: Context) => {
 
 	const dates = await Date_Users.get_user_dates(user.id);
 	const dates_serialized = await Promise.all(
-		dates.map(async (date) => await date.serialize())
+		dates.map(async (date) => {
+			if (date.date < BigInt(Date.now())) {
+				await date.delete();
+				return null;
+			}
+			return await date.serialize();
+		})
 	);
 	return c.json({ message: 'Found dates', dates: dates_serialized });
 });

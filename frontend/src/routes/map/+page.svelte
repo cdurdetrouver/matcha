@@ -105,11 +105,6 @@
 </script>
 
 <div class="size-full" bind:this={mapContainer}></div>
-<img
-	src="https://cdn.discordapp.com/attachments/1121950986582036480/1159999822056142908/taureau.jpg"
-	alt="Marty Logo"
-	class="hidden test"
-/>
 
 <style lang="postcss">
 	:global(.test) {

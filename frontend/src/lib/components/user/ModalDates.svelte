@@ -6,144 +6,25 @@
 	import type { Date } from '$lib/types/date';
 	import { formatDate } from '$lib/script/time';
 	import Icon from '@iconify/svelte';
+	import type { User } from '$lib/types/user';
 
 	const modalStore = getModalStore();
 	const toastStore = getToastStore();
 
 	export let parent: SvelteComponent;
 
-	let dates: Date[] = [];
+	let dates: Date[] = $modalStore[0].meta.dates || [];
+	let users: User[] = $modalStore[0].meta.dates.map((date) => {
+		if (date.user_to_meet.id === $modalStore[0].meta.user.id) {
+			return date.user;
+		} else {
+			return date.user_to_meet;
+		}
+	});
+	let user: User = $modalStore[0].meta.user;
 
 	onMount(async () => {
-		const res = await request('/api/date/all', {
-			method: 'GET',
-			credentials: 'include'
-		});
-
-		if (!res.ok) {
-			console.log(await res.json());
-			const t: ToastSettings = {
-				message: 'Failed to load dates',
-				background: 'variant-filled-error'
-			};
-			toastStore.trigger(t);
-			modalStore.close();
-			return;
-		}
-
-		const data = await res.json();
-		dates = data.dates as Date[];
-
-		dates = [
-			{
-				id: 1,
-				accepted: false,
-				date: new Date('2025-10-10').getTime(),
-				description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-				user_to_meet: {
-					id: 1,
-					username: 'Jhon Doe',
-					avatar: {
-						id: 1,
-						link: 'https://example.com/image.jpg',
-						filename: 'image.jpg',
-						user_id: 1
-					},
-					created_at: new Date('2023-10-01').getTime(),
-					connected_at: new Date('2023-10-01').getTime(),
-					online: true,
-					complete_profile: true,
-					email_verif: true,
-					wanted: 1,
-					auth_provider: 'email',
-					lat: 0,
-					long: 0,
-					fame_rate: 0
-				}
-			},
-			{
-				id: 2,
-				accepted: true,
-				date: new Date('2025-11-15').getTime(),
-				description: 'Meeting at the park for a walk and coffee.',
-				user_to_meet: {
-					id: 2,
-					username: 'Jane Smith',
-					avatar: {
-						id: 2,
-						link: 'https://example.com/avatar2.jpg',
-						filename: 'avatar2.jpg',
-						user_id: 2
-					},
-					created_at: new Date('2023-09-15').getTime(),
-					connected_at: new Date('2023-09-20').getTime(),
-					online: false,
-					complete_profile: true,
-					email_verif: true,
-					wanted: 2,
-					auth_provider: 'google',
-					lat: 10,
-					long: 20,
-					fame_rate: 5
-				}
-			},
-			{
-				id: 3,
-				accepted: true,
-				date: new Date('2025-12-01').getTime(),
-				description: 'Dinner at a fancy restaurant.',
-				user_to_meet: {
-					id: 3,
-					username: 'Alice Johnson',
-					avatar: {
-						id: 3,
-						link: 'https://example.com/avatar3.jpg',
-						filename: 'avatar3.jpg',
-						user_id: 3
-					},
-					created_at: new Date('2023-08-10').getTime(),
-					connected_at: new Date('2023-08-15').getTime(),
-					online: true,
-					complete_profile: true,
-					email_verif: true,
-					wanted: 3,
-					auth_provider: 'facebook',
-					lat: 15,
-					long: 25,
-					fame_rate: 10
-				}
-			},
-			{
-				id: 4,
-				accepted: false,
-				date: new Date('2025-12-20').getTime(),
-				description: 'Casual meetup at the library.',
-				user_to_meet: {
-					id: 4,
-					username: 'Bob Brown',
-					avatar: {
-						id: 4,
-						link: 'https://example.com/avatar4.jpg',
-						filename: 'avatar4.jpg',
-						user_id: 4
-					},
-					created_at: new Date('2023-07-01').getTime(),
-					connected_at: new Date('2023-07-05').getTime(),
-					online: false,
-					complete_profile: true,
-					email_verif: true,
-					wanted: 4,
-					auth_provider: 'email',
-					lat: 30,
-					long: 40,
-					fame_rate: 8
-				}
-			}
-		];
-
 		dates = sortDates(dates);
-
-		console.log(dates);
 	});
 
 	function sortDates(dates: Date[]): Date[] {
@@ -188,39 +69,61 @@
 {#if $modalStore[0]}
 	<div class="modal-example-form card p-4 w-modal shadow-xl space-y-4">
 		{#if dates.length > 0}
-			<div class="p-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
-				{#each dates as date}
-					<div class="card card-hover flex justify-between m-4 h-full">
-						<div class="max-w-[70%] flex flex-col gap-4">
-							<p>
-								{date.user_to_meet.username}
-							</p>
-							<p>
-								{date.description}
-							</p>
-						</div>
-						<div class="h-full flex flex-col justify-between items-end">
-							{formatDate(date.date)}
-							{#if date.accepted == false}
-								<div>
-									<button
-										type="button"
-										class="btn variant-filled"
-										on:click={() => acceptDate(date.id, true)}
-									>
-										<Icon icon="fluent-mdl2:accept" class="color-success-500" />
-									</button>
-									<button
-										type="button"
-										class="btn variant-filled"
-										on:click={() => acceptDate(date.id, false)}
-									>
-										<Icon icon="fluent-mdl2:cancel" />
-									</button>
+			<div class="p-4 flex flex-col max-h-[80vh] overflow-y-auto">
+				{#each dates as date, index}
+					{#if users[index] == undefined}
+						<p class="text-sm text-gray-500">Loading...</p>
+					{:else}
+						<div
+							class="card card-hover flex flex-col md:flex-row justify-between m-4 p-6 shadow-lg rounded-lg gap-7"
+						>
+							<div class="flex items-center gap-4">
+								<a href="/user/{users[index].id}" on:click={parent.onClose}>
+									<img
+										src={users[index].avatar?.link}
+										alt="User Avatar"
+										class="rounded-full w-16 h-16"
+										loading="lazy"
+									/>
+								</a>
+								<div class="flex flex-col">
+									<h2 class="text-lg font-bold">{users[index].username}</h2>
+									<p class="text-sm">{formatDate(date.date)}</p>
 								</div>
-							{/if}
+							</div>
+							<div class="mt-4 md:mt-0 flex-1 flex flex-col justify-between">
+								<p class="text-sm md:text-base leading-relaxed">
+									{date.description}
+								</p>
+								{#if date.accepted == false}
+									{#if date.user_to_meet.id == user.id}
+										<div class="mt-4 flex gap-2 justify-end">
+											<button
+												type="button"
+												class="btn variant-filled hover:variant-filled-success px-4 py-2 rounded-md flex items-center gap-2"
+												on:click={() => acceptDate(date.id, true)}
+											>
+												<Icon icon="fluent-mdl2:accept" class="w-5 h-5" />
+												<p>Accept</p>
+											</button>
+											<button
+												type="button"
+												class="btn variant-filled hover:variant-filled-error text px-4 py-2 rounded-md flex items-center gap-2"
+												on:click={() => acceptDate(date.id, false)}
+											>
+												<Icon icon="fluent-mdl2:cancel" class="w-5 h-5" />
+												<span>Decline</span>
+											</button>
+										</div>
+									{:else}
+										<p class="text-sm text-gray-500">
+											Waiting for {date.user_to_meet.username} to accept
+										</p>
+									{/if}
+								{/if}
+							</div>
 						</div>
-					</div>
+					{/if}
 				{/each}
 			</div>
 		{:else}

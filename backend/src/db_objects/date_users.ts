@@ -1,13 +1,13 @@
 import { client } from '../main.ts';
-import { DateType } from "../types/date.ts";
-import { User } from "./user.ts";
+import { DateType } from '../types/date.ts';
+import { User } from './user.ts';
 
 const TABLE = 'date_users';
 
 export class Date_Users {
 	id: number = 0;
 	user_id: number = 0;
-	user_to_meet_id: number;
+	user_to_meet_id: number = 0;
 	description: string = '';
 	date: bigint = BigInt(Date.now());
 	accepted: boolean = false;
@@ -26,8 +26,7 @@ export class Date_Users {
 			this.date = user_id1OrOther.date!;
 			this.accepted = user_id1OrOther.accepted!;
 			this.id = user_id1OrOther.id!;
-		}
-		else {
+		} else {
 			this.user_id = user_id1OrOther;
 			this.user_to_meet_id = user_to_meet_id!;
 			this.description = description!;
@@ -48,7 +47,8 @@ export class Date_Users {
 				date BIGINT DEFAULT NULL,
 				accepted BOOLEAN DEFAULT FALSE
 			);
-			`);
+			`
+		);
 	}
 
 	async save() {
@@ -61,43 +61,33 @@ export class Date_Users {
 					accepted = $3
 				WHERE id = $4;
 			`,
-			[
-				this.description,
-				this.date,
-				this.accepted,
-				this.id
-			]
+			[this.description, this.date, this.accepted, this.id]
 		);
 	}
 
 	async create() {
-		const res = await client.queryObject<{id: number}>(
+		const res = await client.queryObject<{ id: number }>(
 			`
 				INSERT INTO "${TABLE}" (user_id, user_to_meet_id, description, date)
 				VALUES ($1, $2, $3, $4) RETURNING id;
 			`,
-			[
-				this.user_id,
-				this.user_to_meet_id,
-				this.description,
-				this.date
-			]
+			[this.user_id, this.user_to_meet_id, this.description, this.date]
 		);
-		if (res.rows.length > 0)
-			this.id = res.rows[0].id;
+		if (res.rows.length > 0) this.id = res.rows[0].id;
 	}
 
 	static async get_by_id(id: number): Promise<Date_Users> {
 		const res = await client.queryObject<{
+			id: number;
 			user_id: number;
 			user_to_meet_id: number;
-			lat: number;
-			long: number;
 			date: bigint;
 			accepted: boolean;
+			description: string;
 		}>(
 			`
 				SELECT
+					id,
 					user_id,
 					user_to_meet_id,
 					date,
@@ -116,20 +106,18 @@ export class Date_Users {
 	}
 
 	static async get_user_dates(user_id: number): Promise<Date_Users[]> {
-		const res = await client.queryObject< {
+		const res = await client.queryObject<{
 			user_to_meet_id: number;
 			lat: number;
 			long: number;
 			date: bigint;
-			id : number;
+			id: number;
 			accepted: boolean;
 		}>(
 			`
 				SELECT
-				CASE
-					WHEN user_id = ${user_id} THEN user_to_meet_id
-					ELSE user_id
-				END AS user_to_meet_id,
+				user_id,
+				user_to_meet_id,
 				date,
 				id,
 				accepted,
@@ -143,9 +131,11 @@ export class Date_Users {
 
 	async serialize(): Promise<DateType> {
 		const user_to_meet = await User.get_by_id(this.user_to_meet_id);
+		const user = await User.get_by_id(this.user_id);
 		const date: DateType = {
 			id: this.id,
 			user_to_meet: await user_to_meet.serialize(),
+			user: await user.serialize(),
 			date: Number(this.date),
 			accepted: this.accepted,
 			description: this.description,

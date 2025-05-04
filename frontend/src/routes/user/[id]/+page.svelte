@@ -11,11 +11,13 @@
 		getModalStore,
 		type ModalSettings,
 		type PopupSettings,
-		popup
+		popup,
+		type ModalComponent
 	} from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { getCurrentPosition } from '$lib/script/location';
 	import { formatDate } from '$lib/script/time.js';
+	import ModalCreateDate from '$lib/components/user/ModalCreateDate.svelte';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -201,10 +203,24 @@
 		};
 		modalStore.trigger(modal);
 	}
+
+	function dateCreateModal() {
+		const c: ModalComponent = { ref: ModalCreateDate };
+		const modal: ModalSettings = {
+			type: 'component',
+			component: c,
+			title: 'Calendar',
+			body: 'Create a date',
+			meta: {
+				user_id: user.id
+			}
+		};
+		modalStore.trigger(modal);
+	}
 </script>
 
 {#if user}
-	<div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4">
+	<div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4 h-[50vh]">
 		<!-- Profile Header -->
 		<div class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full border-b pb-6">
 			<!-- Avatar -->
@@ -316,24 +332,40 @@
 				</div>
 			</div>
 
-			<div class="flex flex-col md:flex-row gap-2 md:ml-auto">
-				<button class="btn variant-filled-primary px-6 py-2" type="button" use:popup={reportClick}>
-					Report
-				</button>
-				<div class="card p-4 max-w-sm" data-popup="reportClick">
-					<div class="grid grid-cols-1 gap-2">
-						{#each Reasonlist as reason}
-							<button
-								class="btn variant-filled-primary"
-								type="button"
-								on:click={() => Report(reason)}>{reason}</button
-							>
-						{/each}
+			<div class="flex flex-col justify-between items-end md:ml-auto h-full gap-4">
+				<div class="flex gap-2">
+					<button
+						class="btn variant-filled-primary px-6 py-2"
+						type="button"
+						use:popup={reportClick}
+					>
+						Report
+					</button>
+					<div class="card p-4 max-w-sm" data-popup="reportClick">
+						<div class="grid grid-cols-1 gap-2">
+							{#each Reasonlist as reason}
+								<button
+									class="btn variant-filled-primary"
+									type="button"
+									on:click={() => Report(reason)}>{reason}</button
+								>
+							{/each}
+						</div>
 					</div>
+					<button class="btn variant-filled-primary px-6 py-2" type="button" on:click={Block}>
+						Block
+					</button>
 				</div>
-				<button class="btn variant-filled-primary px-6 py-2" type="button" on:click={Block}>
-					Block
-				</button>
+				<div class="relative">
+					<button
+						class="btn variant-filled-primary px-6 py-2 flex gap-2"
+						type="button"
+						on:click={dateCreateModal}
+					>
+						<Icon icon="mdi:calendar-outline" />
+						Set a date
+					</button>
+				</div>
 			</div>
 		</div>
 

@@ -30,7 +30,7 @@ const USERFIELDS = `
 	mbti,
 	fame_rate,
 	insta_link,
-	twitter_link,
+	x_link,
 	intra_link
 `;
 
@@ -55,7 +55,7 @@ export class User {
 	fame_rate?: number;
 	mbti?: string;
 	insta_link?: string;
-	twitter_link?: string;
+	x_link?: string;
 	intra_link?: string;
 	constructor(
 		usernameOrOther: string | Partial<User>,
@@ -85,7 +85,7 @@ export class User {
 			this.mbti = usernameOrOther.mbti ?? undefined;
 			this.fame_rate = usernameOrOther.fame_rate ?? 0;
 			this.insta_link = usernameOrOther.insta_link ?? undefined;
-			this.twitter_link = usernameOrOther.twitter_link ?? undefined;
+			this.x_link = usernameOrOther.x_link ?? undefined;
 			this.intra_link = usernameOrOther.intra_link ?? undefined;
 		} else {
 			this.username = usernameOrOther;
@@ -120,9 +120,9 @@ export class User {
 					mbti = $16,
 					fame_rate = $17,
 					insta_link = $18,
-					twitter_link = $19,
+					x_link = $19,
 					intra_link = $20
-				WHERE id = $18;
+				WHERE id = $21;
 			`,
 			[
 				this.username,
@@ -143,7 +143,7 @@ export class User {
 				this.mbti,
 				this.fame_rate,
 				this.insta_link,
-				this.twitter_link,
+				this.x_link,
 				this.intra_link,
 				this.id,
 			]
@@ -175,7 +175,7 @@ export class User {
 				fame_rate FLOAT DEFAULT 0,
 				mbti VARCHAR(255) DEFAULT NULL,
 				insta_link VARCHAR(255) DEFAULT NULL,
-				twitter_link VARCHAR(255) DEFAULT NULL,
+				x_link VARCHAR(255) DEFAULT NULL,
 				intra_link VARCHAR(255) DEFAULT NULL
 			);
 			CREATE INDEX ON users USING GIST(location);

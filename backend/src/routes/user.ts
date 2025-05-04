@@ -340,13 +340,14 @@ app.all('/login/intra', (c: Context) => {
 });
 
 app.post('/verif', async (c: Context) => {
+	console.log(' test');
 	const { token, userid } = await c.req.json();
 	let ret_token:
 		| {
 				expiration: number;
 				token: string;
 		  }
-		| undefined = undefined;
+		| undefined = undefined;	
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
 		if (ret_token == undefined) throw new Error('Token not found !');
@@ -420,7 +421,7 @@ app.put('/edit', async (c: Context) => {
 	if (insta_link != undefined)
 		user.insta_link = insta_link;
 	if (twitter_link != undefined)
-		user.twitter_link = twitter_link;
+		user.x_link = twitter_link;
 	if (intra_link != undefined)
 		user.intra_link = intra_link;
 	try {

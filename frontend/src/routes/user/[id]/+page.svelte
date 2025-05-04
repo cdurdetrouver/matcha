@@ -15,6 +15,7 @@
 	} from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { getCurrentPosition } from '$lib/script/location';
+	import { formatDate } from '$lib/script/time.js';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -218,11 +219,9 @@
 				/>
 
 				<!-- Fame_rate -->
-				<div class="absolute top-0 left-0 w-fit h-auto rounded-full border-2 border-white bg-black">
-					<p class="p-1">
-						{(Math.round(user.fame_rate * 10) / 10).toFixed(1)}
-					</p>
-				</div>
+				<span class="badge-icon variant-filled absolute -top-0 -left-0 z-10"
+					>{(Math.round(user.fame_rate * 10) / 10).toFixed(1)}</span
+				>
 
 				<!-- Online/Offline Status -->
 				<div
@@ -289,7 +288,7 @@
 				{#if user.online == false}
 					<div class="flex items-center gap-4">
 						<p class="text-sm text-gray-500">
-							last connection : {new Date(user.connected_at)}
+							last connection : {formatDate(user.connected_at)}
 						</p>
 					</div>
 				{/if}

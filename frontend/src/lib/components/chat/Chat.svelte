@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Avatar } from '@skeletonlabs/skeleton';
-	import { formatDate } from '$lib/script/date';
+	import { formatDate } from '$lib/script/time';
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import type { Message } from '$lib/types/chat';

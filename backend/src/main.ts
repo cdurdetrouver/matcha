@@ -11,6 +11,7 @@ import relation from './routes/relations.ts';
 import research from "./routes/research.ts";
 import report from "./routes/report.ts";
 import date from "./routes/date.ts";
+import social_media from "./routes/social_media.ts";
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
@@ -50,6 +51,7 @@ app.route('/api/seen', seen);
 app.route('/api/research', research);
 app.route('/api/report', report);
 app.route('/api/date', date);
+app.route('/api/social_media', social_media);
 
 app.notFound((c: Context) => {
 	return c.json({ message: 'Not Found' }, 404);

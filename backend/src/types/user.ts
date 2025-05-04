@@ -22,7 +22,7 @@ export type UserType = {
 	mbti?: string;
 	fame_rate?: number;
 	insta_link?: string;
-	twitter_link?: string;
+	x_link?: string;
 	intra_link?: string;
 };
 

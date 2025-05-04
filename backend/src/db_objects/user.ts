@@ -428,6 +428,9 @@ export class User {
 			birthdate: this.birthdate,
 			mbti: this.mbti,
 			fame_rate: this.fame_rate,
+			insta_link: this.insta_link,
+			x_link: this.x_link,
+			intra_link: this.intra_link,
 		};
 		return user;
 	}

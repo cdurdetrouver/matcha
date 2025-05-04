@@ -74,7 +74,7 @@ app.post('/x/:username', async (c: Context) => {
 async function save_avatar(user:User, file: File) {
 	const name = user.username + '_avatar';
 	let image;
-try {
+	try {
 		image = await Image.get_avatar_by_user(user.id);
 		if (!image.filename.endsWith('_default'))
 			await delete_file(image.filename);

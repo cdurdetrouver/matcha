@@ -34,7 +34,7 @@
 			toastStore.trigger(t);
 			goto('/');
 		}
-		city = await getCurrentPosition(user.location[0], user.location[1]);
+		city = await getCurrentPosition(user.lat, user.long);
 		const res = await request('/api/user/image/' + user.id, {
 			method: 'GET',
 			credentials: 'include'

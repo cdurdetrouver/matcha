@@ -20,6 +20,11 @@
 	</svelte:fragment>
 	<svelte:fragment slot="trail">
 		<div class="relative hidden lg:block">
+			<a class="btn hover:variant-soft-primary cursor-pointer" href="/map">
+				<span class="hidden select-none md:inline-block">Map</span>
+			</a>
+		</div>
+		<div class="relative hidden lg:block">
 			<a class="btn hover:variant-soft-primary cursor-pointer" href="/search">
 				<span class="hidden select-none md:inline-block">Search</span>
 			</a>

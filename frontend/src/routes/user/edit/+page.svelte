@@ -29,7 +29,8 @@
 
 	let username = '';
 	let email = '';
-	let location = [0, 0];
+	let latitude = 0;
+	let longitude = 0;
 	let description = '';
 	let interests: string[] = [];
 	let wanted = 0;
@@ -37,8 +38,8 @@
 	$: isModified =
 		username !== user?.username ||
 		email !== (user?.email ?? '') ||
-		location[0] !== user?.location[0] ||
-		location[1] !== user?.location[1] ||
+		latitude !== user.lat ||
+		longitude !== user.long ||
 		description !== (user?.description ?? '') ||
 		JSON.stringify(interests) !== JSON.stringify(user?.interests ?? []) ||
 		wanted !== user?.wanted;
@@ -65,10 +66,11 @@
 			toastStore.trigger(t);
 			goto('/');
 		}
-		city = await getCurrentPosition(user.location[0], user.location[1]);
+		city = await getCurrentPosition(user.lat, user.long);
 		username = user.username;
 		email = user.email ?? '';
-		location = [user.location[0], user.location[1]];
+		latitude = user.lat;
+		longitude = user.long;
 		description = user.description ?? '';
 		interests = user.interests ?? [];
 		wanted = user.wanted;
@@ -126,13 +128,13 @@
 			title: 'Change lcoation',
 			body: 'Choose your location',
 			meta: {
-				user_lat: location[0] != 0 ? location[0] : undefined,
-				user_long: location[1] != 0 ? location[1] : undefined
+				user_lat: user.lat !== 0 ? user.lat : undefined,
+				user_long: user.long !== 0 ? user.long : undefined
 			},
 			response: async (r) => {
 				if (r) {
-					location[0] = r.lat;
-					location[1] = r.long;
+					latitude = r.lat;
+					longitude = r.long;
 					locationError = '';
 					city = await getCurrentPosition(r.lat, r.long);
 				}
@@ -297,7 +299,8 @@
 				username: username !== user?.username ? username : undefined,
 				email: email !== user?.email ? email : undefined,
 				description: description !== user?.description ? description : undefined,
-				location: JSON.stringify(location) !== JSON.stringify(user.location) ? location : undefined,
+				latitude: latitude !== user?.lat ? latitude : undefined,
+				longitude: longitude !== user?.long ? longitude : undefined,
 				interests:
 					JSON.stringify(interests) !== JSON.stringify(user?.interests) ? interests : undefined,
 				wanted: wanted !== user?.wanted ? wanted : undefined
@@ -316,10 +319,11 @@
 					} else {
 						const data_res = await res.json();
 						user = data_res.user as User;
-						city = await getCurrentPosition(user.location[0], user.location[1]);
+						city = await getCurrentPosition(user.lat, user.long);
 						username = user.username;
 						email = user.email ?? '';
-						location = [user.location[0], user.location[1]];
+						latitude = user.lat;
+						longitude = user.long;
 						description = user.description ?? '';
 						interests = user.interests ?? [];
 						wanted = user.wanted;

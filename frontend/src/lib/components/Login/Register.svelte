@@ -7,7 +7,6 @@
 		PUBLIC_INTRA_API_KEY,
 		PUBLIC_INTRA_API_REDIRECT_URL
 	} from '$env/static/public';
-	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
 	import {
 		getModalStore,
@@ -15,6 +14,7 @@
 		type ModalSettings,
 		type ToastSettings
 	} from '@skeletonlabs/skeleton';
+	import { update_user } from '$lib/script/request';
 
 	const modalStore = getModalStore();
 	const toastStore = getToastStore();
@@ -95,7 +95,7 @@
 
 		const user = data_res.user as User;
 
-		SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+		await update_user(user);
 
 		const m: ModalSettings = {
 			type: 'alert',

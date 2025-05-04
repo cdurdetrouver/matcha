@@ -1,9 +1,9 @@
 export const prerender = true;
 
 import { redirect } from '@sveltejs/kit';
-import { GetCookie, SetCookie } from '$lib/script/cookies';
+import { GetCookie } from '$lib/script/cookies';
 import type { LayoutLoad } from './$types';
-import { request } from '$lib/script/request';
+import { update_user } from '$lib/script/request';
 
 const publicPaths = ['/', '/login', '/verif', '/reset_pass'];
 const publicCompletePaths = [...publicPaths, '/complete', '/user'];
@@ -38,26 +38,7 @@ function handleUserFromCookie(userCookie: string, currentPath: string) {
 }
 
 async function handleUserFromApi(currentPath: string) {
-	const res = await request(
-		'/api/user/me',
-		{
-			method: 'GET',
-			credentials: 'include'
-		},
-		true
-	);
-
-	if (!res.ok) {
-		if (!isPathAllowed(currentPath)) {
-			throw redirect(307, '/login');
-		}
-		return { user: null };
-	}
-
-	const data = await res.json();
-	const user = data.user;
-
-	SetCookie('user', JSON.stringify(user), 60 * 60 * 24);
+	const user = await update_user();
 
 	if (!user.complete_profile && !isPathAllowed(currentPath, publicCompletePaths)) {
 		throw redirect(307, '/complete');

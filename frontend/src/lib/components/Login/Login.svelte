@@ -7,10 +7,9 @@
 		PUBLIC_INTRA_API_KEY,
 		PUBLIC_INTRA_API_REDIRECT_URL
 	} from '$env/static/public';
-	import { SetCookie } from '$lib/script/cookies';
 	import type { User } from '$lib/types/user';
 	import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
-	import { request } from '$lib/script/request';
+	import { update_user } from '$lib/script/request';
 
 	const toastStore = getToastStore();
 
@@ -66,7 +65,7 @@
 
 		const user = data_res.user as User;
 
-		SetCookie('user', JSON.stringify(user), 60 * 60 * 24 * 365);
+		await update_user(user);
 
 		const t: ToastSettings = {
 			message: "You're logged in 🎉",

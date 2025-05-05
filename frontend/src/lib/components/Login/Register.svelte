@@ -95,7 +95,7 @@
 
 		const user = data_res.user as User;
 
-		// await update_user(user);
+		await update_user(user);
 
 		const m: ModalSettings = {
 			type: 'alert',

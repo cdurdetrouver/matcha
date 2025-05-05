@@ -365,7 +365,8 @@ app.post('/verif', async (c: Context) => {
 		if (ret_token != undefined) {
 			await Email_Verif.delete_by_user_id(userid);
 		}
-		if (error instanceof Error) return c.json({ message: error }, 422);
+		if (error instanceof Error)
+			return c.json({ message: error.message }, 422);
 		else return c.json({ message: 'You need to register first !' }, 422);
 	}
 });

@@ -87,17 +87,15 @@ app.get(
 					);
 					ws.close();
 					return;
-				}
-				if (user) {
-					setTimeout(async () => {
-						if (!connectedUsers.has(user.id)) {
-							user.connected_at = BigInt(Date.now());
-							user.online = false;
-							await user.save();
-						}
-					}, 6000);
-					connectedUsers.delete(user.id);
-				}
+				}		
+				setTimeout(async () => {
+					if (!connectedUsers.has(user.id)) {
+						user.connected_at = BigInt(Date.now());
+						user.online = false;
+						await user.save();
+					}
+				}, 6000);
+				connectedUsers.delete(user.id);
 			},
 		}));
 	})

@@ -1,18 +1,29 @@
 <script lang="ts">
 	import type { User } from '$lib/types/user';
 	import type { Image } from '$lib/types/image';
+	import type { Date } from '$lib/types/date';
 	import { goto } from '$app/navigation';
 	import { logoutUser, request } from '$lib/script/request';
 	import { onMount } from 'svelte';
-	import { Avatar, getToastStore, type ToastSettings, getModalStore } from '@skeletonlabs/skeleton';
+	import {
+		Avatar,
+		getToastStore,
+		type ToastSettings,
+		getModalStore,
+		type ModalSettings,
+		type ModalComponent
+	} from '@skeletonlabs/skeleton';
 	import Icon from '@iconify/svelte';
 	import { getCurrentPosition } from '$lib/script/location';
+	import ModalDates from '$lib/components/user/ModalDates.svelte';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 	let user: User;
 	let city = '';
 	let images: Image[] = [];
+	let dates: Date[] = [];
+	let lendate = 0;
 
 	onMount(async () => {
 		const req = await request('/api/user/me', {
@@ -50,6 +61,27 @@
 		}
 		const imageData = await res.json();
 		images = imageData.images;
+
+		const res2 = await request('/api/date/all', {
+			method: 'GET',
+			credentials: 'include'
+		});
+
+		if (!res2.ok) {
+			const t: ToastSettings = {
+				message: 'Failed to load dates',
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
+
+		const data_res = await res2.json();
+		dates = data_res.dates as Date[];
+
+		lendate = dates.filter(
+			(date) => date.accepted === false && date.user_to_meet.id === user.id
+		).length;
 	});
 
 	async function logout() {
@@ -66,10 +98,47 @@
 				.join(' ')
 		});
 	}
+
+	function dateModal() {
+		const c: ModalComponent = { ref: ModalDates };
+		const modal: ModalSettings = {
+			type: 'component',
+			component: c,
+			title: 'Calendar',
+			body: 'Manage your dates',
+			meta: {
+				dates,
+				user
+			},
+			response: async (data: any) => {
+				const res2 = await request('/api/date/all', {
+					method: 'GET',
+					credentials: 'include'
+				});
+
+				if (!res2.ok) {
+					const t: ToastSettings = {
+						message: 'Failed to load dates',
+						background: 'variant-filled-error'
+					};
+					toastStore.trigger(t);
+					return;
+				}
+
+				const data_res = await res2.json();
+				dates = data_res.dates as Date[];
+
+				lendate = dates.filter(
+					(date) => date.accepted === false && date.user_to_meet.id === user.id
+				).length;
+			}
+		};
+		modalStore.trigger(modal);
+	}
 </script>
 
 {#if user}
-	<div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4">
+	<div class="flex flex-col items-center w-full max-w-4xl mx-auto p-4 h-[50vh]">
 		<!-- Profile Header -->
 		<div class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full border-b pb-6">
 			<!-- Avatar -->
@@ -84,11 +153,9 @@
 				/>
 
 				<!-- Fame_rate -->
-				<div class="absolute top-0 left-0 w-fit h-auto rounded-full border-2 border-white bg-black">
-					<p class="p-1">
-						{(Math.round(user.fame_rate * 10) / 10).toFixed(1)}
-					</p>
-				</div>
+				<span class="badge-icon variant-filled absolute -top-0 -left-0 z-10"
+					>{(Math.round(user.fame_rate * 10) / 10).toFixed(1)}</span
+				>
 
 				<!-- Online/Offline Status -->
 				<div
@@ -142,11 +209,29 @@
 				{/if}
 			</div>
 
-			<div class="flex flex-col md:flex-row gap-2 md:ml-auto">
-				<a class="btn variant-filled-primary px-6 py-2" href="/user/edit">Edit Profile</a>
-				<button class="btn variant-filled-primary px-6 py-2" type="button" on:click={logout}>
-					Logout
-				</button>
+			<div class="flex flex-col justify-between items-end md:ml-auto h-full gap-4">
+				<div class="flex gap-2">
+					<a class="btn variant-filled-primary px-6 py-2" href="/user/edit">Edit Profile</a>
+					<button class="btn variant-filled-primary px-6 py-2" type="button" on:click={logout}>
+						Logout
+					</button>
+				</div>
+				<div class="relative">
+					<button
+						class="btn variant-filled-primary px-6 py-2 flex gap-2"
+						type="button"
+						on:click={dateModal}
+					>
+						<Icon icon="mdi:calendar-outline" />
+						Calendar
+					</button>
+
+					{#if lendate > 0}
+						<span class="badge-icon variant-filled absolute -top-0 -right-0 z-10"
+							>{dates.length}</span
+						>
+					{/if}
+				</div>
 			</div>
 		</div>
 

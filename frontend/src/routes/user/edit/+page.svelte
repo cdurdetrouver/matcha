@@ -196,13 +196,33 @@
 		if (!source || !username || !['github', 'x'].includes(source)) {
 			return;
 		}
-
-		console.log(source, username);
-
-		// sould put this after the request ok
-		// const data_res = await res.json();
-		// user.avatar = data_res.image;
-		// await update_user(user);
+		request('api/social_media/' + source + '/' + username, {
+			method: 'GET',
+			credentials: 'include'
+		})
+			.then(async (res) => {
+				if (res.ok) {
+					toastStore.trigger({
+						message: 'Avatar uploaded successfully',
+						background: 'variant-filled-success'
+					});
+					const data_res = await res.json();
+					user.avatar = data_res.image;
+					await update_user(user);
+				} else {
+					toastStore.trigger({
+						message: 'Failed to upload avatar',
+						background: 'variant-filled-error'
+					});
+				}
+			})
+			.catch((error) => {
+				console.error('Error uploading avatar:', error);
+				toastStore.trigger({
+					message: 'Failed to upload avatar',
+					background: 'variant-filled-error'
+				});
+			});
 	}
 
 	function openAvatarModal() {

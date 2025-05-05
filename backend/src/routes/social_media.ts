@@ -7,7 +7,7 @@ import { delete_file, post_file } from "../utils/google_file.ts";
 
 const app = new Hono();
 
-app.post('/github/:username', async (c: Context) => {
+app.get('/github/:username', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
@@ -34,10 +34,10 @@ app.post('/github/:username', async (c: Context) => {
 	const image = await save_avatar(user, file);
 	if (image == 422)
 		return c.json({ message: 'Failed to save the profile picture' }, 422);
-	return c.json({ message: 'Update profile picture with github pp'}, 200);
+	return c.json({ message: 'Update profile picture with github pp', user: await user.serialize_me()}, 200);
 });
 
-app.post('/x/:username', async (c: Context) => {
+app.get('/x/:username', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
 		return c.json({ message: 'Server cannot perform checks !' }, 404);
@@ -67,7 +67,7 @@ app.post('/x/:username', async (c: Context) => {
 	const image = await save_avatar(user, file);
 	if (image == 422)
 		return c.json({ message: 'Failed to save the profile picture' }, 422);
-	return c.json({ message: 'Update profile picture with X pp'}, 200);
+	return c.json({ message: 'Update profile picture with X pp', user: await user.serialize_me()}, 200);
 });
 
 async function save_avatar(user:User, file: File) {

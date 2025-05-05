@@ -24,7 +24,8 @@ app.get('/github/:username', async (c: Context) => {
 	const { avatar_url } = data;
 	if (!avatar_url)
 		return c.json({ message: 'Failed to get the profile picture url' }, 404);
-	res = await fetch(avatar_url);
+	const highResUrl = avatar_url.replace('_normal', '_400x400');
+	res = await fetch(highResUrl);
 	if (res.status != 200 || !res.body)
 		return c.json({ message: 'Failed to fetch the profile picture' }, 404);
 	const buffer = await res.arrayBuffer();
@@ -34,7 +35,7 @@ app.get('/github/:username', async (c: Context) => {
 	const image = await save_avatar(user, file);
 	if (image == 422)
 		return c.json({ message: 'Failed to save the profile picture' }, 422);
-	return c.json({ message: 'Update profile picture with github pp', user: await user.serialize_me()}, 200);
+	return c.json({ message: 'Update profile picture with github pp', user: await user.serialize()}, 200);
 });
 
 app.get('/x/:username', async (c: Context) => {
@@ -57,7 +58,8 @@ app.get('/x/:username', async (c: Context) => {
 	const { profile_image_url } = data;
 	if (!profile_image_url)
 		return c.json({ message: 'Failed to get the profile picture url' }, 404);
-	res = await fetch(profile_image_url);
+	const highResUrl = profile_image_url.replace('_normal', '_400x400');
+	res = await fetch(highResUrl);
 	if (res.status != 200 || !res.body)
 		return c.json({ message: 'Failed to fetch the profile picture' }, 404);
 	const buffer = await res.arrayBuffer();
@@ -67,7 +69,7 @@ app.get('/x/:username', async (c: Context) => {
 	const image = await save_avatar(user, file);
 	if (image == 422)
 		return c.json({ message: 'Failed to save the profile picture' }, 422);
-	return c.json({ message: 'Update profile picture with X pp', user: await user.serialize_me()}, 200);
+	return c.json({ message: 'Update profile picture with X pp', user: await user.serialize()}, 200);
 });
 
 async function save_avatar(user:User, file: File) {

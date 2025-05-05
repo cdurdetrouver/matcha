@@ -196,7 +196,7 @@
 		if (!source || !username || !['github', 'x'].includes(source)) {
 			return;
 		}
-		request('api/social_media/' + source + '/' + username, {
+		request('/api/social_media/' + source + '/' + username, {
 			method: 'GET',
 			credentials: 'include'
 		})
@@ -207,7 +207,7 @@
 						background: 'variant-filled-success'
 					});
 					const data_res = await res.json();
-					user.avatar = data_res.image;
+					user.avatar = data_res.user.avatar;
 					await update_user(user);
 				} else {
 					toastStore.trigger({

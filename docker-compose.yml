@@ -32,7 +32,7 @@ services:
 
   db_ui:
     container_name: db_ui
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:snapshot
     environment:
       - PGADMIN_DEFAULT_EMAIL=user@domain.com
       - PGADMIN_DEFAULT_PASSWORD=SuperSecret

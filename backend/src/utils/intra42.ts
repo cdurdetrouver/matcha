@@ -7,7 +7,7 @@ import {
 } from '../secret.ts';
 import { post_file_from_url } from './google_file.ts';
 import { generate_username } from './user.ts';
-import { Ban_Users } from "../db_objects/ban_users.ts";
+import { Ban_Users } from '../db_objects/ban_users.ts';
 
 async function get_access_token(code: string) {
 	const data = {

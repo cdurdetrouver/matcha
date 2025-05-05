@@ -68,13 +68,14 @@ export async function update_user(user?: User) {
 
 		if (!res.ok) {
 			console.warn('Failed to update user data');
+			return null;
 		}
 
 		const data = await res.json();
 		user = data.user as User;
+		SetCookie('user', JSON.stringify(user), 5);
+		await refreshToken();
 	}
-	SetCookie('user', JSON.stringify(user), 5);
-	await refreshToken();
 	return user;
 }
 

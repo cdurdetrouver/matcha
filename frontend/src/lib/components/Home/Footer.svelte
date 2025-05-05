@@ -37,17 +37,17 @@
 				<div class="space-y-6">
 					<h6 class="h6">Explore</h6>
 					<ul class="space-y-3">
-						<li><a class="anchor" href="/docs/introduction">Introduction</a></li>
-						<li><a class="anchor" href="/docs/get-started">Get Started</a></li>
-						<li><a class="anchor" href="/blog">Blog</a></li>
+						<li><a class="anchor" href="/">Introduction</a></li>
+						<li><a class="anchor" href="/">Get Started</a></li>
+						<li><a class="anchor" href="/">Blog</a></li>
 					</ul>
 				</div>
 				<div class="space-y-6">
 					<h6 class="h6">Features</h6>
 					<ul class="space-y-3">
-						<li><a class="anchor" href="/elements/core">Tailwind</a></li>
-						<li><a class="anchor" href="/actions/clipboard">Svelte</a></li>
-						<li><a class="anchor" href="/utilities/codeblocks">Utilities</a></li>
+						<li><a class="anchor" href="/">Tailwind</a></li>
+						<li><a class="anchor" href="/">Svelte</a></li>
+						<li><a class="anchor" href="/">Utilities</a></li>
 					</ul>
 				</div>
 				<div class="space-y-6">

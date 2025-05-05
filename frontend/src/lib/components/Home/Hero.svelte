@@ -8,7 +8,7 @@
 		</h1>
 		<p class="!text-xl max-w-[475px]">Meet some students of 42 with the same passions at you.</p>
 		<div class="flex gap-4">
-			<a class="btn variant-filled-primary text-xl" href="/prediction" rel="noreferrer">
+			<a class="btn variant-filled-primary text-xl" href="/" rel="noreferrer">
 				Discover the subject
 			</a>
 		</div>

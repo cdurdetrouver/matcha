@@ -16,3 +16,5 @@ export const GOOGLE_ID = Deno.env.get('GOOGLE_ID') ?? 'GOOGLE_ID';
 export const GOOGLE_SECRET = Deno.env.get('GOOGLE_SECRET') ?? 'GOOGLE_SECRET';
 export const GOOGLE_REDIRECT_URI =
 	Deno.env.get('GOOGLE_REDIRECT_URI') ?? 'GOOGLE_REDIRECT_URI';
+export const X_BARREER_API_KEY = 
+	Deno.env.get('X_BARREER_API_KEY') ?? 'X_BARREER_API_KEY';

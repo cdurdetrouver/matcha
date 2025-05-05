@@ -56,6 +56,8 @@ app.post('/all', async (c: Context) => {
 	}
 
 	let users_list: User[];
+	if (user_lists.length == 0)
+		return c.json({ message: 'No users found' }, 200);
 	if (user_lists.length == 1) {
 		users_list = user_lists[0];
 	} else {
@@ -66,7 +68,7 @@ app.post('/all', async (c: Context) => {
 	}
 	users_list = users_list.filter((u) => u.id != user.id);
 	if (users_list.length == 0)
-		return c.json({ message: 'No users found' }, 404);
+		return c.json({ message: 'No users found' }, 200);
 	const users_list_s = await Promise.all(
 		users_list.map(async (user) => await user.serialize())
 	);

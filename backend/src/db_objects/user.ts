@@ -281,7 +281,9 @@ export class User {
 					location::geography,
 					ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
 					$3
-				) AND id != $4;
+				) AND id != $4 AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $4);
 			`,
 			[long, lat, radius, this.id]
 		);

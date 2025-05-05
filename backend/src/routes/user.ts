@@ -340,7 +340,6 @@ app.all('/login/intra', (c: Context) => {
 });
 
 app.post('/verif', async (c: Context) => {
-	console.log(' test');
 	const { token, userid } = await c.req.json();
 	let ret_token:
 		| {

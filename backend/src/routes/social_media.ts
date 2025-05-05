@@ -51,9 +51,8 @@ app.post('/x/:username', async (c: Context) => {
 		"Authorization": `Bearer ${X_BARREER_API_KEY}`
 	});
 	let res = await fetch(`https://api.twitter.com/2/users/by/username/${username}?user.fields=profile_image_url`, { headers });
-	if (res.status != 200) {
+	if (res.status != 200)
 		return c.json({ message: 'X user not found' }, 404);
-	}
 	const data = (await res.json()).data;
 	const { profile_image_url } = data;
 	if (!profile_image_url)

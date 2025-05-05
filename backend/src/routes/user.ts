@@ -50,7 +50,7 @@ app.get('/chats', async (c: Context) => {
 	const chats_ids = await Chats_Users.get_chats_by_user(user.id);
 	const chats = await Chat.get_all_by_ids(chats_ids);
 	const chats_serialize: ChatType[] = await Promise.all(
-		chats.map(async (chat: Chat) => await chat.serialize())
+		chats.map(async (chat: Chat) => await chat.serialize(user.id))
 	);
 	return c.json(
 		{ message: 'User chats found !', chats: chats_serialize },
@@ -746,7 +746,7 @@ app.get('/:id', async (c: Context) => {
 		return c.json({ message: message }, ret_val);
 	let user_info;
 	try {
-		user_info = await User.get_by_id(id);
+		user_info = await user.get_by_id(id);
 	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}

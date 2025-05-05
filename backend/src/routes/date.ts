@@ -27,7 +27,7 @@ app.post('/set', async (c: Context) => {
 			400
 		);
 	try {
-		await User.get_by_id(Number(other_user_id));
+		await user.get_by_id(Number(other_user_id));
 	} catch (_e) {
 		return c.json({ message: 'User not found !' }, 404);
 	}

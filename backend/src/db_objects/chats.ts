@@ -107,9 +107,9 @@ export class Chat {
 		return chat;
 	}
 
-	async serialize(): Promise<ChatType> {
+	async serialize(user_id: number): Promise<ChatType> {
 		const users_id = await Chats_Users.get_users_by_chat(this.id);
-		const users = await User.get_all_by_ids(users_id);
+		const users = await User.get_all_by_ids(users_id, user_id);
 		const users_serialize = await Promise.all(
 			users.map(async (user) => await user.serialize())
 		);

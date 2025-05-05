@@ -27,7 +27,7 @@ app.post('/all', async (c: Context) => {
 		user_lists.push(await Tag.get_user_by_tags(tags, user.id));
 	}
 	if (username != undefined) {
-		const users = await User.get_by_username_contains(username);
+		const users = await user.get_by_username_contains(username);
 		user_lists.push(users);
 	}
 	if (fame_rate != undefined) {
@@ -37,7 +37,7 @@ app.post('/all', async (c: Context) => {
 				400
 			);
 		user_lists.push(
-			await User.get_all_by_famerate(
+			await user.get_all_by_famerate(
 				fame_rate,
 				fame_rate === 1 ? 1 : fame_rate + 0.1
 			)
@@ -52,7 +52,7 @@ app.post('/all', async (c: Context) => {
 				},
 				400
 			);
-		user_lists.push(await User.get_all_by_age(minAge, maxAge));
+		user_lists.push(await user.get_all_by_age(minAge, maxAge));
 	}
 
 	let users_list: User[];

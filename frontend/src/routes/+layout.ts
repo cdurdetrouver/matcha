@@ -41,7 +41,7 @@ async function handleUserFromApi(currentPath: string) {
 	const user = await update_user();
 
 	if (!user) {
-		if (!isPathAllowed(currentPath)) throw redirect(307, '/login  ');
+		if (!isPathAllowed(currentPath)) throw redirect(307, '/login');
 	} else if (!user.complete_profile && !isPathAllowed(currentPath, publicCompletePaths)) {
 		throw redirect(307, '/complete');
 	}

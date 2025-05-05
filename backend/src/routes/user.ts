@@ -346,7 +346,7 @@ app.post('/verif', async (c: Context) => {
 				expiration: number;
 				token: string;
 		  }
-		| undefined = undefined;	
+		| undefined = undefined;
 	try {
 		ret_token = await Email_Verif.get_by_user_id(userid);
 		if (ret_token == undefined) throw new Error('Token not found !');

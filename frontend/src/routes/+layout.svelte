@@ -22,6 +22,10 @@
 		socket = new WebSocketManager('/api/notif/ws');
 
 		socket.setOnOpenHook(() => {
+			if (!data.user) {
+				socket.close();
+				return;
+			}
 			data.user.online = true;
 		});
 

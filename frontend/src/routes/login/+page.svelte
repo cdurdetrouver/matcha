@@ -41,8 +41,6 @@
 				}
 				goto('/complete');
 			} else {
-				const data = await res.json();
-				console.error(data);
 				const t = {
 					message: 'Failed to login with ' + (source === 'google' ? 'Google' : 'Intra'),
 					background: 'variant-filled-error'

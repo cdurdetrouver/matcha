@@ -1,7 +1,4 @@
-# frontend/Dockerfile
-# Use an official node image as the base image
-FROM node:lts-bullseye
-
+FROM node:23-alpine
 
 # Set the working directory
 WORKDIR /app

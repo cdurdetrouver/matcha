@@ -30,5 +30,7 @@ export const REDIS_HOSTNAME =
 export const REDIS_PORT = Deno.env.get('REDIS_PORT') ?? 'REDIS_PORT';
 export const DENO_PORT =
 	Deno.env.get('DENO_PORT') ?? 'DENO_PORT';
-export let ALLOWED_ORIGINS = 
+export const ALLOWED_ORIGINS = 
 	Deno.env.get('ALLOWED_ORIGINS')?.split(',');
+export const REDIS_PASSWORD =	
+	Deno.env.get('REDIS_PASSWORD') ?? 'REDIS_PASSWORD';

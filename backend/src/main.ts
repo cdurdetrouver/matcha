@@ -15,7 +15,7 @@ import social_media from "./routes/social_media.ts";
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
-import { ALLOWED_ORIGINS, DB_HOSTNAME, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, DENO_PORT, REDIS_HOSTNAME, REDIS_PORT } from './secret.ts';
+import { ALLOWED_ORIGINS, DB_HOSTNAME, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, DENO_PORT, REDIS_HOSTNAME, REDIS_PORT, REDIS_PASSWORD } from './secret.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -67,6 +67,7 @@ export const client = new Client({
 export const redis = await connect({
 	hostname: REDIS_HOSTNAME,
 	port: REDIS_PORT,
+	password: REDIS_PASSWORD,
 });
 
 export const relation_graph = 'relation_graph';

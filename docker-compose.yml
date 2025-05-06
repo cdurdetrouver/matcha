@@ -64,6 +64,10 @@ services:
   redisgraph:
     container_name: redisgraph
     image: redislabs/redisgraph:latest
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "${REDISGRAPH_PASSWORD}" --loadmodule /usr/lib/redis/modules/redisgraph.so
     ports:
       - ${REDISGRAPH_PORTS}
     networks:

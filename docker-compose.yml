@@ -15,14 +15,14 @@ services:
     container_name: db
     image: postgis/postgis:17-3.4
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgresuser -d matcha" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       retries: 5
       start_period: 10s
     environment:
-      - POSTGRES_DB=matcha
-      - POSTGRES_USER=postgresuser
-      - POSTGRES_PASSWORD=postgrespassword
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -34,12 +34,12 @@ services:
     container_name: db_ui
     image: dpage/pgadmin4:6.21
     environment:
-      - PGADMIN_DEFAULT_EMAIL=user@domain.com
-      - PGADMIN_DEFAULT_PASSWORD=SuperSecret
-      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
-      - PGADMIN_CONFIG_LOGIN_BANNER="Authorised users only!"
-      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
-      - PGADMIN_LISTEN_PORT=5050
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=${PGADMIN_ENHANCED_COOKIE_PROTECTION}
+      - PGADMIN_CONFIG_LOGIN_BANNER="${PGADMIN_LOGIN_BANNER}"
+      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=${PGADMIN_CONSOLE_LOG_LEVEL}
+      - PGADMIN_LISTEN_PORT=${PGADMIN_LISTEN_PORT}
     volumes:
       - ./db_ui/servers.json:/pgadmin4/servers.json
       - ./db_ui/pass.pgpass:/pgadmin4/.pgpass
@@ -64,8 +64,12 @@ services:
   redisgraph:
     container_name: redisgraph
     image: redislabs/redisgraph:latest
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "${REDISGRAPH_PASSWORD}" --loadmodule /usr/lib/redis/modules/redisgraph.so
     ports:
-      - "6379:6379"
+      - "6378:6379"
     networks:
       - matcha.net
     volumes:

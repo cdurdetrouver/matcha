@@ -1,4 +1,4 @@
-DOCKER_COMPOSE=docker compose
+DOCKER_COMPOSE=docker compose --env-file .env
 DOCKER_COMPOSE_FILE=docker-compose.yml
 
 all: build start

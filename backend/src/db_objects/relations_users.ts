@@ -97,7 +97,7 @@ export class Relations_Users {
 	static async is_related(
 		user_id: number,
 		target_id: number
-	): Promise<boolean> {
+	): Promise<number> {
 		const res = await client.queryObject<{
 			target_id: number;
 			user_id: number;
@@ -109,8 +109,8 @@ export class Relations_Users {
             `,
 			[user_id, target_id]
 		);
-		if (res.rows[0] == undefined) return false;
-		return true;
+		if (res.rows[0] == undefined) return -1;
+		return res.rows[0].relation;
 	}
 
 	static async delete_relation(

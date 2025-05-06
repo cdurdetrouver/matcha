@@ -167,6 +167,35 @@ app.all('/delete', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
+app.get('/is_related_to_me/:id', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+	const id = Number(c.req.param('id'));
+	if (id == undefined) return c.json({ message: 'ID is required' }, 400);
+	if (id === user.id)
+		return c.json({ message: 'You cannot relate to yourself' }, 400);
+	try {
+		const target_user = await user.get_by_id(id);
+		const rel = await Relations_Users.is_related(user.id, id);
+		if (rel == -1) return c.json({ message: 
+			('User is not related to ' + target_user.username)}, 200);
+		return c.json({ message: ('User is related to '
+			+ target_user.username), relation: rel }, 200);
+	} catch (e) {
+		if (e instanceof Error && e.message === 'User not found')
+			return c.json({ message: 'User does not exist' }, 400);
+		return c.json({ message: 'Relation does not exist' }, 400);
+	}
+});
+
+app.all('/is_related_to_me/:id', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
 app.notFound((c: Context) => {
 	return c.json({ message: 'Route not Found' }, 404);
 });

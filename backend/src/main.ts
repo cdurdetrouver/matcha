@@ -58,7 +58,7 @@ app.notFound((c: Context) => {
 
 export const client = new Client({
 	hostname: DB_HOSTNAME,
-	port: DB_PORT,
+	port: parseInt(DB_PORT, 10),
 	database: DB_NAME,
 	user: DB_USER,
 	password: DB_PASSWORD,

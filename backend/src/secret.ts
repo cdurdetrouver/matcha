@@ -18,3 +18,17 @@ export const GOOGLE_REDIRECT_URI =
 	Deno.env.get('GOOGLE_REDIRECT_URI') ?? 'GOOGLE_REDIRECT_URI';
 export const X_BARREER_API_KEY = 
 	Deno.env.get('X_BARREER_API_KEY') ?? 'X_BARREER_API_KEY';
+export const DB_HOSTNAME =
+	Deno.env.get('DB_HOSTNAME') ?? 'DB_HOSTNAME';
+export const DB_PORT = Deno.env.get('DB_PORT') ?? 'DB_PORT';
+export const DB_NAME = Deno.env.get('DB_NAME') ?? 'DB_NAME';
+export const DB_USER = Deno.env.get('DB_USER') ?? 'DB_USER';
+export const DB_PASSWORD =
+	Deno.env.get('DB_PASSWORD') ?? 'DB_PASSWORD';
+export const REDIS_HOSTNAME =
+	Deno.env.get('REDIS_HOSTNAME') ?? 'REDIS_HOSTNAME';
+export const REDIS_PORT = Deno.env.get('REDIS_PORT') ?? 'REDIS_PORT';
+export const DENO_PORT =
+	Deno.env.get('DENO_PORT') ?? 'DENO_PORT';
+export let ALLOWED_ORIGINS = 
+	Deno.env.get('ALLOWED_ORIGINS')?.split(',');

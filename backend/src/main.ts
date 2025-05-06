@@ -15,17 +15,16 @@ import social_media from "./routes/social_media.ts";
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
+import { ALLOWED_ORIGINS, DB_HOSTNAME, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, DENO_PORT, REDIS_HOSTNAME, REDIS_PORT } from './secret.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
-
-const allowedOrigin = ['http://localhost:5173', 'ws://localhost:5173'];
 
 app.use('*', (c: Context, next) => {
 	if (c.req.header('upgrade')?.toLowerCase() === 'websocket') {
 		return next();
 	}
 	return cors({
-		origin: allowedOrigin,
+		origin: ALLOWED_ORIGINS,
 		allowHeaders: [
 			'Origin',
 			'Content-Type',
@@ -58,16 +57,16 @@ app.notFound((c: Context) => {
 });
 
 export const client = new Client({
-	hostname: 'db',
-	port: 5432,
-	database: 'matcha',
-	user: 'postgresuser',
-	password: 'postgrespassword',
+	hostname: DB_HOSTNAME,
+	port: DB_PORT,
+	database: DB_NAME,
+	user: DB_USER,
+	password: DB_PASSWORD,
 });
 
 export const redis = await connect({
-	hostname: 'redisgraph',
-	port: 6379,
+	hostname: REDIS_HOSTNAME,
+	port: REDIS_PORT,
 });
 
 export const relation_graph = 'relation_graph';
@@ -79,7 +78,7 @@ try {
 
 	console.log('Connected to the database');
 
-	Deno.serve({ port: 8000 }, app.fetch);
+	Deno.serve({ port: DENO_PORT }, app.fetch);
 } catch (e) {
 	console.error(e);
 }

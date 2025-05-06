@@ -66,7 +66,7 @@ export const client = new Client({
 
 export const redis = await connect({
 	hostname: REDIS_HOSTNAME,
-	port: REDIS_PORT,
+	port: Number(REDIS_PORT),
 	password: REDIS_PASSWORD,
 });
 

@@ -8,7 +8,7 @@ services:
     networks:
       - matcha.net
     ports:
-      - ${FRONTEND_PORTS}
+      - "5173:5173"
     depends_on:
       - backend
   db:
@@ -24,7 +24,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - ${POSTGRES_PORT}
+      - "5432:5432"
     volumes:
       - ./db:/var/lib/postgresql/data
     networks:
@@ -44,7 +44,7 @@ services:
       - ./db_ui/servers.json:/pgadmin4/servers.json
       - ./db_ui/pass.pgpass:/pgadmin4/.pgpass
     ports:
-      - ${PGADMIN_PORTS}
+      - "5050:5050"
     networks:
       - matcha.net
 
@@ -56,7 +56,7 @@ services:
     networks:
       - matcha.net
     ports:
-      - ${BACKEND_PORTS}
+      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -69,7 +69,7 @@ services:
       - -c
       - redis-server --requirepass "${REDISGRAPH_PASSWORD}" --loadmodule /usr/lib/redis/modules/redisgraph.so
     ports:
-      - ${REDISGRAPH_PORTS}
+      - "6378:6379"
     networks:
       - matcha.net
     volumes:
@@ -82,7 +82,7 @@ services:
     networks:
       - matcha.net
     ports:
-      - ${REDISINSIGHT_PORTS}
+      - "5540:5540"
 
 networks:
   matcha.net:

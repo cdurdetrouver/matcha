@@ -635,6 +635,9 @@ app.post('/block_user/:id', async (c: Context) => {
 	try {
 		await User.get_by_id(id);
 		await Block_Users.block_user(user.id, id);
+		const chats = await Chats_Users.get_chats_by_2_user(user.id, id);
+		await Promise.all(chats.map(async (chat_id) => {
+			await Chats_Users.delete_user_chat(user.id, chat_id);}));
 	} catch (e) {
 		if (e instanceof Error && e.message === 'User not found')
 			return c.json(

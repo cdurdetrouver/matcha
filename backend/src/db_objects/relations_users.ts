@@ -113,6 +113,19 @@ export class Relations_Users {
 		return true;
 	}
 
+	static async delete_relation(
+		user_id: number,
+		target_id: number
+	): Promise<void> {
+		await client.queryObject(
+			`
+				DELETE FROM "${TABLE}"
+				WHERE user_id = $1 AND target_id = $2 OR user_id = $2 AND target_id = $1;
+			`,
+			[user_id, target_id]
+		);
+	}
+
 	async serialize(): Promise<RelationType> {
 		const user = await (await User.get_by_id(this.target_id)).serialize();
 		const relation_s: RelationType = {

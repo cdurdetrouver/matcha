@@ -54,6 +54,20 @@ export class Chats_Users {
 		return res.rows.map((row) => row.chat_id);
 	}
 
+	static async get_chats_by_2_user(user_id1: number,
+		user_id2: number): Promise<number[]> {
+		const res = await client.queryObject<{ chat_id: number }>(
+			`
+				SELECT chat_id FROM "${TABLE}"
+				WHERE user_id = $1 AND chat_id IN (
+				SELECT chat_id FROM "${TABLE}"
+				WHERE user_id = $2);
+			`,
+			[user_id1, user_id2]
+		);
+		return res.rows.map((row) => row.chat_id);
+	}
+
 	static async delete_user_chat(user_id: number, chat_id: number) {
 		await client.queryObject(
 			`

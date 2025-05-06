@@ -221,6 +221,20 @@ export class User {
 		);
 	}
 
+	async get_by_id(id: number): Promise<User> {
+		const res = await client.queryObject<User>(
+			`
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE id = $1 AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $2);
+			`,
+			[id, this.id]
+		);
+		const user = res.rows[0];
+		if (user == undefined) throw Error('User not found');
+		return new User(user);
+	}
+
 	static async get_by_id(id: number): Promise<User> {
 		const res = await client.queryObject<User>(
 			`
@@ -233,38 +247,44 @@ export class User {
 		return new User(user);
 	}
 
-	static async get_all_by_ids(ids: number[]): Promise<User[]> {
+	static async get_all_by_ids(ids: number[], user_id: number): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE id = ANY($1);
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE id = ANY($1) AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $2);
 			`,
-			[ids]
+			[ids, user_id]
 		);
 		return res.rows.map((row) => new User(row));
 	}
 
-	static async get_all_by_famerate(
+	async get_all_by_famerate(
 		fame_rate_min: number,
 		fame_rate_max: number
 	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE fame_rate BETWEEN $1 AND $2;
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE fame_rate BETWEEN $1 AND $2 AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $3);
 			`,
-			[fame_rate_min, fame_rate_max]
+			[fame_rate_min, fame_rate_max, this.id]
 		);
 		return res.rows.map((row) => new User(row));
 	}
 
-	static async get_all_by_age(
+	async get_all_by_age(
 		minAge: number,
 		maxAge: number
 	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
-				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE EXTRACT(YEAR FROM age(birthdate)) BETWEEN $1 AND $2;
+				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE EXTRACT(YEAR FROM age(birthdate)) BETWEEN $1 AND $2 AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $3);
 			`,
-			[minAge, maxAge]
+			[minAge, maxAge, this.id]
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -281,7 +301,9 @@ export class User {
 					location::geography,
 					ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
 					$3
-				) AND id != $4;
+				) AND id != $4 AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $4);
 			`,
 			[long, lat, radius, this.id]
 		);
@@ -301,13 +323,15 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	static async get_by_username_contains(substring: string): Promise<User[]> {
+	async get_by_username_contains(substring: string): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" 
-				WHERE username ILIKE $1;
+				WHERE username ILIKE $1 AND id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $2);
 			`,
-			[`%${substring}%`]
+			[`%${substring}%`, this.id]
 		);
 		return res.rows.map((row) => new User(row));
 	}
@@ -401,7 +425,7 @@ export class User {
 			relation_graph,
 			100
 		);
-		const users = await User.get_all_by_ids(ids);
+		const users = await User.get_all_by_ids(ids, this.id);
 		return users;
 	}
 

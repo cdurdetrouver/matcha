@@ -228,7 +228,7 @@ app.get('/:id/info', async (c: Context) => {
 	}
 	if (!(await Chats_Users.get_chats_by_user(user.id)).includes(chat.id))
 		return c.json({ message: 'User not in the chat' }, 403);
-	return c.json({ message: 'Chat found', chat: await chat.serialize() });
+	return c.json({ message: 'Chat found', chat: await chat.serialize(user.id) });
 });
 
 app.all('/:id/info', (c: Context) => {

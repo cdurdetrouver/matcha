@@ -27,7 +27,7 @@ app.post('/all', async (c: Context) => {
 		user_lists.push(await Tag.get_user_by_tags(tags, user.id));
 	}
 	if (username != undefined) {
-		const users = await User.get_by_username_contains(username);
+		const users = await user.get_by_username_contains(username);
 		user_lists.push(users);
 	}
 	if (fame_rate != undefined) {
@@ -37,7 +37,7 @@ app.post('/all', async (c: Context) => {
 				400
 			);
 		user_lists.push(
-			await User.get_all_by_famerate(
+			await user.get_all_by_famerate(
 				fame_rate,
 				fame_rate === 1 ? 1 : fame_rate + 0.1
 			)
@@ -52,13 +52,13 @@ app.post('/all', async (c: Context) => {
 				},
 				400
 			);
-		user_lists.push(await User.get_all_by_age(minAge, maxAge));
+		user_lists.push(await user.get_all_by_age(minAge, maxAge));
 	}
 
 	let users_list: User[];
 	if (user_lists.length == 0)
-		return c.json({ message: 'No users found' }, 404);
-	else if (user_lists.length == 1) {
+		return c.json({ message: 'No users found' }, 200);
+	if (user_lists.length == 1) {
 		users_list = user_lists[0];
 	} else {
 		users_list = user_lists.reduce((acc, list) => {
@@ -67,6 +67,8 @@ app.post('/all', async (c: Context) => {
 		});
 	}
 	users_list = users_list.filter((u) => u.id != user.id);
+	if (users_list.length == 0)
+		return c.json({ message: 'No users found' }, 200);
 	const users_list_s = await Promise.all(
 		users_list.map(async (user) => await user.serialize())
 	);

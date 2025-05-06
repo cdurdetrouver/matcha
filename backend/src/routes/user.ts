@@ -50,7 +50,7 @@ app.get('/chats', async (c: Context) => {
 	const chats_ids = await Chats_Users.get_chats_by_user(user.id);
 	const chats = await Chat.get_all_by_ids(chats_ids);
 	const chats_serialize: ChatType[] = await Promise.all(
-		chats.map(async (chat: Chat) => await chat.serialize())
+		chats.map(async (chat: Chat) => await chat.serialize(user.id))
 	);
 	return c.json(
 		{ message: 'User chats found !', chats: chats_serialize },
@@ -641,7 +641,7 @@ app.post('/block_user/:id', async (c: Context) => {
 				{ message: 'The user you try to blocked does not exists !' },
 				404
 			);
-		else return c.json({ message: 'Error while blocking the user' }, 422);
+		else return c.json({ message: 'User already blocked' }, 400);
 	}
 	return c.json({ message: 'Blocked users list updated' }, 200);
 });
@@ -658,10 +658,10 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 	const { message, user } = ret_check;
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
-	if (user.id != id) return c.json({ message: 'Not authorized' }, 401);
-
 	try {
 		await User.get_by_id(id);
+		if (!await Block_Users.is_user_blocked_by(user.id, id))
+			return c.json({ message: 'User not blocked' }, 400);
 		await Block_Users.delete_block(id, user.id);
 	} catch (e) {
 		if (e instanceof Error && e.message === 'User not found')
@@ -746,7 +746,7 @@ app.get('/:id', async (c: Context) => {
 		return c.json({ message: message }, ret_val);
 	let user_info;
 	try {
-		user_info = await User.get_by_id(id);
+		user_info = await user.get_by_id(id);
 	} catch (_e) {
 		return c.json({ message: 'User not found' }, 404);
 	}

@@ -1,3 +1,4 @@
+import { Block_Users } from "../db_objects/block_users.ts";
 import { Relations_Users } from '../db_objects/relations_users.ts';
 import { User } from '../db_objects/user.ts';
 import { MatchContextType } from '../types/matchcontext.ts';
@@ -28,6 +29,9 @@ export async function matchingScore(
 	let boost = 0;
 	let maxBoost = 0;
 
+	if (await Block_Users.is_user_blocked_by(userA.id, userB.id) || 
+	await Block_Users.is_user_blocked_by(userB.id, userA.id))
+		return 0;
 	maxBoost += mostSimilarUserstoA.length * 2;
 	for (const user of mostSimilarUserstoA) {
 		if (user.id !== userB.id) {

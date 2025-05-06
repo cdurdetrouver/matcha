@@ -67,7 +67,7 @@ app.post('/create', async (c: Context) => {
 	let target_user;
 	try {
 		target_id = Number(target_id);
-		target_user = await User.get_by_id(target_id);
+		target_user = await user.get_by_id(target_id);
 	} catch (_e) {
 		return c.json({ message: 'Target user does not exist' }, 400);
 	}

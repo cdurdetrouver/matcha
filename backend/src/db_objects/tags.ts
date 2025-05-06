@@ -62,7 +62,9 @@ export class Tag {
 		const res = await client.queryObject<{ user_id: number }>(
 			`
 				SELECT user_id FROM tags_users
-				WHERE tag = ANY($1::text[]) AND user_id != $2
+				WHERE tag = ANY($1::text[]) AND user_id != $2 AND user_id NOT IN (
+					SELECT blocked_id FROM "block_users"
+					WHERE blocker_id = $2)
 				GROUP BY user_id
 				HAVING COUNT(DISTINCT tag) = $3;
 			`,

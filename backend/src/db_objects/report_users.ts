@@ -49,7 +49,7 @@ export class Report_Users {
 		`, [user_id, target_id, reason]);
 	}
 
-	static async get_reports_by_target(target_id: number, reason: string): Promise<Report[]> {
+	static async get_reports_by_target(target_id: number, reason: string): Promise<User[]> {
 		const res = await client.queryObject<{
 			user_id: number;
 		}>(`

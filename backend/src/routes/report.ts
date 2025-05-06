@@ -24,7 +24,7 @@ app.post('/user', async (c: Context) => {
 		return c.json({ message: 'You cannot report yourself' }, 400);
 	let target_user: User;
 	try {
-		target_user = await User.get_by_id(target_id);
+		target_user = await user.get_by_id(target_id);
 	} catch (_e) {
 			return c.json({ message: 'User not found' }, 404);
 	}

@@ -77,7 +77,7 @@ export class Relations_Users {
 	static async get_relation(
 		user_id: number,
 		target_id: number
-	): Promise<Relations_Users | null> {
+	): Promise<Relations_Users> {
 		const res = await client.queryObject<{
 			target_id: number;
 			user_id: number;
@@ -90,7 +90,7 @@ export class Relations_Users {
             `,
 			[user_id, target_id]
 		);
-		if (res.rows[0] == undefined) return null;
+		if (res.rows[0] == undefined) throw new Error('Relation not found');
 		return new Relations_Users(res.rows[0]);
 	}
 

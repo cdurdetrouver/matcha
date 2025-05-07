@@ -7,10 +7,21 @@
 	import { WebSocketManager } from '$lib/script/request.js';
 	import { tick } from 'svelte';
 	import { ChatsStore } from '$lib/stores/chats.js';
+	import { getToastStore, type ToastSettings, } from '@skeletonlabs/skeleton';
 
-	export let data;
+	const toastStore = getToastStore();
+
+	export let data;	
+	let showCallMenu = false;
+	let is_videoCall = false;
+	let is_audioCall = false;
+
 	let chats: ChatType[] = [];
 	ChatsStore.subscribe((value) => chats.push(...value));
+	
+	function toggleCallMenu() {
+		showCallMenu = !showCallMenu;
+	}
 
 	let classes = {
 		personal: [
@@ -54,6 +65,93 @@
 		};
 		if (socket && currentMessage != '') socket.send(newMessage);
 		currentMessage = '';
+	}
+
+	const openMediaDevices = async (constraints: MediaStreamConstraints) => {
+		return await navigator.mediaDevices.getUserMedia(constraints);
+	}
+
+	async function getConnectedDevices(type: string) {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		return devices.filter(device => device.kind === type)
+	}
+
+	async function openCamera(cameraId: string, minWidth: number, minHeight: number) {
+		const constraints: MediaStreamConstraints ={
+			'audio': {'echoCancellation': true},
+			'video': {
+				'deviceId': cameraId,
+				'width': {'min': minWidth},
+				'height': {'min': minHeight}
+				}
+			}
+    	return await navigator.mediaDevices.getUserMedia(constraints);
+	}
+
+	async function audioCall() {
+		try {
+			const stream = await openMediaDevices({'audio':true});
+		} catch(error) {
+			console.error('Error accessing media devices.', error);
+			const t: ToastSettings = {
+					message: 'Cannot access to the microphone',
+					background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
+		const devices = await getConnectedDevices('audioinput');
+		if (devices.length === 0) {
+			const t: ToastSettings = {
+					message: 'No audio input devices found',
+					background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
+	}
+
+	async function videoCall() {
+		try {
+			const stream = await openMediaDevices({'audio':true, 'video':true});
+		} catch(error) {
+			console.error('Error accessing media devices.', error);
+			const t: ToastSettings = {
+					message: 'Cannot access to the media devices',
+					background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
+		is_videoCall = true;
+		const devices = await getConnectedDevices('videoinput');
+		console.log("devices: ", devices);
+		if (devices && devices.length > 0) {
+		if (devices[0]) {
+			try {
+				const stream = await openCamera(devices[0].deviceId, 100, 100);
+				const videoElement = document.querySelector('video#localVideo');
+				if (videoElement instanceof HTMLVideoElement) {
+					videoElement.srcObject = stream;
+				} else {
+					console.error('Video element not found or is not a valid HTMLVideoElement.');
+				}
+			} catch (error) {
+				console.error('Error opening camera:', error);
+				const t: ToastSettings = {
+					message: 'Failed to access the camera',
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+			}
+		} else {
+			const t: ToastSettings = {
+				message: 'No video input devices found',
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
+		}
 	}
 
 	async function scrollToBottom() {
@@ -101,6 +199,16 @@
 			<h2 class="h2">{chat.name}</h2>
 		{/if}
 	</header>
+	{#if is_videoCall}
+		<div class="h-full w-full">
+			<video id="localVideo" autoplay playsinline></video>
+		</div>
+	{/if}
+	{#if is_audioCall}
+		<div class="h-full w-full">
+			<audio id="localAudio" autoplay playsinline></audio>
+		</div>
+	{/if}
 	<section class="h-full overflow-y-auto" bind:this={chatContainer} on:scroll={handleScroll}>
 		<ul class="size-full p-10 flex flex-col gap-2.5">
 			{#each messages as message}
@@ -120,7 +228,32 @@
 			class="input-group input-group-divider grid-cols-[auto_1fr_auto] rounded-container-token"
 			on:submit|preventDefault={sendMessage}
 		>
-			<button class="input-group-shim">+</button>
+			{#if !showCallMenu}
+				<button class="input-group-shim" on:click={() => {toggleCallMenu()}}>+</button>
+			{/if}
+			{#if showCallMenu}
+				<div class="bg-transparent border-0 flex" on:mouseleave={() => {toggleCallMenu()}}>
+
+					<button
+					type="button"
+					class="input-group-shim bg-transparent"
+					on:click={audioCall}
+					aria-label="Audio call"
+					title="Audio call"
+					>
+					<Icon icon="ic:round-call" width="24" height="24" />
+					</button>
+					<button
+					type="button"
+					class="input-group-shim bg-transparent"
+					on:click={videoCall}
+					aria-label="Video call"
+					title="Video call"
+					>
+					<Icon icon="ic:round-videocam" width="24" height="24" />
+					</button>
+				</div>
+			{/if}
 			<textarea
 				bind:value={currentMessage}
 				class="bg-transparent border-0 ring-0 p-2 h-fit"

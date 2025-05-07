@@ -163,8 +163,11 @@ app.delete('/delete', async (c: Context) => {
 		await Relations_Users.delete_relation(user.id, target_id);
 		const chats = await Chats_Users.get_chats_by_2_user(user.id, target_id);
 		await Promise.all(chats.map(async (chat_id) => {
-			await Chats_Users.delete_user_chat(user.id, chat_id);
-			await Chats_Users.delete_user_chat(target_id, chat_id);}));
+			await Promise.all([
+				Chats_Users.delete_user_chat(user.id, chat_id),
+				Chats_Users.delete_user_chat(target_id, chat_id)
+			]);
+		}));
 	} catch (_e) {
 		return c.json({ message: 'Relation does not exist' }, 400);
 	}

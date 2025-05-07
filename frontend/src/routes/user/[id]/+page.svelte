@@ -25,7 +25,8 @@
 	export let data;
 
 	let user: User;
-	let related: number | null = null;
+	let liked_me: number = 1;
+	let liked_him: number = 1;
 	let city = '';
 	let images: Image[] = [];
 
@@ -79,12 +80,19 @@
 		});
 		if (res_relation.status === 200) {
 			const relationData = await res_relation.json();
-			related = relationData.relation?.relation;
+			if (relationData.relation) liked_me = relationData.relation?.relation;
+		}
+
+		const res_reverse_relation = await request('/api/relations/is_related_to_me/' + user.id, {
+			method: 'GET',
+			credentials: 'include'
+		});
+		if (res_reverse_relation.status === 200) {
+			const relationData = await res_reverse_relation.json();
+			if (relationData.relation) liked_him = relationData.relation?.relation;
 		}
 
 		socket = new WebSocketManager(`/api/seen/ws?target_user_id=${user.id}`);
-
-		// console.log(socket);
 	});
 
 	onDestroy(() => {
@@ -289,17 +297,6 @@
 					{/if}
 				</div>
 
-				<!-- Relation Status -->
-				<div class="flex items-center gap-2">
-					{#if related === 0}
-						<p>Asked you to be friend</p>
-						<Icon icon="mdi:fire" class="text-[#1e90ff] h-auto w-[1.5rem]" />
-					{:else if related === 2}
-						<p>Asked you to be lovers</p>
-						<Icon icon="mdi:fire" class="text-[#e32636] h-auto w-[1.5rem]" />
-					{/if}
-				</div>
-
 				<!-- Last Connection -->
 				{#if user.online == false}
 					<div class="flex items-center gap-4">
@@ -309,30 +306,83 @@
 					</div>
 				{/if}
 
-				<!-- Request Buttons -->
-				<div class="flex gap-4 mt-4">
-					{#if user.wanted <= 1 && data.user.wanted <= 1}
-						<button
-							type="button"
-							class="btn btn-hover px-4 py-2 bg-[#1e90ff] text-white rounded-lg"
-							on:click={() => sendRequest('friend')}
-						>
-							Request Friend
-						</button>
-					{/if}
-					{#if user.wanted >= 1 && data.user.wanted >= 1}
-						<button
-							type="button"
-							class="btn btn-hover px-4 py-2 bg-[#e32636] text-white rounded-lg"
-							on:click={() => sendRequest('love')}
-						>
-							Request Love
-						</button>
-					{/if}
-				</div>
+				<!-- Relation Status -->
+				{#if liked_him === 1}
+					<div class="flex items-center gap-2">
+						{#if liked_me === 0}
+							<p>Asked you to be friend</p>
+							<Icon icon="mdi:fire" class="text-[#1e90ff] h-auto w-[1.5rem]" />
+						{:else if liked_me === 2}
+							<p>Asked you to be lovers</p>
+							<Icon icon="mdi:fire" class="text-[#e32636] h-auto w-[1.5rem]" />
+						{/if}
+					</div>
+
+					<!-- Request Buttons -->
+					<div class="flex gap-4 mt-4">
+						{#if user.wanted <= 1 && data.user.wanted <= 1 && liked_me <= 1}
+							<button
+								type="button"
+								class="btn btn-hover px-4 py-2 bg-[#1e90ff] text-white rounded-lg"
+								on:click={() => sendRequest('friend')}
+							>
+								{#if liked_me === 0}
+									Accept Friend
+								{:else if liked_me === 1}
+									Request Friend
+								{/if}
+							</button>
+						{/if}
+						{#if user.wanted >= 1 && data.user.wanted >= 1 && liked_me >= 1}
+							<button
+								type="button"
+								class="btn btn-hover px-4 py-2 bg-[#e32636] text-white rounded-lg"
+								on:click={() => sendRequest('love')}
+							>
+								{#if liked_me === 2}
+									Accept Love
+								{:else if liked_me === 1}
+									Request Love
+								{/if}
+							</button>
+						{/if}
+					</div>
+				{:else if liked_him !== 1 && liked_me !== 1}
+					<div class="flex gap-4 mt-4">
+						{#if liked_him === 0 && liked_me === 0}
+							<button
+								type="button"
+								class="btn btn-hover px-4 py-2 bg-[#1e90ff] text-white rounded-lg"
+								on:click={() => sendRequest('friend')}
+							>
+								<Icon icon="material-symbols:block" class="text-[#e32636]" />
+								Unfriend
+							</button>
+						{:else if liked_him === 2 && liked_me === 2}
+							<button
+								type="button"
+								class="btn btn-hover px-4 py-2 bg-[#e32636] text-white rounded-lg"
+								on:click={() => sendRequest('love')}
+							>
+								<Icon icon="material-symbols:block" class="text-[#1e90ff]" />
+								Unlove
+							</button>
+						{/if}
+					</div>
+				{:else}
+					<div class="flex items-center gap-2">
+						{#if liked_him === 0}
+							<p>Friend request send</p>
+							<Icon icon="mdi:fire" class="text-[#1e90ff] h-auto w-[1.5rem]" />
+						{:else if liked_him === 2}
+							<p>Love request send</p>
+							<Icon icon="mdi:fire" class="text-[#e32636] h-auto w-[1.5rem]" />
+						{/if}
+					</div>
+				{/if}
 			</div>
 
-			<div class="flex flex-col justify-between items-end md:ml-auto h-full gap-4">
+			<div class="flex flex-col justify-between md:items-end items-center md:ml-auto h-full gap-4">
 				<div class="flex gap-2">
 					<button
 						class="btn variant-filled-primary px-6 py-2"
@@ -347,8 +397,10 @@
 								<button
 									class="btn variant-filled-primary"
 									type="button"
-									on:click={() => Report(reason)}>{reason}</button
+									on:click={() => Report(reason)}
 								>
+									{reason}
+								</button>
 							{/each}
 						</div>
 					</div>

@@ -209,7 +209,7 @@
 				{/if}
 			</div>
 
-			<div class="flex flex-col justify-between items-end md:ml-auto h-full gap-4">
+			<div class="flex flex-col justify-between md:items-end items-center md:ml-auto h-full gap-4">
 				<div class="flex gap-2">
 					<a class="btn variant-filled-primary px-6 py-2" href="/user/edit">Edit Profile</a>
 					<button class="btn variant-filled-primary px-6 py-2" type="button" on:click={logout}>

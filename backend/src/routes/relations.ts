@@ -85,12 +85,11 @@ app.post('/create', async (c: Context) => {
 	if (target_user.wanted !== 1 && target_user.wanted !== relation)
 		return c.json(
 			{
-				message:
-					'Target user is not looking for this kind of relation',
+				message: 'Target user is not looking for this kind of relation',
 			},
 			400
 		);
-	if (await Relations_Users.is_related(user.id, target_id) != -1)
+	if ((await Relations_Users.is_related(user.id, target_id)) != -1)
 		return c.json({ message: 'Relation already exists' }, 400);
 	if (relation === 0 && (target_user.wanted > 1 || user.wanted > 1))
 		return c.json(
@@ -156,14 +155,18 @@ app.delete('/delete', async (c: Context) => {
 
 	let { target_id } = await c.req.json();
 	target_id = Number(target_id);
-	if (target_id == undefined) return c.json({ message: 'ID is required' }, 400);
+	if (target_id == undefined)
+		return c.json({ message: 'ID is required' }, 400);
 	if (target_id === user.id)
 		return c.json({ message: 'You cannot relate to yourself' }, 400);
 	try {
 		await Relations_Users.delete_relation(user.id, target_id);
 		const chats = await Chats_Users.get_chats_by_2_user(user.id, target_id);
-		await Promise.all(chats.map(async (chat_id) => {
-			await Chats_Users.delete_user_chat(user.id, chat_id);}));
+		await Promise.all(
+			chats.map(async (chat_id) => {
+				await Chats_Users.delete_user_chat(user.id, chat_id);
+			})
+		);
 	} catch (_e) {
 		return c.json({ message: 'Relation does not exist' }, 400);
 	}

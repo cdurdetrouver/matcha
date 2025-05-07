@@ -131,7 +131,7 @@ export class Relations_Users {
 		const relation_s: RelationType = {
 			user_target: user,
 			relation: this.relation,
-			time_to_match: this.time_to_match,
+			time_to_match: Number(this.time_to_match),
 		};
 		return relation_s;
 	}

@@ -182,7 +182,7 @@ app.get('/is_related_to_me/:id', async (c: Context) => {
 	if (message != undefined || user == null)
 		return c.json({ message: message }, 401);
 	const id = Number(c.req.param('id'));
-	if (id == undefined) return c.json({ message: 'ID is required' }, 400);
+	if (isNaN(id)) return c.json({ message: 'ID is required' }, 400);
 	if (id === user.id)
 		return c.json({ message: 'You cannot relate to yourself' }, 400);
 	try {

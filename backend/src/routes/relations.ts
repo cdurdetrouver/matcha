@@ -75,7 +75,7 @@ app.post('/create', async (c: Context) => {
 	relation = Number(relation);
 	if (relation !== 0 && relation !== 2)
 		return c.json({ message: 'Relation range is invalid' }, 400);
-	if (target_user.wanted !== 0 && target_user.wanted !== relation)
+	if (target_user.wanted !== 1 && target_user.wanted !== relation)
 		return c.json(
 			{
 				message:

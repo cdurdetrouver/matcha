@@ -121,7 +121,7 @@ app.post('/create', async (c: Context) => {
 	let notif_mess =
 		user.username + (relation === 2 ? ' loved you' : ' liked you');
 	let notif_redirect = '/user/' + user.id;
-	if (await Relations_Users.is_related(target_id, user.id) != -1) {
+	if (await Relations_Users.is_related(target_id, user.id) == relation) {
 		notif_mess =
 			target_user.username +
 			(relation === 2 ? ' loved you too' : ' liked you too') +

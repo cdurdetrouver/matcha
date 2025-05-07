@@ -1,7 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { check_cookies } from '../utils/jwt.ts';
 import { Relations_Users } from '../db_objects/relations_users.ts';
-import { User } from '../db_objects/user.ts';
 import { post_notif } from './notif.ts';
 import { Chat } from '../db_objects/chats.ts';
 import { Chats_Users } from '../db_objects/chats_users.ts';
@@ -76,7 +75,15 @@ app.post('/create', async (c: Context) => {
 	relation = Number(relation);
 	if (relation !== 0 && relation !== 2)
 		return c.json({ message: 'Relation range is invalid' }, 400);
-	if (await Relations_Users.is_related(user.id, target_id))
+	if (target_user.wanted !== 1 && target_user.wanted !== relation)
+		return c.json(
+			{
+				message:
+					'Target user is not looking for this kind of relation',
+			},
+			400
+		);
+	if (await Relations_Users.is_related(user.id, target_id) != -1)
 		return c.json({ message: 'Relation already exists' }, 400);
 	if (relation === 0 && (target_user.wanted > 1 || user.wanted > 1))
 		return c.json(
@@ -107,7 +114,7 @@ app.post('/create', async (c: Context) => {
 	let notif_mess =
 		user.username + (relation === 2 ? ' loved you' : ' liked you');
 	let notif_redirect = '/user/' + user.id;
-	if (await Relations_Users.is_related(target_id, user.id)) {
+	if (await Relations_Users.is_related(target_id, user.id) != -1) {
 		notif_mess =
 			target_user.username +
 			(relation === 2 ? ' loved you too' : ' liked you too') +
@@ -129,6 +136,34 @@ app.post('/create', async (c: Context) => {
 });
 
 app.all('/create', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.delete('/delete', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+
+	let { target_id } = await c.req.json();
+	target_id = Number(target_id);
+	if (target_id == undefined) return c.json({ message: 'ID is required' }, 400);
+	if (target_id === user.id)
+		return c.json({ message: 'You cannot relate to yourself' }, 400);
+	try {
+		await Relations_Users.delete_relation(user.id, target_id);
+		const chats = await Chats_Users.get_chats_by_2_user(user.id, target_id);
+		await Promise.all(chats.map(async (chat_id) => {
+			await Chats_Users.delete_user_chat(user.id, chat_id);}));
+	} catch (_e) {
+		return c.json({ message: 'Relation does not exist' }, 400);
+	}
+	return c.json({ message: 'Relation deleted' }, 200);
+});
+
+app.all('/delete', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

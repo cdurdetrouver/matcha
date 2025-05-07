@@ -127,6 +127,41 @@
 				background: 'variant-filled-success'
 			};
 			toastStore.trigger(t);
+			liked_him = relation;
+
+			const res_reverse_relation = await request('/api/relations/is_related_to_me/' + user.id, {
+				method: 'GET',
+				credentials: 'include'
+			});
+			if (res_reverse_relation.status === 200) {
+				const relationData = await res_reverse_relation.json();
+				if (relationData.relation) liked_him = relationData.relation?.relation;
+			}
+		} else {
+			const t: ToastSettings = {
+				message: 'Failed to send request: ' + (await res.json()).message,
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
+	}
+
+	async function sendRequestDelete() {
+		const res = await request('/api/relations/delete', {
+			method: 'DELETE',
+			credentials: 'include',
+			body: JSON.stringify({
+				target_id: user.id
+			})
+		});
+		if (res.status === 200) {
+			const t: ToastSettings = {
+				message: 'Relation deleted',
+				background: 'variant-filled-success'
+			};
+			toastStore.trigger(t);
+			liked_him = 1;
+			liked_me = 1;
 		} else {
 			const t: ToastSettings = {
 				message: 'Failed to send request: ' + (await res.json()).message,
@@ -352,19 +387,19 @@
 						{#if liked_him === 0 && liked_me === 0}
 							<button
 								type="button"
-								class="btn btn-hover px-4 py-2 bg-[#1e90ff] text-white rounded-lg"
-								on:click={() => sendRequest('friend')}
+								class="btn btn-hover px-4 py-2 bg-[#1e90ff] text-white rounded-lg flex gap-2"
+								on:click={sendRequestDelete}
 							>
-								<Icon icon="material-symbols:block" class="text-[#e32636]" />
+								<Icon icon="material-symbols:block" class="text-[#e32636]" width="24" />
 								Unfriend
 							</button>
 						{:else if liked_him === 2 && liked_me === 2}
 							<button
 								type="button"
-								class="btn btn-hover px-4 py-2 bg-[#e32636] text-white rounded-lg"
-								on:click={() => sendRequest('love')}
+								class="btn btn-hover px-4 py-2 bg-[#e32636] text-white rounded-lg flex gap-2"
+								on:click={sendRequestDelete}
 							>
-								<Icon icon="material-symbols:block" class="text-[#1e90ff]" />
+								<Icon icon="lets-icons:broken-heart-fill" class="text-[#1e90ff]" width="24" />
 								Unlove
 							</button>
 						{/if}

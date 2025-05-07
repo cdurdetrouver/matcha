@@ -34,33 +34,6 @@ app.all('/all', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 
-app.get('/:id', async (c: Context) => {
-	const ret_check = await check_cookies(c);
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 404);
-	const { message, user } = ret_check;
-	if (message != undefined || user == null)
-		return c.json({ message: message }, 401);
-
-	const id = Number(c.req.param('id'));
-	if (id == undefined) return c.json({ message: 'ID is required' }, 400);
-	if (id === user.id)
-		return c.json({ message: 'You cannot relate to yourself' }, 400);
-	try {
-		await user.get_by_id(id);
-		const rel = await Relations_Users.get_relation(id, user.id);
-		return c.json({ relation: await rel?.serialize() }, 200);
-	} catch (_e) {
-		if (_e instanceof Error && _e.message === 'User not found')
-			return c.json({ message: 'User does not exist' }, 400);
-		return c.json({ message: 'Relation does not exist' }, 400);
-	}
-});
-
-app.all('/:id', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
 app.post('/create', async (c: Context) => {
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
@@ -120,7 +93,7 @@ app.post('/create', async (c: Context) => {
 	let notif_mess =
 		user.username + (relation === 2 ? ' loved you' : ' liked you');
 	let notif_redirect = '/user/' + user.id;
-	if (await Relations_Users.is_related(target_id, user.id) == relation) {
+	if ((await Relations_Users.is_related(target_id, user.id)) == relation) {
 		notif_mess =
 			target_user.username +
 			(relation === 2 ? ' loved you too' : ' liked you too') +
@@ -191,8 +164,13 @@ app.get('/is_related_to_me/:id', async (c: Context) => {
 	try {
 		const target_user = await user.get_by_id(id);
 		const rel = await Relations_Users.get_relation(user.id, id);
-		return c.json({ message: ('User is related to '
-			+ target_user.username), relation: await rel?.serialize() }, 200);
+		return c.json(
+			{
+				message: 'User is related to ' + target_user.username,
+				relation: await rel?.serialize(),
+			},
+			200
+		);
 	} catch (e) {
 		if (e instanceof Error && e.message === 'User not found')
 			return c.json({ message: 'User does not exist' }, 400);
@@ -201,6 +179,33 @@ app.get('/is_related_to_me/:id', async (c: Context) => {
 });
 
 app.all('/is_related_to_me/:id', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.get('/:id', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 404);
+	const { message, user } = ret_check;
+	if (message != undefined || user == null)
+		return c.json({ message: message }, 401);
+
+	const id = Number(c.req.param('id'));
+	if (id == undefined) return c.json({ message: 'ID is required' }, 400);
+	if (id === user.id)
+		return c.json({ message: 'You cannot relate to yourself' }, 400);
+	try {
+		await user.get_by_id(id);
+		const rel = await Relations_Users.get_relation(id, user.id);
+		return c.json({ relation: await rel?.serialize() }, 200);
+	} catch (_e) {
+		if (_e instanceof Error && _e.message === 'User not found')
+			return c.json({ message: 'User does not exist' }, 400);
+		return c.json({ message: 'Relation does not exist' }, 400);
+	}
+});
+
+app.all('/:id', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

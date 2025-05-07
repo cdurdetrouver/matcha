@@ -109,10 +109,12 @@ export class Chat {
 
 	async serialize(user_id: number): Promise<ChatType> {
 		const users_id = await Chats_Users.get_users_by_chat(this.id);
+		console.log(users_id);
 		const users = await User.get_all_by_ids(users_id, user_id);
 		const users_serialize = await Promise.all(
 			users.map(async (user) => await user.serialize())
 		);
+		// console.log(users_serialize);
 		let last_message: MessageType | undefined = undefined;
 		let avatar;
 		try {

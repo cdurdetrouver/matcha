@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Avatar } from '@skeletonlabs/skeleton';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -7,9 +8,25 @@
 
 	let search: string = '';
 
-	export let chats:Chat[];
+	export let chats: Chat[];
 	export let user: User | null;
-	export let chatid:number;
+	export let chatid: number;
+
+	const users: User[] = [];
+
+	onMount(() => {
+		chats.forEach((chat) => {
+			if (chat.users.length !== 2) return;
+			if (chat.users[0].id !== user?.id) {
+				users.push(chat.users[0]);
+
+				console.log('ok');
+			} else {
+				users.push(chat.users[1]);
+				console.log('ok');
+			}
+		});
+	});
 
 	function getInitials(channelName: string): string {
 		const serverSplit = channelName.split(' ');
@@ -41,33 +58,67 @@
 	<input class="input pl-2" type="search" placeholder="Search..." bind:value={search} />
 </header>
 <div class="flex flex-col items-center justify-start w-full overflow-y-scroll overflow-x-hidden">
-	{#each search !== '' ? FilterChats(search, chats) : chats as chat}
-		<button
-			type="button"
-			class="btn w-full flex items-center justify-start gap-2.5 mt-[10px] {chat.id === chatid
-				? 'variant-filled-primary'
-				: 'bg-surface-hover-token'}"
-			on:click={() => goto('/chat/' + chat.id)}
-		>
-			<Avatar
-				src={chat.avatar?.link}
-				alt="Chat {chat.id}"
-				initials={getInitials(chat.name ?? "")}
-				class="min-w-10 max-w-10"
-				rounded={page.params.id === String(chat.id) ? 'rounded-3xl' : 'rounded-full'}
-			/>
+	{#each search !== '' ? FilterChats(search, chats) : chats as chat, index}
+		{#if users[index]}
+			<button
+				type="button"
+				class="btn w-full flex items-center justify-start gap-2.5 mt-[10px] {chat.id === chatid
+					? 'variant-filled-primary'
+					: 'bg-surface-hover-token'}"
+				on:click={() => goto('/chat/' + chat.id)}
+			>
+				<Avatar
+					src={users[index]?.avatar?.link}
+					alt="Chat {chat.id}"
+					initials={getInitials(chat.name ?? '')}
+					class="min-w-10 max-w-10"
+					rounded={page.params.id === String(chat.id) ? 'rounded-3xl' : 'rounded-full'}
+				/>
 
-			<span class="flex-1 w-[10vw] text-start">
-				<h3 class="h5">{chat.name}</h3>
-				<p class="text-sm truncate">
-					{#if chat.LastMessage}
-						{chat.LastMessage?.author?.id === user?.id ? 'Moi' : chat.LastMessage?.author?.username}
-						: {chat.LastMessage?.content}
-					{:else}
-						No Message
-					{/if}
-				</p>
-			</span>
-		</button>
+				<span class="flex-1 w-[10vw] text-start">
+					<h3 class="h5">{chat.name}</h3>
+					<p class="text-sm truncate">
+						{#if chat.LastMessage}
+							{chat.LastMessage?.author?.id === user?.id
+								? 'Moi'
+								: chat.LastMessage?.author?.username}
+							: {chat.LastMessage?.content}
+						{:else}
+							No Message
+						{/if}
+					</p>
+				</span>
+			</button>
+		{:else}
+			<button
+				type="button"
+				class="btn w-full flex items-center justify-start gap-2.5 mt-[10px] {chat.id === chatid
+					? 'variant-filled-primary'
+					: 'bg-surface-hover-token'}"
+				on:click={() => goto('/chat/' + chat.id)}
+			>
+				<Avatar
+					src={chat.avatar?.link}
+					alt="Chat {chat.id}"
+					initials={getInitials(chat.name ?? '')}
+					class="min-w-10 max-w-10"
+					rounded={page.params.id === String(chat.id) ? 'rounded-3xl' : 'rounded-full'}
+				/>
+
+				<span class="flex-1 w-[10vw] text-start">
+					<h3 class="h5">{chat.name}</h3>
+					<p class="text-sm truncate">
+						{#if chat.LastMessage}
+							{chat.LastMessage?.author?.id === user?.id
+								? 'Moi'
+								: chat.LastMessage?.author?.username}
+							: {chat.LastMessage?.content}
+						{:else}
+							No Message
+						{/if}
+					</p>
+				</span>
+			</button>
+		{/if}
 	{/each}
 </div>

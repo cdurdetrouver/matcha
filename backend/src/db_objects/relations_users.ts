@@ -90,7 +90,7 @@ export class Relations_Users {
             `,
 			[user_id, target_id]
 		);
-		if (res.rows[0] == undefined) return null;
+		if (res.rows[0] == undefined) throw new Error('Relation not found');
 		return new Relations_Users(res.rows[0]);
 	}
 

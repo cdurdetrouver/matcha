@@ -7,6 +7,7 @@ const TABLE = 'messages';
 
 export class Message {
 	content: string;
+	call_content?: RTCSessionDescriptionInit;
 	user_id?: number;
 	chat_id: number;
 	type: string;
@@ -22,13 +23,19 @@ export class Message {
 	) {
 		if (typeof contentOrOther === 'object' && contentOrOther !== null) {
 			this.content = contentOrOther.content!;
+			this.call_content = contentOrOther.call_content;
 			this.user_id = contentOrOther.user_id;
 			this.chat_id = contentOrOther.chat_id!;
 			this.type = contentOrOther.type!;
 			this.id = contentOrOther.id ?? 0;
 			this.send_at = contentOrOther.send_at ?? BigInt(Date.now());
 		} else {
-			this.content = contentOrOther;
+			if (type == 'Call_offer' || type == 'Call_answer') {
+				this.content = '';
+				this.call_content = JSON.parse(contentOrOther);
+			}
+			else
+				this.content = contentOrOther!;
 			this.chat_id = chat_id!;
 			this.type = type!;
 			this.user_id = user_id;
@@ -142,6 +149,7 @@ export class Message {
 
 		const message: MessageType = {
 			content: this.content,
+			call_content: this.call_content,
 			author: user,
 			type: this.type,
 			id: this.id,

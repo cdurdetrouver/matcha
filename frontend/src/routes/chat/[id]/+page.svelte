@@ -46,6 +46,7 @@
 		socket = new WebSocketManager(`/api/chat/${data.chatid}`);
 
 		socket.setOnMessageHook(async (data) => {
+			console.log('Received data:', data);
 			if (data.type === 'init') messages = data.messages;
 			else if (data.type === 'message') messages = [...messages, data.message];
 			else if (data.type === 'history') messages = [...data.messages, ...messages];
@@ -127,30 +128,44 @@
 		const devices = await getConnectedDevices('videoinput');
 		console.log("devices: ", devices);
 		if (devices && devices.length > 0) {
-		if (devices[0]) {
-			try {
-				const stream = await openCamera(devices[0].deviceId, 100, 100);
-				const videoElement = document.querySelector('video#localVideo');
-				if (videoElement instanceof HTMLVideoElement) {
-					videoElement.srcObject = stream;
-				} else {
-					console.error('Video element not found or is not a valid HTMLVideoElement.');
+			if (devices[0]) {
+				try {
+					const stream = await openCamera(devices[0].deviceId, 100, 100);
+					const videoElement = document.querySelector('video#localVideo');
+					if (videoElement instanceof HTMLVideoElement) {
+						videoElement.srcObject = stream;
+					} else {
+						console.error('Video element not found or is not a valid HTMLVideoElement.');
+						return;
+					}
+				} catch (error) {
+					console.error('Error opening camera:', error);
+					const t: ToastSettings = {
+						message: 'Failed to access the camera',
+						background: 'variant-filled-error'
+					};
+					toastStore.trigger(t);
+					return;
 				}
-			} catch (error) {
-				console.error('Error opening camera:', error);
+			} else {
 				const t: ToastSettings = {
-					message: 'Failed to access the camera',
+					message: 'No video input devices found',
 					background: 'variant-filled-error'
 				};
 				toastStore.trigger(t);
+				return;
 			}
-		} else {
-			const t: ToastSettings = {
-				message: 'No video input devices found',
-				background: 'variant-filled-error'
+			const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
+			const peerConnection = new RTCPeerConnection(configuration);
+			const offer = await peerConnection.createOffer();
+			await peerConnection.setLocalDescription(offer);
+			const newMessage: Message = {
+				type: 'Call_offer',
+				call_content: offer,
+				id: 0,
+				created_at: Date.now()
 			};
-			toastStore.trigger(t);
-		}
+			if (socket && newMessage.call_content != undefined) socket.send(newMessage);
 		}
 	}
 

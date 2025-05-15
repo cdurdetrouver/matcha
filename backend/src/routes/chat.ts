@@ -163,34 +163,51 @@ app.get(
 						})
 					);
 				} else {
-					const message: Message = new Message(
-						mes.content,
-						chat.id,
-						mes.type,
-						user_chat.id
-					);
-					try {
-						await message.create();
-					} catch (e) {
-						console.log(e);
-						ws.send(
-							JSON.stringify({ error: 'Failed to store message' })
-						);
-						return;
-					}
-					try {
-						const full_message = await Message.get_by_id(
-							message.id
-						);
-						await broadcastToGroup(
+					let message: Message;
+					if (mes.type === 'Call_offer' || mes.type === 'Call_answer') {
+						message = new Message(
+							mes.call_content,
 							chat.id,
-							full_message,
-							chan_layer
+							mes.type,
+							user_chat.id
 						);
-					} catch (e) {
-						console.log(e);
-						ws.send('Server failed to retrieve message');
-						return;
+						console.log('call offer');
+						await broadcastToGroup(
+								chat.id,
+								message,
+								chan_layer
+							);
+					}
+					else {
+						message = new Message(
+							mes.content,
+							chat.id,
+							mes.type,
+							user_chat.id
+						);
+						try {
+							await message.create();
+						} catch (e) {
+							console.log(e);
+							ws.send(
+								JSON.stringify({ error: 'Failed to store message' })
+							);
+							return;
+						}
+						try {
+							const full_message = await Message.get_by_id(
+								message.id
+							);
+							await broadcastToGroup(
+								chat.id,
+								full_message,
+								chan_layer
+							);
+						} catch (e) {
+							console.log(e);
+							ws.send('Server failed to retrieve message');
+							return;
+						}
 					}
 				}
 			},

@@ -170,8 +170,7 @@
 			const offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			const newMessage: Message = {
-				content: 'Join the video call',
-				type: 'chat',
+				type: 'VideoCall',
 				call_content: offer,
 				id: 0,
 				created_at: Date.now()

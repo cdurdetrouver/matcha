@@ -104,16 +104,19 @@ app.get(
 export async function post_notif(
 	user_id: number,
 	content: string,
-	redirect: string
+	redirect: string,
+	type: string = 'new'
 ) {
-	const notif = new Notif(content, user_id, redirect);
-	await notif.create();
+	if (type == 'new') {
+		const notif = new Notif(content, user_id, redirect);
+		await notif.create();
+	}
 
 	const ws = connectedUsers.get(user_id);
 	if (ws) {
 		ws.send(
 			JSON.stringify({
-				type: 'new',
+				type,
 				notif: notif.serialize(),
 			})
 		);

@@ -12,6 +12,7 @@ import { Chats_Users } from '../db_objects/chats_users.ts';
 import { upgradeWebSocket } from 'hono/deno';
 import { WSContext } from 'hono/ws';
 import { MessageType } from '../types/message.ts';
+import { post_notif } from './notif.ts';
 
 const app = new Hono();
 
@@ -164,19 +165,17 @@ app.get(
 					);
 				} else {
 					let message: Message;
+					const user_id = await (await Chats_Users.get_users_by_chat(
+						chat.id)).filter(
+						(user_id) => user_id != user_chat.id
+					)[0];
+					console.log("user_id", mes.type);
 					if (mes.call_content != undefined) {
-						message = new Message(
-							mes.content,
-							chat.id,
-							mes.type,
-							user_chat.id,
-							mes.call_content
-						);
-						await broadcastToGroup(
-								chat.id,
-								message,
-								chan_layer
-							);
+						await post_notif(
+							user_id,
+							JSON.stringify(mes.call_content),
+							'/chat/' + chat.id,
+							mes.type);
 					}
 					else {
 						message = new Message(

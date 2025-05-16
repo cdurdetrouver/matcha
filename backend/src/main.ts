@@ -8,14 +8,25 @@ import notif from './routes/notif.ts';
 import tag from './routes/tag.ts';
 import seen from './routes/seen.ts';
 import relation from './routes/relations.ts';
-import research from "./routes/research.ts";
-import report from "./routes/report.ts";
-import date from "./routes/date.ts";
-import social_media from "./routes/social_media.ts";
+import research from './routes/research.ts';
+import report from './routes/report.ts';
+import date from './routes/date.ts';
+import social_media from './routes/social_media.ts';
 import type { JwtVariables } from 'hono/jwt';
 import { Client } from 'https://deno.land/x/postgres@v0.19.3/client.ts';
 import { connect } from 'https://deno.land/x/redis@v0.39.0/mod.ts';
-import { ALLOWED_ORIGINS, DB_HOSTNAME, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, DENO_PORT, REDIS_HOSTNAME, REDIS_PORT, REDIS_PASSWORD } from './secret.ts';
+import {
+	ALLOWED_ORIGINS,
+	DB_HOSTNAME,
+	DB_NAME,
+	DB_PASSWORD,
+	DB_PORT,
+	DB_USER,
+	DENO_PORT,
+	REDIS_HOSTNAME,
+	REDIS_PORT,
+	REDIS_PASSWORD,
+} from './secret.ts';
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -75,9 +86,9 @@ export const similarity_graph = 'similarity_graph';
 
 try {
 	await client.connect();
-	await init_db();
-
 	console.log('Connected to the database');
+	await init_db();
+	console.log('Database initialized');
 
 	Deno.serve({ port: DENO_PORT }, app.fetch);
 } catch (e) {

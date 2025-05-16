@@ -94,10 +94,10 @@ export class User {
 		}
 	}
 
-	async save() {
+	async save(update_all: boolean = true) {
 		this.description = filter.clean(this.description ?? '');
-		if (this.complete_profile) {
-			await User.update_all();
+		if (this.complete_profile && update_all) {
+			await this.update_relations();
 		}
 		await client.queryObject(
 			`
@@ -247,7 +247,10 @@ export class User {
 		return new User(user);
 	}
 
-	static async get_all_by_ids(ids: number[], user_id: number): Promise<User[]> {
+	static async get_all_by_ids(
+		ids: number[],
+		user_id: number
+	): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE id = ANY($1) AND id NOT IN (
@@ -274,10 +277,7 @@ export class User {
 		return res.rows.map((row) => new User(row));
 	}
 
-	async get_all_by_age(
-		minAge: number,
-		maxAge: number
-	): Promise<User[]> {
+	async get_all_by_age(minAge: number, maxAge: number): Promise<User[]> {
 		const res = await client.queryObject<User>(
 			`
 				SELECT ${USERFIELDS} FROM "${TABLE}" WHERE EXTRACT(YEAR FROM age(birthdate)) BETWEEN $1 AND $2 AND id NOT IN (
@@ -348,26 +348,23 @@ export class User {
 	static async update_all() {
 		const users = await User.getall();
 		for (const user of users) {
-			await user.udpate_relations();
+			await user.update_relations();
 		}
 	}
 
-	async udpate_relations() {
+	async update_relations() {
 		const nearbyUsers = await this.get_all_by_loc(
-			20000,
+			10000,
 			this.long,
 			this.lat
 		);
-
 		const similar_user: User[] = [];
-
 		for (const otherUser of nearbyUsers) {
 			if (this.id !== otherUser.id) {
 				const weight = await this.update_similarity(otherUser);
 				if (weight > 0.5) similar_user.push(otherUser);
 			}
 		}
-
 		let tot = 0;
 		for (const otherUser of nearbyUsers) {
 			if (this.id !== otherUser.id) {
@@ -378,7 +375,6 @@ export class User {
 				tot += weight;
 			}
 		}
-
 		this.fame_rate = tot / nearbyUsers.length;
 	}
 

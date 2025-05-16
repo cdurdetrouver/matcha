@@ -376,9 +376,17 @@ app.all('/verif', (c: Context) => {
 });
 
 app.put('/edit', async (c: Context) => {
-	const { username, email, description, latitude, longitude, wanted,
-		insta_link, twitter_link, intra_link } =
-		await c.req.json();
+	const {
+		username,
+		email,
+		description,
+		latitude,
+		longitude,
+		wanted,
+		insta_link,
+		twitter_link,
+		intra_link,
+	} = await c.req.json();
 
 	const ret_check = await check_cookies(c);
 	if (ret_check == null)
@@ -417,12 +425,9 @@ app.put('/edit', async (c: Context) => {
 	if (wanted != undefined) {
 		user.wanted = wanted;
 	}
-	if (insta_link != undefined)
-		user.insta_link = insta_link;
-	if (twitter_link != undefined)
-		user.x_link = twitter_link;
-	if (intra_link != undefined)
-		user.intra_link = intra_link;
+	if (insta_link != undefined) user.insta_link = insta_link;
+	if (twitter_link != undefined) user.x_link = twitter_link;
+	if (intra_link != undefined) user.intra_link = intra_link;
 	try {
 		await user.save();
 		const serialized_user = await user.serialize_me();
@@ -567,16 +572,17 @@ app.post('/image', async (c: Context) => {
 		const missing = index.filter((item) => index_post.indexOf(item) < 0);
 		name = user.username + '_' + missing[0];
 	}
-	const image = await Image.post(user.id, name, 'post');
 	try {
 		await post_file(name, file);
+		const image = await Image.post(user.id, name, 'post');
+		return c.json(
+			{ message: 'Image saved !', image: await image.serialize() },
+			200
+		);
 	} catch (_e) {
+		console.log('Error while uploading the file');
 		return c.json({ message: 'Failed to save the image' }, 422);
 	}
-	return c.json(
-		{ message: 'Image saved !', image: await image.serialize() },
-		200
-	);
 });
 
 app.all('/image', (c: Context) => {
@@ -636,8 +642,11 @@ app.post('/block_user/:id', async (c: Context) => {
 		await User.get_by_id(id);
 		await Block_Users.block_user(user.id, id);
 		const chats = await Chats_Users.get_chats_by_2_user(user.id, id);
-		await Promise.all(chats.map(async (chat_id) => {
-			await Chats_Users.delete_user_chat(user.id, chat_id);}));
+		await Promise.all(
+			chats.map(async (chat_id) => {
+				await Chats_Users.delete_user_chat(user.id, chat_id);
+			})
+		);
 	} catch (e) {
 		if (e instanceof Error && e.message === 'User not found')
 			return c.json(
@@ -663,7 +672,7 @@ app.delete('/unblock_user/:id', async (c: Context) => {
 		return c.json({ message: message }, 401);
 	try {
 		await User.get_by_id(id);
-		if (!await Block_Users.is_user_blocked_by(user.id, id))
+		if (!(await Block_Users.is_user_blocked_by(user.id, id)))
 			return c.json({ message: 'User not blocked' }, 400);
 		await Block_Users.delete_block(id, user.id);
 	} catch (e) {

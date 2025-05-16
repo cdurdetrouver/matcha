@@ -19,23 +19,22 @@ export class Message {
 		contentOrOther: string | Partial<Message>,
 		chat_id?: number,
 		type?: string,
-		user_id?: number
+		user_id?: number,
+		call_content?: RTCSessionDescriptionInit
 	) {
 		if (typeof contentOrOther === 'object' && contentOrOther !== null) {
 			this.content = contentOrOther.content!;
-			this.call_content = contentOrOther.call_content;
+			this.call_content = contentOrOther.call_content!;
 			this.user_id = contentOrOther.user_id;
 			this.chat_id = contentOrOther.chat_id!;
 			this.type = contentOrOther.type!;
 			this.id = contentOrOther.id ?? 0;
 			this.send_at = contentOrOther.send_at ?? BigInt(Date.now());
 		} else {
-			if (type == 'Call_offer' || type == 'Call_answer') {
-				this.content = '';
-				this.call_content = JSON.parse(contentOrOther);
+			if (call_content != undefined) {
+				this.call_content = call_content;
 			}
-			else
-				this.content = contentOrOther!;
+			this.content = contentOrOther!;
 			this.chat_id = chat_id!;
 			this.type = type!;
 			this.user_id = user_id;

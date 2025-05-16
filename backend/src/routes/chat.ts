@@ -164,14 +164,14 @@ app.get(
 					);
 				} else {
 					let message: Message;
-					if (mes.type === 'Call_offer' || mes.type === 'Call_answer') {
+					if (mes.call_content != undefined) {
 						message = new Message(
-							mes.call_content,
+							mes.content,
 							chat.id,
 							mes.type,
-							user_chat.id
+							user_chat.id,
+							mes.call_content
 						);
-						console.log('call offer');
 						await broadcastToGroup(
 								chat.id,
 								message,

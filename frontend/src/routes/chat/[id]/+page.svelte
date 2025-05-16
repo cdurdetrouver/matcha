@@ -15,6 +15,7 @@
 	let showCallMenu = false;
 	let is_videoCall = false;
 	let is_audioCall = false;
+	let stream: MediaStream | null = null;
 
 	let chats: ChatType[] = [];
 	ChatsStore.subscribe((value) => chats.push(...value));
@@ -45,13 +46,14 @@
 		chat = chats.find((chat) => chat.id === data.chatid);
 		socket = new WebSocketManager(`/api/chat/${data.chatid}`);
 
-		socket.setOnMessageHook(async (data) => {
-			console.log('Received data:', data);
-			if (data.type === 'init') messages = data.messages;
-			else if (data.type === 'message') messages = [...messages, data.message];
-			else if (data.type === 'history') messages = [...data.messages, ...messages];
-
-			if (data.type !== 'history') await scrollToBottom();
+		socket.setOnMessageHook(async (dat) => {
+			console.log('Received data:', dat);
+			if (dat.type === 'init') messages = dat.messages;
+			else if (dat.type === 'message' && !(dat.message.call_content !+ undefined
+			&& dat.message.author?.id === data.user?.id)) messages = [...messages, dat.message];
+			else if (dat.type === 'history') messages = [...dat.messages, ...messages];
+			console.log('Messages:', messages);
+			if (dat.type !== 'history') await scrollToBottom();
 		});
 
 		await scrollToBottom();
@@ -113,6 +115,14 @@
 	}
 
 	async function videoCall() {
+		if (is_videoCall || is_audioCall) {
+			const t: ToastSettings = {
+				message: 'Already in a call',
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+			return;
+		}
 		try {
 			const stream = await openMediaDevices({'audio':true, 'video':true});
 		} catch(error) {
@@ -130,7 +140,7 @@
 		if (devices && devices.length > 0) {
 			if (devices[0]) {
 				try {
-					const stream = await openCamera(devices[0].deviceId, 100, 100);
+					stream = await openCamera(devices[0].deviceId, 100, 100);
 					const videoElement = document.querySelector('video#localVideo');
 					if (videoElement instanceof HTMLVideoElement) {
 						videoElement.srcObject = stream;
@@ -160,7 +170,8 @@
 			const offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			const newMessage: Message = {
-				type: 'Call_offer',
+				content: 'Join the video call',
+				type: 'chat',
 				call_content: offer,
 				id: 0,
 				created_at: Date.now()
@@ -229,10 +240,12 @@
 			{#each messages as message}
 				{#if message.type == 'announce'}
 					<Announce {message} />
+					
 				{:else}
 					<Chat
 						{message}
 						classes={classes[message.author?.id === data.user?.id ? 'personal' : 'other']}
+
 					/>
 				{/if}
 			{/each}

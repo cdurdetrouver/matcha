@@ -184,7 +184,7 @@
 </script>
 
 {#if $modalStore[0]}
-	<div class="modal-example-form card p-4 w-modal shadow-xl space-y-4">
+	<div class="modal-example-form card p-4 w-modal shadow-xl space-y-4 max-h-[80vh] overflow-y-auto">
 		<header class="text-2xl font-bold">{$modalStore[0].title ?? '(title missing)'}</header>
 		<article>{$modalStore[0].body ?? '(body missing)'}</article>
 

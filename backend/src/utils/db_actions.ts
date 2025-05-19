@@ -12,7 +12,8 @@ import { Relations_Users } from '../db_objects/relations_users.ts';
 import { Report_Users } from '../db_objects/report_users.ts';
 import { Ban_Users } from '../db_objects/ban_users.ts';
 import { Block_Users } from '../db_objects/block_users.ts';
-import { Date_Users } from "../db_objects/date_users.ts";
+import { Date_Users } from '../db_objects/date_users.ts';
+import { populateTags, populateUsers } from './CreateUsers.ts';
 
 export async function init_db() {
 	await User.init_table();
@@ -30,4 +31,7 @@ export async function init_db() {
 	await Image.init_table();
 	await Email_Verif.init_table();
 	await Block_Users.init_table();
+
+	await populateTags();
+	await populateUsers();
 }

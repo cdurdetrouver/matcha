@@ -323,6 +323,7 @@
 
 			goto('/');
 		} catch (error) {
+			console.error('Error while completing profile:', error);
 			const t: ToastSettings = {
 				message: 'Error while complete: ' + error,
 				background: 'variant-filled-error'

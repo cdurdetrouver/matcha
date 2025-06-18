@@ -130,8 +130,8 @@ export class Relations_Users {
 		const user = await (await User.get_by_id(this.target_id)).serialize();
 		const relation_s: RelationType = {
 			user_target: user,
-			relation: this.relation,
-			time_to_match: this.time_to_match,
+			relation: Number(this.relation),
+			time_to_match: Number(this.time_to_match),
 		};
 		return relation_s;
 	}

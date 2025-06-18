@@ -7,23 +7,27 @@
 	import { storePopup } from '@skeletonlabs/skeleton';
 	import { autoModeWatcher } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 	import type { Notif } from '$lib/types/notif.ts';
 	import { WebSocketManager } from '$lib/script/request';
-	import { getToastStore, type ToastSettings, } from '@skeletonlabs/skeleton';
+	import { acceptCall, endCall } from '$lib/script/call';
+	import { CallStore, type CallState } from '$lib/stores/calls';
 
-	
 	initializeStores();
-	const toastStore = getToastStore();
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
 	export let data;
 
-	let socket: WebSocketManager;
+	export let socket: WebSocketManager;
 	let notifs: Notif[] = [];
 
 	onMount(() => {
 		socket = new WebSocketManager('/api/notif/ws');
-
+		CallStore.update((s: CallState) => {
+			s.socket = socket;
+			s.is_Call = 0;
+			return s;
+		});
 		socket.setOnOpenHook(() => {
 			if (!data.user) {
 				socket.close();
@@ -32,42 +36,76 @@
 			data.user.online = true;
 		});
 
-		socket.setOnMessageHook((message) => {
-			console.log('Received message:', message);
-			if (message.type === 'new') notifs = [...notifs, message.notif];
-			else if (message.type === 'init') notifs = message.notifs;
-			else if (message.type === 'VideoCall') {
-				//popup call
-				const toastSettings: ToastSettings = {
-					title: 'Incoming Video Call',
-					message: message.notif.message,
-					duration: 0,
-					actions: [
-						{
-							label: 'Accept',
-							onClick: () => {
-								// Handle accept action
-								socket.send({
-									type: 'accept',
-									callerId: message.notif.callerId,
-									calleeId: data.user.id
-								});
-							}
-						},
-						{
-							label: 'Decline',
-							onClick: () => {
-								// Handle decline action
-								socket.send({
-									type: 'decline',
-									callerId: message.notif.callerId,
-									calleeId: data.user.id
-								});
-							}
+		socket.setOnMessageHook(async (message) => {
+			const state = get(CallStore);
+			switch (message.type) {
+				case 'new':
+					notifs = [...notifs, message.notif];
+					break;
+				case 'init':
+					notifs = message.notifs;
+					break;
+				case 'callOffer':
+					let is_accepting = true;
+					const content = JSON.parse(message.notif.content);
+					// inform the user about the incoming video call
+					if (is_accepting) {
+						try {
+							await acceptCall(content.offer, content.video, content.caller_id);
 						}
-					]
-				};
-				toastStore.addToast(toastSettings);
+						catch (err) {
+							console.error('Error accepting video call:', err);
+							endCall();
+							socket.send({
+								type: 'callReject',
+								target_id: content.caller_id,
+							});
+							return;
+						}
+					}
+					else {
+						socket.send({
+							type: 'callReject',
+							target_id: content.caller_id,
+						});
+					}
+					break;
+				case 'callAnswer':
+					const data_content = JSON.parse(message.notif.content);
+					const answer = data_content.answer;
+					await (state.peerConnection).setRemoteDescription(new RTCSessionDescription(answer));
+					CallStore.update((s: CallState) => {
+						s.peerConnection = state.peerConnection;
+						s.pendingCandidates = [];
+						s.answer = 2;
+						return s;
+					});
+					break;
+				case 'callReject':
+					console.log('callRejected try the outer world make some real friends or find love lol');
+					await endCall();
+					break;
+				case 'ice-candidate':
+					try {
+						const candidate: RTCIceCandidateInit = JSON.parse(message.notif.content).candidate;
+						if (state.answer === 0) {
+							CallStore.update((s: CallState) => {
+								s.pendingCandidates.push(candidate);
+								return s;
+							});
+						}
+						else {
+							await state.peerConnection.addIceCandidate(candidate);
+						}
+					} catch (err) {
+						console.error('Error adding received ICE candidate:', err);
+					}
+					break;
+				case 'endCall':
+					await endCall(true);
+					break;
+				default:
+					console.log('Unknown message type:', message.type, message);
 			}
 		});
 	});

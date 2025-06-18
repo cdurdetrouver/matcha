@@ -34,3 +34,7 @@ export const ALLOWED_ORIGINS =
 	Deno.env.get('ALLOWED_ORIGINS')?.split(',');
 export const REDIS_PASSWORD =	
 	Deno.env.get('REDIS_PASSWORD') ?? 'REDIS_PASSWORD';
+export const ACCOUNT_SID =
+	Deno.env.get('ACCOUNT_SID') ?? 'ACCOUNT_SID';
+export const AUTH_TOKEN =
+	Deno.env.get('AUTH_TOKEN') ?? 'AUTH_TOKEN';

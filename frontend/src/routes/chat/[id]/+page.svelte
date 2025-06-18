@@ -1,28 +1,34 @@
 <script lang="ts">
 	import Chat from '$lib/components/chat/Chat.svelte';
 	import Announce from '$lib/components/chat/Announce.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import type { Message, Chat as ChatType } from '$lib/types/chat.js';
 	import { WebSocketManager } from '$lib/script/request.js';
-	import { tick } from 'svelte';
 	import { ChatsStore } from '$lib/stores/chats.js';
-	import { getToastStore, type ToastSettings, } from '@skeletonlabs/skeleton';
+	import { CallStore, type CallState } from '$lib/stores/calls.js';
+	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { Call, endCall } from '$lib/script/call';
+	import { get } from 'svelte/store';
 
 	const toastStore = getToastStore();
 
 	export let data;	
 	let showCallMenu = false;
-	let is_videoCall = false;
-	let is_audioCall = false;
-	let stream: MediaStream | null = null;
+	let showInCallMenu = false;
+	let inCall = false;
 
+	const { is_Call } = get(CallStore);
 	let chats: ChatType[] = [];
 	ChatsStore.subscribe((value) => chats.push(...value));
 	
 	function toggleCallMenu() {
 		showCallMenu = !showCallMenu;
 	}
+
+	function toggleInCallMenu() {
+		showInCallMenu = !showInCallMenu;
+	} 
 
 	let classes = {
 		personal: [
@@ -45,7 +51,11 @@
 	onMount(async () => {
 		chat = chats.find((chat) => chat.id === data.chatid);
 		socket = new WebSocketManager(`/api/chat/${data.chatid}`);
-
+		CallStore.update((s: CallState) => {
+			s.caller_id = data.user?.id;
+			s.chat_id = data.chatid;
+			return s;
+		});
 		socket.setOnMessageHook(async (dat) => {
 			console.log('Received data:', dat);
 			if (dat.type === 'init') messages = dat.messages;
@@ -68,115 +78,6 @@
 		};
 		if (socket && currentMessage != '') socket.send(newMessage);
 		currentMessage = '';
-	}
-
-	const openMediaDevices = async (constraints: MediaStreamConstraints) => {
-		return await navigator.mediaDevices.getUserMedia(constraints);
-	}
-
-	async function getConnectedDevices(type: string) {
-		const devices = await navigator.mediaDevices.enumerateDevices();
-		return devices.filter(device => device.kind === type)
-	}
-
-	async function openCamera(cameraId: string, minWidth: number, minHeight: number) {
-		const constraints: MediaStreamConstraints ={
-			'audio': {'echoCancellation': true},
-			'video': {
-				'deviceId': cameraId,
-				'width': {'min': minWidth},
-				'height': {'min': minHeight}
-				}
-			}
-    	return await navigator.mediaDevices.getUserMedia(constraints);
-	}
-
-	async function audioCall() {
-		try {
-			const stream = await openMediaDevices({'audio':true});
-		} catch(error) {
-			console.error('Error accessing media devices.', error);
-			const t: ToastSettings = {
-					message: 'Cannot access to the microphone',
-					background: 'variant-filled-error'
-			};
-			toastStore.trigger(t);
-			return;
-		}
-		const devices = await getConnectedDevices('audioinput');
-		if (devices.length === 0) {
-			const t: ToastSettings = {
-					message: 'No audio input devices found',
-					background: 'variant-filled-error'
-			};
-			toastStore.trigger(t);
-			return;
-		}
-	}
-
-	async function videoCall() {
-		if (is_videoCall || is_audioCall) {
-			const t: ToastSettings = {
-				message: 'Already in a call',
-				background: 'variant-filled-error'
-			};
-			toastStore.trigger(t);
-			return;
-		}
-		try {
-			const stream = await openMediaDevices({'audio':true, 'video':true});
-		} catch(error) {
-			console.error('Error accessing media devices.', error);
-			const t: ToastSettings = {
-					message: 'Cannot access to the media devices',
-					background: 'variant-filled-error'
-			};
-			toastStore.trigger(t);
-			return;
-		}
-		is_videoCall = true;
-		const devices = await getConnectedDevices('videoinput');
-		console.log("devices: ", devices);
-		if (devices && devices.length > 0) {
-			if (devices[0]) {
-				try {
-					stream = await openCamera(devices[0].deviceId, 100, 100);
-					const videoElement = document.querySelector('video#localVideo');
-					if (videoElement instanceof HTMLVideoElement) {
-						videoElement.srcObject = stream;
-					} else {
-						console.error('Video element not found or is not a valid HTMLVideoElement.');
-						return;
-					}
-				} catch (error) {
-					console.error('Error opening camera:', error);
-					const t: ToastSettings = {
-						message: 'Failed to access the camera',
-						background: 'variant-filled-error'
-					};
-					toastStore.trigger(t);
-					return;
-				}
-			} else {
-				const t: ToastSettings = {
-					message: 'No video input devices found',
-					background: 'variant-filled-error'
-				};
-				toastStore.trigger(t);
-				return;
-			}
-			const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
-			const peerConnection = new RTCPeerConnection(configuration);
-			const offer = await peerConnection.createOffer();
-			await peerConnection.setLocalDescription(offer);
-			const newMessage: Message = {
-				type: 'VideoCall',
-				call_content: offer,
-				id: 0,
-				created_at: Date.now()
-			};
-			if (socket && newMessage.call_content != undefined) socket.send(newMessage);
-		}
 	}
 
 	async function scrollToBottom() {
@@ -224,16 +125,18 @@
 			<h2 class="h2">{chat.name}</h2>
 		{/if}
 	</header>
-	{#if is_videoCall}
 		<div class="h-full w-full">
-			<video id="localVideo" autoplay playsinline></video>
+			<video id="localVideo" autoplay style="transform: scaleX(-1);"></video>
 		</div>
-	{/if}
-	{#if is_audioCall}
 		<div class="h-full w-full">
-			<audio id="localAudio" autoplay playsinline></audio>
+			<audio id="localAudio" muted volume="0"  style="transform: scaleX(-1);"></audio>
 		</div>
-	{/if}
+		<div class="h-full w-full">
+			<video id="remoteVideo" autoplay  style="transform: scaleX(-1);"></video>
+		</div>
+		<div class="h-full w-full">
+			<audio id="remoteAudio" autoplay  style="transform: scaleX(-1);"></audio>
+		</div>
 	<section class="h-full overflow-y-auto" bind:this={chatContainer} on:scroll={handleScroll}>
 		<ul class="size-full p-10 flex flex-col gap-2.5">
 			{#each messages as message}
@@ -256,28 +159,37 @@
 			on:submit|preventDefault={sendMessage}
 		>
 			{#if !showCallMenu}
-				<button class="input-group-shim" on:click={() => {toggleCallMenu()}}>+</button>
+				<button class="input-group-shim" on:click={() => {toggleCallMenu(); toggleInCallMenu()}}>+</button>
 			{/if}
 			{#if showCallMenu}
 				<div class="bg-transparent border-0 flex" on:mouseleave={() => {toggleCallMenu()}}>
-
 					<button
 					type="button"
 					class="input-group-shim bg-transparent"
-					on:click={audioCall}
-					aria-label="Audio call"
-					title="Audio call"
-					>
-					<Icon icon="ic:round-call" width="24" height="24" />
-					</button>
-					<button
-					type="button"
-					class="input-group-shim bg-transparent"
-					on:click={videoCall}
+					on:click={async () => { try {inCall=true; await Call(true);} catch (err) {
+						console.error('Error starting video call:', err);
+						return;
+					}}}
 					aria-label="Video call"
 					title="Video call"
 					>
 					<Icon icon="ic:round-videocam" width="24" height="24" />
+					</button>
+				</div>
+			{/if}
+			{#if showInCallMenu}
+				<div class="bg-transparent border-0 flex" on:mouseleave={() => {toggleInCallMenu()}}>
+					<button
+					type="button"
+					class="input-group-shim bg-transparent"
+					on:click={() => {
+						endCall();
+						inCall = false;
+					}}
+					aria-label="Toggle in call menu"
+					title="Toggle in call menu"
+					>
+					<Icon icon="mdi:phone-hangup" width="24" height="24" />
 					</button>
 				</div>
 			{/if}

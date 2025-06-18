@@ -42,7 +42,6 @@ export async function Call(video:boolean): Promise<void> {
 	await CallStore.set(defaultCallState);
 	try {
 		stream = await openMediaDevices({ video: video, audio: AUDIO_CONSTRAINTS});
-		//stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
 		await CallStore.update((s: CallState) => {
 			s.stream = stream;
 			s.is_Call = 2;
@@ -133,11 +132,7 @@ export async function acceptCall(
 		throw new Error('Already in a call');
 	await CallStore.set(defaultCallState);
 	try {
-		//stream = await openMediaDevices({ video: video, audio: AUDIO_CONSTRAINTS });
-		stream = await navigator.mediaDevices.getDisplayMedia({
-            video: true,
-            audio: false
-        });
+		stream = await openMediaDevices({ video: video, audio: AUDIO_CONSTRAINTS });
 		await CallStore.update((s: CallState) => {
 			s.stream = stream;
 			s.is_Call = 2;

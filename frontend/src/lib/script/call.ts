@@ -34,7 +34,7 @@ async function openMediaDevices(constraints: MediaStreamConstraints): Promise<Me
 }
 
 export async function Call(video:boolean): Promise<void> {
-	const state = await get(CallStore);
+	let state = await get(CallStore);
 	let stream: MediaStream;
 	// Check if already in a call
 	if (state.is_Call !== 0)
@@ -85,7 +85,7 @@ export async function Call(video:boolean): Promise<void> {
 				type: 'IceCandidate',
 				candidate: event.candidate,
 				target_chat: s.chat_id,
-				caller_id: state.caller_id
+				caller_id: s.caller_id
 			});
 		}
 	};
@@ -97,6 +97,7 @@ export async function Call(video:boolean): Promise<void> {
 	const offer = await pc.createOffer();
 	await pc.setLocalDescription(offer);
 	//sending it to the other client
+	state = await get(CallStore);
 	state.socket!.send({
 		type: 'callOffer',
 		offer: offer,
@@ -255,9 +256,7 @@ export async function endCall(received?: boolean): Promise<void> {
 		stream: undefined,
 		socket: state.socket,
 		peerConnection: undefined,
-		caller_id: undefined,
 		target_id: undefined,
-		chat_id: undefined,
 		pendingCandidates: [],
 		answer: 0
 	});

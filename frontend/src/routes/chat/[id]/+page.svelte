@@ -182,8 +182,8 @@
 					<button
 					type="button"
 					class="input-group-shim bg-transparent"
-					on:click={() => {
-						endCall();
+					on:click={async () => {
+						await endCall();
 						inCall = false;
 					}}
 					aria-label="Toggle in call menu"

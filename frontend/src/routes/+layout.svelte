@@ -88,7 +88,9 @@
 				case 'ice-candidate':
 					try {
 						const candidate: RTCIceCandidateInit = JSON.parse(message.notif.content).candidate;
-						if (state.answer === 0) {
+						if (state.answer === 0 || !state.peerConnection ||
+								!state.peerConnection.remoteDescription ||
+								!state.peerConnection.remoteDescription.type) {
 							CallStore.update((s: CallState) => {
 								s.pendingCandidates.push(candidate);
 								return s;

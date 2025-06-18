@@ -11,7 +11,7 @@
 
 <div class="hidden md:block size-full">
 	<div class="size-full flex items-center justify-center">
-		<h1 class="h1">Match someone to unclock the chat</h1>
+		<h1 class="h1">Match someone to unlock the chat</h1>
 	</div>
 </div>
 

@@ -116,7 +116,7 @@
 		const monthDiff = today.getMonth() - birthDate.getMonth();
 		const dayDiff = today.getDate() - birthDate.getDate();
 
-		if (age > 18 || (age === 18 && (monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0)))) {
+		if ((age > 18 || (age === 18 && (monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0)))) && age < 100) {
 			return true;
 		}
 
@@ -389,7 +389,7 @@
 				{/if}
 			</Step>
 			<Step>
-				<svelte:fragment slot="header">What are you looking for ?</svelte:fragment>
+				<svelte:fragment slot="header">looking for ?</svelte:fragment>
 				<RadioGroup class="w-full uppercase">
 					<RadioItem bind:group={value} name="justify" value={0}>
 						<div class="flex items-center justify-center gap-2">
@@ -439,7 +439,7 @@
 				{/if}
 			</Step>
 			<Step locked={!isValidOption(SexualOptions, inputSexual) && value > 0}>
-				<svelte:fragment slot="header">What are you interrested for ?</svelte:fragment>
+				<svelte:fragment slot="header">What are you looking for ?</svelte:fragment>
 				<input
 					class="input p-2"
 					type="search"

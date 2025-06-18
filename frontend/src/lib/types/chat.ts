@@ -6,6 +6,7 @@ export type Message = {
 	content?: string;
 	image?: string;
 	video?: string;
+	call_content?: RTCSessionDescriptionInit;
 	author?: User;
 	created_at: number;
 	type: string;

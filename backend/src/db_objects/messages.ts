@@ -18,7 +18,7 @@ export class Message {
 		contentOrOther: string | Partial<Message>,
 		chat_id?: number,
 		type?: string,
-		user_id?: number
+		user_id?: number,
 	) {
 		if (typeof contentOrOther === 'object' && contentOrOther !== null) {
 			this.content = contentOrOther.content!;
@@ -28,7 +28,7 @@ export class Message {
 			this.id = contentOrOther.id ?? 0;
 			this.send_at = contentOrOther.send_at ?? BigInt(Date.now());
 		} else {
-			this.content = contentOrOther;
+			this.content = contentOrOther!;
 			this.chat_id = chat_id!;
 			this.type = type!;
 			this.user_id = user_id;
@@ -142,6 +142,7 @@ export class Message {
 
 		const message: MessageType = {
 			content: this.content,
+			call_content: this.call_content,
 			author: user,
 			type: this.type,
 			id: this.id,

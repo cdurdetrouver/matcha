@@ -12,11 +12,50 @@ import { Chats_Users } from '../db_objects/chats_users.ts';
 import { upgradeWebSocket } from 'hono/deno';
 import { WSContext } from 'hono/ws';
 import { MessageType } from '../types/message.ts';
+import twilio from 'twilio';
+import { ACCOUNT_SID, AUTH_TOKEN } from "../secret.ts";
 
 const app = new Hono();
 
-const chan_layer = new Map<number, Set<WSContext<WebSocket>>>();
+export const chan_layer = new Map<number, Set<WSContext<WebSocket>>>();
 
+app.get('/:id/info', async (c: Context) => {
+	const id = Number(c.req.param('id'));
+	const ret_check = await check_cookies(c);
+	let chat: Chat;
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 400);
+	const { message, ret_val, user } = ret_check;
+	if (user == null || message != undefined)
+		return c.json({ message: message }, ret_val);
+	if (isNaN(id)) return c.json({ message: 'Chat id is undefined' }, 400);
+	try {
+		chat = await Chat.get_by_id(id);
+	} catch (_e) {
+		return c.json({ message: 'Chat not found' }, 404);
+	}
+	if (!(await Chats_Users.get_chats_by_user(user.id)).includes(chat.id))
+		return c.json({ message: 'User not in the chat' }, 403);
+	return c.json({ message: 'Chat found', chat: await chat.serialize(user.id) });
+});
+
+app.all('/:id/info', (c: Context) => {
+	return c.json({ message: 'Method Not Allowed' }, 405);
+});
+
+app.get('/ice_servers', async (c: Context) => {
+	const ret_check = await check_cookies(c);
+	if (ret_check == null)
+		return c.json({ message: 'Server cannot perform checks !' }, 400);
+	const { message, ret_val, user } = ret_check;
+	if (user == null || message != undefined)
+		return c.json({ message: message }, ret_val);
+	const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
+
+	const token = await client.tokens.create();
+
+	return c.json(token.iceServers, 200);
+});
 app.get('/:chat_id/:message_id', async (c: Context) => {
 	const chat_id = Number(c.req.param('chat_id'));
 	const message_id = Number(c.req.param('message_id'));
@@ -163,7 +202,7 @@ app.get(
 						})
 					);
 				} else {
-					const message: Message = new Message(
+					const message = new Message(
 						mes.content,
 						chat.id,
 						mes.type,
@@ -208,30 +247,6 @@ app.get(
 );
 
 app.all('/:id', (c: Context) => {
-	return c.json({ message: 'Method Not Allowed' }, 405);
-});
-
-app.get('/:id/info', async (c: Context) => {
-	const id = Number(c.req.param('id'));
-	const ret_check = await check_cookies(c);
-	let chat: Chat;
-	if (ret_check == null)
-		return c.json({ message: 'Server cannot perform checks !' }, 400);
-	const { message, ret_val, user } = ret_check;
-	if (user == null || message != undefined)
-		return c.json({ message: message }, ret_val);
-	if (isNaN(id)) return c.json({ message: 'Chat id is undefined' }, 400);
-	try {
-		chat = await Chat.get_by_id(id);
-	} catch (_e) {
-		return c.json({ message: 'Chat not found' }, 404);
-	}
-	if (!(await Chats_Users.get_chats_by_user(user.id)).includes(chat.id))
-		return c.json({ message: 'User not in the chat' }, 403);
-	return c.json({ message: 'Chat found', chat: await chat.serialize(user.id) });
-});
-
-app.all('/:id/info', (c: Context) => {
 	return c.json({ message: 'Method Not Allowed' }, 405);
 });
 

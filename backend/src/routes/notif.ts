@@ -2,8 +2,10 @@ import { Hono, type Context } from 'hono';
 import { upgradeWebSocket } from 'hono/deno';
 import { check_cookies } from '../utils/jwt.ts';
 import { Notif } from '../db_objects/notif.ts';
+import { NotifType } from '../types/notifs.ts';
 import { WSContext } from 'hono/ws';
 import { User } from '../db_objects/user.ts';
+import { Chats_Users } from "../db_objects/chats_users.ts";
 
 const app = new Hono();
 interface ExtendedWebSocket extends WSContext<WebSocket> {
@@ -14,7 +16,7 @@ const connectedUsers = new Map<number, WSContext<WebSocket>>();
 
 app.get(
 	'/ws',
-	upgradeWebSocket((c) => {
+	upgradeWebSocket((c: Context) => {
 		return check_cookies(c, '/notifs').then((ret_check) => ({
 			onOpen: (_event, ws) => {
 				const { user } = ret_check;
@@ -61,13 +63,76 @@ app.get(
 			},
 			onMessage: async (event, ws) => {
 				const data = JSON.parse(String(event.data));
-				if (data.type === 'delete') {
-					await Notif.delete(data.id);
-					ws.send(
-						JSON.stringify({
-							type: 'delete',
-							id: data.id,
-						})
+				let send_data;
+				let target_id = undefined;
+				let type = undefined;
+				if (data.target_chat && typeof data.target_chat !== 'number')
+					return console.error('Invalid target_chat type:', data.target_chat);
+				switch (data.type) {
+					case 'delete':
+						await Notif.delete(data.id);
+						ws.send(
+							JSON.stringify({
+								type: 'delete',
+								id: data.id,
+							})
+						);
+						break;
+					case 'callAnswer': {
+						const callee = (await Chats_Users.get_users_by_chat(
+								data.target_chat)).find((id) => id != data.caller_id);
+						send_data = {
+							answer: data.answer,
+							callee: callee,
+						}
+						target_id = data.caller_id
+						type = "callAnswer";
+						break;
+					}
+					case 'callOffer':
+						send_data = {
+							caller_id: data.caller_id,
+							offer: data.offer,
+							video: data.video,
+						}
+						if (data.target_id === undefined)
+							target_id = (await Chats_Users.get_users_by_chat(
+								data.target_chat)).find((id) => id != data.caller_id);
+						type = "callOffer";
+						break;
+					case 'IceCandidate':
+						send_data = {
+							candidate: data.candidate,
+						}
+						type = "ice-candidate";
+						if (data.target_id === undefined || data.target_id == 0)
+							target_id = (await Chats_Users.get_users_by_chat(
+								data.target_chat)).find((id) => id != data.caller_id);
+						break;
+					case 'callReject':
+						type = 'callReject';
+						break;
+					case 'endCall':
+						type = 'endCall';
+						send_data = {
+							caller_id: data.caller_id,
+						}
+						if (data.target_id === 0)
+							target_id = (await Chats_Users.get_users_by_chat(
+								data.target_chat)).find((id) => id != data.caller_id);
+						break;
+					default:
+						console.log('Unknown notif type', data.type);
+						break;
+				}
+				if (send_data !== undefined) {
+					if (target_id == undefined)
+						target_id = data.target_id;
+					post_notif(
+						target_id,
+						JSON.stringify(send_data), 
+						'',
+						type
 					);
 				}
 			},
@@ -104,17 +169,30 @@ app.get(
 export async function post_notif(
 	user_id: number,
 	content: string,
-	redirect: string
+	redirect: string,
+	type: string = 'new'
 ) {
-	const notif = new Notif(content, user_id, redirect);
-	await notif.create();
-
+	let notifs_serialize: NotifType;
+	if (type == 'new') {
+		const notif = new Notif(content, user_id, redirect);
+		await notif.create();
+		notifs_serialize = notif.serialize();
+		
+	}
+	else {
+		notifs_serialize = {
+			content: content,
+			redirect: redirect,
+			id: -1,
+			send_at: Number(BigInt(Date.now())),
+		}
+	}
 	const ws = connectedUsers.get(user_id);
 	if (ws) {
 		ws.send(
 			JSON.stringify({
-				type: 'new',
-				notif: notif.serialize(),
+				type,
+				notif: notifs_serialize,
 			})
 		);
 	}

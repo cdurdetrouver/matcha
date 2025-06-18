@@ -82,7 +82,8 @@
 
 	async function scrollToBottom() {
 		await tick();
-		chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+		if (chatContainer)
+			chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 	}
 
 	function handleScroll() {
